@@ -1,6 +1,6 @@
 {
-  "name": "Tadilat Proje Mini",
-  "short_name": "Tadilat Mini",
+  "name": "Projekt Bau",
+  "short_name": "Projekt Bau",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f3f4f6",

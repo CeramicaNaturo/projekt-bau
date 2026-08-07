@@ -50,3 +50,28 @@ button,.file{border:0;border-radius:10px;padding:10px 13px;font-weight:800;curso
   .pdf-value{font-size:10.5pt;white-space:pre-wrap;line-height:1.35}
   .pdf-empty{border:1px dashed #ddd}
 }
+
+@media print{
+  @page{size:A4 portrait;margin:9mm}
+  body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .topbar,.wrap{display:none!important}
+  .print-report{display:block!important}
+  .pdf-page{height:279mm;page-break-after:always;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;color:#111}
+  .pdf-page:last-child{page-break-after:auto}
+  .pdf-header{display:grid;grid-template-columns:1fr auto;gap:8mm;border-bottom:2px solid #111;padding-bottom:4mm;margin-bottom:5mm}
+  .pdf-brand{font-size:8pt;letter-spacing:.12em;font-weight:700;color:#666;text-transform:uppercase}
+  .pdf-header h1{font-size:19pt;margin:1mm 0 2mm}
+  .pdf-meta{font-size:9.5pt;line-height:1.45}
+  .pdf-page-no{font-size:9pt;text-align:right;white-space:nowrap}
+  .pdf-items{display:grid;grid-template-rows:1fr 1fr;gap:5mm;flex:1;min-height:0}
+  .pdf-item{display:grid;grid-template-columns:47% 53%;border:1px solid #aaa;border-radius:2mm;overflow:hidden;min-height:0;background:#fff}
+  .pdf-photo{background:#eee;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
+  .pdf-photo img{width:100%;height:100%;object-fit:cover}
+  .pdf-text{padding:4.5mm;display:flex;flex-direction:column;gap:2.3mm;overflow:hidden}
+  .pdf-text h3{font-size:13.5pt;line-height:1.15;margin:0}
+  .pdf-label{font-size:7.5pt;text-transform:uppercase;letter-spacing:.04em;color:#666;font-weight:700;margin-bottom:.5mm}
+  .pdf-value{font-size:9.5pt;white-space:pre-wrap;line-height:1.3}
+  .pdf-status{display:inline-block;border:1px solid #bbb;border-radius:999px;padding:1mm 2.5mm;font-size:8.5pt;font-weight:700}
+  .pdf-footer{border-top:1px solid #ccc;margin-top:4mm;padding-top:2.5mm;display:flex;justify-content:space-between;font-size:7.5pt;color:#666}
+  .pdf-empty{border:1px dashed #ddd;background:#fff}
+}

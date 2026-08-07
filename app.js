@@ -98,27 +98,53 @@ function img(f){
   return new Promise(ok=>{let r=new FileReader(),i=new Image();r.onload=()=>i.src=r.result;i.onload=()=>{let w=Math.min(1400,i.width),h=Math.round(i.height*w/i.width),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(i,0,0,w,h);ok(c.toDataURL('image/jpeg',.8))};r.readAsDataURL(f)})
 }
 function buildPrintReport(){
-  const p=cur();if(!p)return;
+  const p=cur(); if(!p)return;
   const items=[];
   p.areas.forEach(a=>(a.photos||[]).forEach(ph=>items.push({area:a,photo:ph})));
-  const root=$('printReportRoot');root.innerHTML='';
+  const root=$('printReportRoot'); root.innerHTML='';
   if(!items.length){alert('Für den PDF-Bericht muss mindestens ein Foto vorhanden sein.');return}
+
+  const totalPages=Math.ceil(items.length/2);
+  const reportDate=new Date().toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'});
+
   for(let i=0;i<items.length;i+=2){
-    const page=document.createElement('section');page.className='pdf-page';
-    page.innerHTML=`<div class=pdf-header><h1>${esc(p.name)}</h1><div class=pdf-meta>${esc(p.address||'')}<br>${p.customer?'Kunde: '+esc(p.customer)+' · ':''}${p.owner?'Verantwortlich: '+esc(p.owner)+' · ':''}Startdatum: ${esc(fmtDate(p.startDate))}</div></div><div class=pdf-items></div>`;
+    const pageNo=Math.floor(i/2)+1;
+    const page=document.createElement('section'); page.className='pdf-page';
+    page.innerHTML=`<div class="pdf-header">
+      <div>
+        <div class="pdf-brand">Projekt Bau · Baudokumentation</div>
+        <h1>${esc(p.name)}</h1>
+        <div class="pdf-meta">
+          ${p.address?`<strong>Adresse:</strong> ${esc(p.address)}<br>`:''}
+          ${p.customer?`<strong>Kunde / Firma:</strong> ${esc(p.customer)}<br>`:''}
+          ${p.owner?`<strong>Verantwortlich:</strong> ${esc(p.owner)}<br>`:''}
+          ${p.phone?`<strong>Telefon:</strong> ${esc(p.phone)}<br>`:''}
+          <strong>Startdatum:</strong> ${esc(fmtDate(p.startDate))}
+        </div>
+      </div>
+      <div class="pdf-page-no">Seite ${pageNo} / ${totalPages}<br>Bericht: ${esc(reportDate)}</div>
+    </div>
+    <div class="pdf-items"></div>
+    <div class="pdf-footer"><span>Projekt Bau</span><span>${esc(p.name)} · ${pageNo}/${totalPages}</span></div>`;
+
     const box=page.querySelector('.pdf-items');
     for(let j=0;j<2;j++){
       const it=items[i+j];
-      if(!it){let empty=document.createElement('div');empty.className='pdf-item pdf-empty';box.appendChild(empty);continue}
+      if(!it){const empty=document.createElement('div');empty.className='pdf-item pdf-empty';box.appendChild(empty);continue}
+
       const tasks=(it.area.tasks||[]).map(x=>x.text).filter(Boolean).join(' • ');
       const mats=(it.area.materials||[]).map(x=>x.text).filter(Boolean).join(' • ');
+      const description=it.photo.note||tasks||'-';
+
       const card=document.createElement('div');card.className='pdf-item';
-      card.innerHTML=`<div class=pdf-photo><img src="${it.photo.data}"></div><div class=pdf-text>
-        <div><div class=pdf-label>Bereich / Titel</div><h3>${esc(it.photo.title||it.area.name)}</h3></div>
-        <div><div class=pdf-label>Fotoart</div><div class=pdf-value>${esc(it.photo.kind||'Detail')}</div></div>
-        <div><div class=pdf-label>Beschreibung / Auszuführende Arbeiten</div><div class=pdf-value>${esc(it.photo.note||tasks||'-')}</div></div>
-        ${mats?`<div><div class=pdf-label>Material / Menge</div><div class=pdf-value>${esc(mats)}</div></div>`:''}
-        ${it.area.worker?`<div><div class=pdf-label>Mitarbeiter / Team</div><div class=pdf-value>${esc(it.area.worker)}</div></div>`:''}
+      card.innerHTML=`<div class="pdf-photo"><img src="${it.photo.data}"></div>
+      <div class="pdf-text">
+        <div><div class="pdf-label">Bereich / Position</div><h3>${esc(it.photo.title||it.area.name)}</h3></div>
+        <div><span class="pdf-status">${esc(it.photo.kind||'Detail')} · ${esc(it.area.status||'Offen')}</span></div>
+        <div><div class="pdf-label">Beschreibung / Auszuführende Arbeiten</div><div class="pdf-value">${esc(description)}</div></div>
+        ${mats?`<div><div class="pdf-label">Material / Menge</div><div class="pdf-value">${esc(mats)}</div></div>`:''}
+        ${it.area.worker?`<div><div class="pdf-label">Mitarbeiter / Team</div><div class="pdf-value">${esc(it.area.worker)}</div></div>`:''}
+        <div><div class="pdf-label">Priorität</div><div class="pdf-value">${esc(it.area.priority||'Normal')}</div></div>
       </div>`;
       box.appendChild(card)
     }

@@ -1,16 +1,20 @@
-Projekt Bau v0.4 – Deutsch / Schweiz
+Projekt Bau v0.5 – Professioneller PDF-Bericht / Schweiz
 
-- Benutzeroberfläche vollständig auf Deutsch (de-CH)
-- PDF-Bericht vollständig auf Deutsch
-- Schweizer Datumsformat: TT.MM.JJJJ
-- Schweizer Zahlenformat: 1’250.50
-- Schweizer Währungsformat: CHF 1’250.50
-- A4-PDF mit maximal zwei Fotos pro Seite
-- Foto links, Beschreibung rechts
-- Titel / Position und separate Beschreibung je Foto
-- Reihenfolge der Fotos änderbar
-- Bereiche, Arbeiten, Material / Menge und Mitarbeiter / Team
-- Tablet- und Desktop-Ansicht
+- Vollständig Deutsch (de-CH)
+- Schweizer Datumsformat TT.MM.JJJJ
+- A4 Hochformat
+- Maximal zwei Fotos pro Seite
+- Foto links, Informationen rechts
+- Projektkopf mit Adresse, Kunde/Firma, Verantwortlich, Telefon und Startdatum
+- Seitenzahl Seite X / Y
+- Berichtsdatum
+- Bereich / Position
 - Vorher / Nachher / Detail
+- Status und Priorität
+- Beschreibung / auszuführende Arbeiten
+- Material / Menge
+- Mitarbeiter / Team
+- Einheitliche Fusszeile
+- Foto-Reihenfolge steuerbar
 
 OneDrive-Synchronisierung folgt später.

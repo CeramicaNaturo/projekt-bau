@@ -1,13 +1,16 @@
-Projekt Bau v0.3
+Projekt Bau v0.4 – Deutsch / Schweiz
 
-Ana yenilik:
-- A4 PDF raporu
-- Her A4 sayfasında en fazla 2 fotoğraf
-- Fotoğraf solda, bilgi metni sağda
-- Fotoğraf başlık/konum alanı
-- Fotoğraf başına ayrı PDF açıklaması
-- Fotoğraf sırasını yukarı/aşağı değiştirme
-- Bölüm görevleri, malzeme/ölçü, işçi/ekip PDF'ye aktarılabilir
-- v0.2 LocalStorage verilerini v0.3'e taşımaya çalışır
+- Benutzeroberfläche vollständig auf Deutsch (de-CH)
+- PDF-Bericht vollständig auf Deutsch
+- Schweizer Datumsformat: TT.MM.JJJJ
+- Schweizer Zahlenformat: 1’250.50
+- Schweizer Währungsformat: CHF 1’250.50
+- A4-PDF mit maximal zwei Fotos pro Seite
+- Foto links, Beschreibung rechts
+- Titel / Position und separate Beschreibung je Foto
+- Reihenfolge der Fotos änderbar
+- Bereiche, Arbeiten, Material / Menge und Mitarbeiter / Team
+- Tablet- und Desktop-Ansicht
+- Vorher / Nachher / Detail
 
-OneDrive entegrasyonu sonraki aşamada.
+OneDrive-Synchronisierung folgt später.

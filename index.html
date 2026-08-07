@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="tr">
+<html lang="de-CH">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -11,33 +11,33 @@
 <body>
 <header class="topbar">
   <div>
-    <div class="eyebrow">SAHA PROJE TAKİBİ · v0.3</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.4</div>
     <h1>Projekt Bau</h1>
   </div>
-  <button id="workerView" class="secondary">İşçi Görünümü</button>
+  <button id="workerView" class="secondary">Mitarbeiteransicht</button>
 </header>
 
 <main class="wrap">
 <section class="card editor">
-  <div class="title"><h2>Yeni Proje</h2><span class="pill">PDF geliştirilmiş</span></div>
+  <div class="title"><h2>Neues Projekt</h2><span class="pill">PDF · Schweiz</span></div>
   <div class="grid">
-    <label>Proje adı<input id="name" placeholder="Örn. Müller Wohnung"></label>
-    <label>Adres<input id="address" placeholder="Örn. Zürich"></label>
-    <label>Müşteri / Firma<input id="customer"></label>
+    <label>Projektname<input id="name" placeholder="z. B. Müller Wohnung"></label>
+    <label>Adresse<input id="address" placeholder="z. B. Zürich"></label>
+    <label>Kunde / Firma<input id="customer"></label>
     <label>Telefon<input id="phone"></label>
-    <label>Başlangıç tarihi<input id="startDate" type="date"></label>
-    <label>Sorumlu<input id="owner"></label>
+    <label>Startdatum<input id="startDate" type="date"></label>
+    <label>Verantwortlich<input id="owner"></label>
   </div>
-  <label>Genel açıklama<textarea id="description" rows="3"></textarea></label>
-  <button id="create" class="primary">Projeyi Oluştur</button>
+  <label>Allgemeine Beschreibung<textarea id="description" rows="3"></textarea></label>
+  <button id="create" class="primary">Projekt erstellen</button>
 </section>
 
 <section class="card editor">
   <div class="title">
-    <h2>Projeler</h2>
+    <h2>Projekte</h2>
     <div class="actions">
-      <button id="backup" class="secondary">Yedek Al</button>
-      <label class="secondary file">Yedeği Aç<input id="restore" type="file" accept=".json"></label>
+      <button id="backup" class="secondary">Sicherung erstellen</button>
+      <label class="secondary file">Sicherung öffnen<input id="restore" type="file" accept=".json"></label>
     </div>
   </div>
   <div id="projects"></div>
@@ -46,13 +46,13 @@
 <section id="panel" class="card hidden">
   <div class="title">
     <div>
-      <div class="eyebrow">AKTİF PROJE</div>
+      <div class="eyebrow">AKTIVES PROJEKT</div>
       <h2 id="pTitle"></h2>
       <div id="pMeta" class="muted"></div>
     </div>
     <div class="actions editor">
-      <button id="printReport" class="primary">PDF Raporu Oluştur</button>
-      <button id="deleteProject" class="danger">Projeyi Sil</button>
+      <button id="printReport" class="primary">PDF-Bericht erstellen</button>
+      <button id="deleteProject" class="danger">Projekt löschen</button>
     </div>
   </div>
 
@@ -61,20 +61,20 @@
 
   <div class="editor">
     <div class="grid compact">
-      <label>Bölüm<input id="areaName" placeholder="Bad / Küche / Salon"></label>
-      <label>Öncelik
+      <label>Bereich<input id="areaName" placeholder="Bad / Küche / Wohnzimmer"></label>
+      <label>Priorität
         <select id="priority"><option>Normal</option><option>Wichtig</option><option>Dringend</option></select>
       </label>
     </div>
-    <button id="addArea" class="primary">Bölüm Ekle</button>
+    <button id="addArea" class="primary">Bereich Ekle</button>
   </div>
 
   <div id="areas"></div>
 </section>
 
 <section class="card editor">
-  <div class="title"><h2>OneDrive</h2><span class="pill warn">sonraki aşama</span></div>
-  <p class="muted">Önce saha ve PDF yapısını tamamlıyoruz. OneDrive senkronizasyonu sonraki aşamada eklenecek.</p>
+  <div class="title"><h2>OneDrive</h2><span class="pill warn">nächster Schritt</span></div>
+  <p class="muted">Önce saha ve PDF yapısını tamamlıyoruz. OneDrive senkronizasyonu nächster Schrittda eklenecek.</p>
 </section>
 </main>
 

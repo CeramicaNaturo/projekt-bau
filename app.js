@@ -71,7 +71,7 @@ function area(p,a){
         <input class="cameraInput" type="file" accept="image/*" capture="environment">
       </label>
       <label class="secondary file">Foto auswählen
-        <input class="galleryInput" type="file" accept="image/*" multiple>
+        <input class="galleryInput" type="file" multiple>
       </label>
     </div>
   </div>
@@ -100,7 +100,14 @@ function area(p,a){
     e.target.value='';
   };
   d.querySelector('.galleryInput').onchange=async e=>{
-    if(e.target.files && e.target.files.length) await addSelectedPhotos(e.target.files);
+    if(e.target.files && e.target.files.length){
+      const images=[...e.target.files].filter(f=>f.type && f.type.startsWith('image/'));
+      if(!images.length){
+        alert('Bitte nur Bilddateien auswählen.');
+      }else{
+        await addSelectedPhotos(images);
+      }
+    }
     e.target.value='';
   };
   a.photos.forEach((ph,i)=>d.querySelector('.photos').appendChild(photoCard(a,ph,i)));

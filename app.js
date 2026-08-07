@@ -60,7 +60,21 @@ function area(p,a){
   <div class=grid><label>Mitarbeiter / Team<input class=worker></label><label>Status<select class=status><option>Offen</option><option>In Arbeit</option><option>Wartet</option><option>Abgeschlossen</option></select></label></div>
   <div class=sub><div class=title><h4>Auszuführende Arbeiten</h4><button class="secondary addT editor">+ Aufgabe</button></div><div class=tasks></div></div>
   <div class=sub><div class=title><h4>Material / Menge</h4><button class="secondary addM editor">+ Material</button></div><div class=mats></div></div>
-  <div class="photoBox editor"><select class=kind><option>Vorher</option><option>Nachher</option><option>Detail</option></select><label class="primary file">Foto aufnehmen / auswählen<input class=pi type=file accept="image/*" capture=environment multiple></label></div>
+  <div class="photoBox editor">
+    <select class=kind>
+      <option>Vorher</option>
+      <option>Nachher</option>
+      <option>Detail</option>
+    </select>
+    <div class="photo-source-actions">
+      <label class="primary file">Foto aufnehmen
+        <input class="cameraInput" type="file" accept="image/*" capture="environment">
+      </label>
+      <label class="secondary file">Foto auswählen
+        <input class="galleryInput" type="file" accept="image/*" multiple>
+      </label>
+    </div>
+  </div>
   <div class=photos></div>`;
   d.querySelector('.worker').value=a.worker||'';d.querySelector('.status').value=a.status||'Offen';
   d.querySelector('.worker').onchange=e=>{a.worker=e.target.value;save()};d.querySelector('.status').onchange=e=>{a.status=e.target.value;save()};
@@ -69,7 +83,26 @@ function area(p,a){
   d.querySelector('.addT').onclick=()=>{a.tasks.push({id:u(),text:''});save()};
   a.materials.forEach(m=>d.querySelector('.mats').appendChild(row(a.materials,m,'60×120 seramik – 12 m²')));
   d.querySelector('.addM').onclick=()=>{a.materials.push({id:u(),text:''});save()};
-  d.querySelector('.pi').onchange=async e=>{for(let f of e.target.files)a.photos.push({id:u(),kind:d.querySelector('.kind').value,title:'',note:'',data:await img(f)});save()};
+  const addSelectedPhotos=async(files)=>{
+    for(const f of files){
+      a.photos.push({
+        id:u(),
+        kind:d.querySelector('.kind').value,
+        title:'',
+        note:'',
+        data:await img(f)
+      });
+    }
+    save();
+  };
+  d.querySelector('.cameraInput').onchange=async e=>{
+    if(e.target.files && e.target.files.length) await addSelectedPhotos(e.target.files);
+    e.target.value='';
+  };
+  d.querySelector('.galleryInput').onchange=async e=>{
+    if(e.target.files && e.target.files.length) await addSelectedPhotos(e.target.files);
+    e.target.value='';
+  };
   a.photos.forEach((ph,i)=>d.querySelector('.photos').appendChild(photoCard(a,ph,i)));
   return d
 }
@@ -112,7 +145,7 @@ function buildPrintReport(){
     const page=document.createElement('section'); page.className='pdf-page';
     page.innerHTML=`<div class="pdf-header">
       <div>
-        <div class="pdf-brand">Projekt Bau · Baudokumentation</div>
+        <div class="pdf-brand">PROJEKT BAU · BAUDOKUMENTATION</div>
         <h1>${esc(p.name)}</h1>
         <div class="pdf-meta">
           ${p.address?`<strong>Adresse:</strong> ${esc(p.address)}<br>`:''}
@@ -122,7 +155,7 @@ function buildPrintReport(){
           <strong>Startdatum:</strong> ${esc(fmtDate(p.startDate))}
         </div>
       </div>
-      <div class="pdf-page-no">Seite ${pageNo} / ${totalPages}<br>Bericht: ${esc(reportDate)}</div>
+      <div class="pdf-page-no">Seite ${pageNo} / ${totalPages}<br>Berichtsdatum: ${esc(reportDate)}</div>
     </div>
     <div class="pdf-items"></div>
     <div class="pdf-footer"><span>Projekt Bau</span><span>${esc(p.name)} · ${pageNo}/${totalPages}</span></div>`;
@@ -130,7 +163,7 @@ function buildPrintReport(){
     const box=page.querySelector('.pdf-items');
     for(let j=0;j<2;j++){
       const it=items[i+j];
-      if(!it){const empty=document.createElement('div');empty.className='pdf-item pdf-empty';box.appendChild(empty);continue}
+      if(!it){continue}
 
       const tasks=(it.area.tasks||[]).map(x=>x.text).filter(Boolean).join(' • ');
       const mats=(it.area.materials||[]).map(x=>x.text).filter(Boolean).join(' • ');

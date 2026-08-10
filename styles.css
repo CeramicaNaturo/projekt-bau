@@ -109,3 +109,40 @@ button,.file{border:0;border-radius:10px;padding:10px 13px;font-weight:800;curso
 .floorplan-hint{font-size:12px;color:#6b7280;margin:7px 0 10px}
 #floorplanCanvas{display:block;width:100%;height:auto;max-height:70vh;border:1px solid #cbd5e1;border-radius:12px;background:#fff;touch-action:none}
 @media(max-width:700px){.floorplan-list{grid-template-columns:1fr}.floorplan-toolbar{display:grid;grid-template-columns:repeat(2,1fr)}.floorplan-toolbar button{width:100%}}
+
+.floorplan-options{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:end;
+  margin:10px 0;
+  padding:10px;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+}
+.floorplan-options label{min-width:130px}
+.check-inline{flex-direction:row!important;align-items:center!important;gap:8px!important;padding:10px 0}
+.check-inline input{width:auto!important}
+.floorplan-canvas-wrap{
+  overflow:auto;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  background:#eef2f7;
+  max-height:72vh;
+}
+#floorplanCanvas{
+  border:0!important;
+  border-radius:0!important;
+  max-height:none!important;
+  background:#fff;
+  transform-origin:top left;
+}
+.fp-selected-info{
+  margin-top:8px;
+  font-size:12px;
+  color:#475569;
+}
+@media(max-width:700px){
+  .floorplan-options{display:grid;grid-template-columns:1fr 1fr}
+}

@@ -1,9 +1,10 @@
-Projekt Bau v0.8.4 – Objektmasse
+Projekt Bau v0.8.5 – Masslinie / Touch-Zeichnung Fix
 
-- Grundriss-Objekte besitzen nun reale Masse in Zentimetern.
-- Breite (cm) und Tiefe (cm) können für das ausgewählte Objekt manuell eingegeben werden.
-- Masse werden direkt beim Objekt im Plan angezeigt.
-- Standardmasse für neue Sanitärobjekte, Türen und Fenster.
-- Freie Position, Drehung 0–359° und Skalierung 25–300 % bleiben erhalten.
-- Wand- und Masslinien zeigen weiterhin ihre Länge in cm.
+- Masslinie auf Tablet korrigiert.
+- Wandzeichnung auf Tablet korrigiert.
+- Einheitliche Pointer-Events für Finger, Stift und Maus.
+- Pointer Capture: Ziehen bleibt aktiv, auch wenn der Finger kurz ausserhalb des Canvas gerät.
+- Masslinie: Button wählen, Startpunkt berühren, bis Endpunkt ziehen, loslassen.
+- Wand: gleiche Bedienung.
+- Bestehende Objekt-, Dreh-, Grössen- und Massfunktionen bleiben erhalten.
 - Deutsch / de-CH.

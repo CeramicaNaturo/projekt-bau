@@ -298,8 +298,13 @@ function setFloorTool(tool){
 }
 function snap(v){return fpSnapEnabled?Math.round(v/fpGrid)*fpGrid:v}
 function fpPoint(ev){
-  const r=fpCanvas.getBoundingClientRect(),t=ev.touches?ev.touches[0]:ev;
-  return{x:(t.clientX-r.left)*fpCanvas.width/r.width,y:(t.clientY-r.top)*fpCanvas.height/r.height};
+  const r=fpCanvas.getBoundingClientRect();
+  const t=(ev.touches&&ev.touches[0])?ev.touches[0]:
+          (ev.changedTouches&&ev.changedTouches[0])?ev.changedTouches[0]:ev;
+  return{
+    x:(t.clientX-r.left)*fpCanvas.width/r.width,
+    y:(t.clientY-r.top)*fpCanvas.height/r.height
+  };
 }
 function uidObj(){return 'fp_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function cmFromPixels(px){return Math.round(px)}
@@ -368,13 +373,27 @@ function floorMove(ev){
   drawFloorplan(fpPreview);
 }
 function floorEnd(ev){
-  if(fpTool==='select'){fpDrawing=false;fpDragOffset=null;return}
+  if(fpTool==='select'){
+    fpDrawing=false;fpDragOffset=null;return;
+  }
   if(!fpDrawing||(fpTool!=='wall'&&fpTool!=='dimension'))return;
-  const t=ev.changedTouches&&ev.changedTouches[0]?ev.changedTouches[0]:ev,r=fpCanvas.getBoundingClientRect();
-  const p={x:(t.clientX-r.left)*fpCanvas.width/r.width,y:(t.clientY-r.top)*fpCanvas.height/r.height};
-  const obj={id:uidObj(),type:fpTool,x1:fpStart.x,y1:fpStart.y,x2:snap(p.x),y2:snap(p.y),thickness:fpWallThickness};
-  if(dist({x:obj.x1,y:obj.y1},{x:obj.x2,y:obj.y2})>5)fpObjects.push(obj);
-  fpDrawing=false;fpStart=null;fpPreview=null;drawFloorplan();ev.preventDefault();
+
+  const p=fpPoint(ev);
+  const obj={
+    id:uidObj(),
+    type:fpTool,
+    x1:fpStart.x,y1:fpStart.y,
+    x2:snap(p.x),y2:snap(p.y),
+    thickness:fpWallThickness
+  };
+
+  if(dist({x:obj.x1,y:obj.y1},{x:obj.x2,y:obj.y2})>5){
+    fpObjects.push(obj);
+  }
+  fpDrawing=false;fpStart=null;fpPreview=null;
+  drawFloorplan();
+  updateSelectedInfo();
+  ev.preventDefault();
 }
 function deleteSelected(){
   if(!fpSelectedId)return;
@@ -561,8 +580,29 @@ function initFloorplanControls(){
   $('fpZoomReset').onclick=()=>{fpZoom=1;applyZoom()};
 }
 function initFloorplanCanvas(){
-  fpCanvas.addEventListener('mousedown',floorStart);fpCanvas.addEventListener('mousemove',floorMove);window.addEventListener('mouseup',floorEnd);
-  fpCanvas.addEventListener('touchstart',floorStart,{passive:false});fpCanvas.addEventListener('touchmove',floorMove,{passive:false});fpCanvas.addEventListener('touchend',floorEnd,{passive:false});
+  if(!fpCanvas)return;
+  fpCanvas.style.touchAction='none';
+
+  fpCanvas.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='touch'||e.pointerType==='pen'||e.pointerType==='mouse'){
+      try{fpCanvas.setPointerCapture(e.pointerId)}catch(_){}
+      floorStart(e);
+    }
+  });
+
+  fpCanvas.addEventListener('pointermove',e=>{
+    if(fpDrawing)floorMove(e);
+  });
+
+  fpCanvas.addEventListener('pointerup',e=>{
+    floorEnd(e);
+    try{fpCanvas.releasePointerCapture(e.pointerId)}catch(_){}
+  });
+
+  fpCanvas.addEventListener('pointercancel',e=>{
+    if(fpDrawing)floorEnd(e);
+    try{fpCanvas.releasePointerCapture(e.pointerId)}catch(_){}
+  });
 }
 initFloorplanControls();initFloorplanCanvas();
 

@@ -70,9 +70,7 @@ function area(p,a){
       <label class="primary file">Foto aufnehmen
         <input class="cameraInput" type="file" accept="image/*" capture="environment">
       </label>
-      <label class="secondary file">Foto auswählen
-        <input class="galleryInput" type="file" multiple>
-      </label>
+      <button type="button" class="secondary galleryButton">Foto auswählen</button>
     </div>
   </div>
   <div class=photos></div>`;
@@ -99,16 +97,54 @@ function area(p,a){
     if(e.target.files && e.target.files.length) await addSelectedPhotos(e.target.files);
     e.target.value='';
   };
-  d.querySelector('.galleryInput').onchange=async e=>{
-    if(e.target.files && e.target.files.length){
-      const images=[...e.target.files].filter(f=>f.type && f.type.startsWith('image/'));
-      if(!images.length){
-        alert('Bitte nur Bilddateien auswählen.');
-      }else{
-        await addSelectedPhotos(images);
+  d.querySelector('.galleryButton').onclick=async()=>{
+    try{
+      // Bevorzugt: echter System-Dateidialog. Kein Kamera-"capture".
+      if(window.showOpenFilePicker){
+        const handles=await window.showOpenFilePicker({
+          multiple:true,
+          types:[{
+            description:'Bilder',
+            accept:{
+              'image/*':['.jpg','.jpeg','.png','.webp','.gif','.bmp','.heic','.heif']
+            }
+          }]
+        });
+        const files=[];
+        for(const handle of handles){
+          files.push(await handle.getFile());
+        }
+        if(files.length) await addSelectedPhotos(files);
+        return;
       }
+
+      // Fallback für Browser ohne File System Access API:
+      // bewusst KEIN accept=image/* und KEIN capture, damit der Dateidialog erscheint.
+      const picker=document.createElement('input');
+      picker.type='file';
+      picker.multiple=true;
+      picker.style.display='none';
+      document.body.appendChild(picker);
+
+      picker.onchange=async()=>{
+        const files=[...picker.files].filter(f=>{
+          const name=(f.name||'').toLowerCase();
+          return (f.type&&f.type.startsWith('image/')) ||
+            /\.(jpg|jpeg|png|webp|gif|bmp|heic|heif)$/.test(name);
+        });
+        if(!files.length){
+          alert('Bitte Bilddateien auswählen.');
+        }else{
+          await addSelectedPhotos(files);
+        }
+        picker.remove();
+      };
+
+      picker.click();
+    }catch(err){
+      if(err && err.name==='AbortError') return;
+      alert('Der Dateidialog konnte nicht geöffnet werden.');
     }
-    e.target.value='';
   };
   a.photos.forEach((ph,i)=>d.querySelector('.photos').appendChild(photoCard(a,ph,i)));
   return d

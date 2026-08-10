@@ -1,12 +1,11 @@
-Projekt Bau v0.6.2 – Galerie-/Dateiauswahl für Microsoft Edge Tablet
+Projekt Bau v0.7 – Mehrere Grundrisse pro Projekt
 
-Änderung:
-- "Foto aufnehmen" bleibt separat für die Kamera.
-- "Foto auswählen" verwendet nun bevorzugt den echten System-Dateidialog via showOpenFilePicker().
-- Keine capture-Eigenschaft für die Galerie.
-- Fallback-Dateidialog ohne accept=image/*, damit Microsoft Edge nicht automatisch die Kamera öffnet.
-- Mehrfachauswahl bleibt möglich.
-- Unterstützte Bilddateien: JPG, JPEG, PNG, WEBP, GIF, BMP, HEIC, HEIF.
-- Deutsch / de-CH und Schweizer Formate bleiben unverändert.
-
-Nach Upload auf GitHub Pages bitte reset.html einmal öffnen.
+- Separater Projektbereich «Grundrisse»
+- Beliebig viele Grundrisse pro Projekt
+- Eigener Name je Grundriss, z. B. Bad EG, Küche, Wohnzimmer
+- Grundriss bearbeiten und löschen
+- Touch-/Maus-Bedienung
+- Werkzeuge: Wand, Tür, Fenster, WC, Dusche, Lavabo, Text
+- Rückgängig und Alles löschen
+- Deutsch / de-CH
+- Schweizer Formate bleiben erhalten

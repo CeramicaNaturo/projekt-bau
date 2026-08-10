@@ -11,7 +11,7 @@
 <body>
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.6.2</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.7</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -70,6 +70,14 @@
   </div>
 
   <div id="areas"></div>
+<div class="divider editor"></div>
+<section class="project-floorplans editor">
+  <div class="title">
+    <div><div class="eyebrow">GRUNDRISSE</div><h3>Grundrisse</h3></div>
+    <button id="newFloorplanBtn" class="secondary">+ Neuen Grundriss erstellen</button>
+  </div>
+  <div id="floorplanList" class="floorplan-list"></div>
+</section>
 </section>
 
 <section class="card editor">
@@ -80,6 +88,28 @@
 
 <div id="printReportRoot" class="print-report"></div>
 
+<div id="floorplanModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="title">
+      <div><div class="eyebrow">GRUNDRISS</div><h2 id="floorplanEditorTitle">Grundriss zeichnen</h2></div>
+      <button id="closeFloorplan" class="secondary">Schliessen</button>
+    </div>
+    <div class="floorplan-toolbar">
+      <button class="secondary fp-tool active" data-tool="wall">Wand</button>
+      <button class="secondary fp-tool" data-tool="door">Tür</button>
+      <button class="secondary fp-tool" data-tool="window">Fenster</button>
+      <button class="secondary fp-tool" data-tool="wc">WC</button>
+      <button class="secondary fp-tool" data-tool="shower">Dusche</button>
+      <button class="secondary fp-tool" data-tool="sink">Lavabo</button>
+      <button class="secondary fp-tool" data-tool="text">Text</button>
+      <button id="fpUndo" class="secondary">Rückgängig</button>
+      <button id="fpClear" class="danger">Alles löschen</button>
+      <button id="fpSave" class="primary">Grundriss speichern</button>
+    </div>
+    <div class="floorplan-hint">Wand: mit dem Finger ziehen · Symbole: gewünschte Stelle antippen · Text: Stelle antippen und Beschriftung eingeben.</div>
+    <canvas id="floorplanCanvas" width="1200" height="800"></canvas>
+  </div>
+</div>
 <script src="app.js"></script>
 </body>
 </html>

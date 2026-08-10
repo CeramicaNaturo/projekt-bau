@@ -95,3 +95,17 @@ button,.file{border:0;border-radius:10px;padding:10px 13px;font-weight:800;curso
     grid-template-rows:1fr;
   }
 }
+
+.divider{height:1px;background:#e5e7eb;margin:20px 0}
+.floorplan-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.floorplan-card{border:1px solid #e5e7eb;border-radius:14px;padding:12px;background:#fafafa}
+.floorplan-card img{display:block;width:100%;aspect-ratio:3/2;object-fit:contain;background:#fff;border:1px solid #e5e7eb;border-radius:10px}
+.floorplan-card-title{font-weight:900;font-size:16px;margin-bottom:8px}
+.floorplan-card-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
+.modal-card{background:#fff;border-radius:16px;width:min(1180px,98vw);max-height:96vh;overflow:auto;padding:14px}
+.floorplan-toolbar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px}
+.fp-tool.active{outline:3px solid rgba(17,24,39,.18)}
+.floorplan-hint{font-size:12px;color:#6b7280;margin:7px 0 10px}
+#floorplanCanvas{display:block;width:100%;height:auto;max-height:70vh;border:1px solid #cbd5e1;border-radius:12px;background:#fff;touch-action:none}
+@media(max-width:700px){.floorplan-list{grid-template-columns:1fr}.floorplan-toolbar{display:grid;grid-template-columns:repeat(2,1fr)}.floorplan-toolbar button{width:100%}}

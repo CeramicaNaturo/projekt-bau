@@ -243,26 +243,46 @@ function renderFloorplans(project){
     list.appendChild(card);
   });
 }
-$('newFloorplanBtn').onclick=()=>{
-  const p=cur();if(!p)return;
-  const name=prompt('Name des Grundrisses eingeben:','Bad');if(!name)return;
+function createNewFloorplan(){
+  const p=cur();
+  if(!p){alert('Bitte zuerst ein Projekt öffnen.');return;}
+  const name=prompt('Name des Grundrisses eingeben:','Bad');
+  if(!name)return;
   p.floorplans=p.floorplans||[];
   const fp={id:u(),name:name.trim()||'Grundriss',objects:[],image:null};
-  p.floorplans.push(fp);save();openFloorplan(p,fp);
-};
+  p.floorplans.push(fp);
+  save();
+  openFloorplan(p,fp);
+}
 function openFloorplan(project,record){fpProject=project;fpRecord=record;fpObjects=Array.isArray(record.objects)?JSON.parse(JSON.stringify(record.objects)):[];$('floorplanEditorTitle').textContent=`Grundriss · ${record.name}`;$('floorplanModal').classList.remove('hidden');setFloorTool('wall');drawFloorplan()}
 function closeFloorplan(){$('floorplanModal').classList.add('hidden');fpProject=null;fpRecord=null}
 function setFloorTool(tool){fpTool=tool;document.querySelectorAll('.fp-tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool))}
-document.querySelectorAll('.fp-tool').forEach(b=>b.onclick=()=>setFloorTool(b.dataset.tool));
-$('closeFloorplan').onclick=closeFloorplan;$('fpUndo').onclick=()=>{fpObjects.pop();drawFloorplan()};$('fpClear').onclick=()=>{if(confirm('Grundriss vollständig löschen?')){fpObjects=[];drawFloorplan()}};
-$('fpSave').onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=JSON.parse(JSON.stringify(fpObjects));fpRecord.image=fpCanvas.toDataURL('image/png');save();closeFloorplan()};
+function initFloorplanControls(){
+  const newBtn=$('newFloorplanBtn');
+  if(newBtn)newBtn.onclick=createNewFloorplan;
+  document.querySelectorAll('.fp-tool').forEach(b=>b.onclick=()=>setFloorTool(b.dataset.tool));
+  const closeBtn=$('closeFloorplan'); if(closeBtn)closeBtn.onclick=closeFloorplan;
+  const undoBtn=$('fpUndo'); if(undoBtn)undoBtn.onclick=()=>{fpObjects.pop();drawFloorplan()};
+  const clearBtn=$('fpClear'); if(clearBtn)clearBtn.onclick=()=>{if(confirm('Grundriss vollständig löschen?')){fpObjects=[];drawFloorplan()}};
+  const saveBtn=$('fpSave'); if(saveBtn)saveBtn.onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=JSON.parse(JSON.stringify(fpObjects));fpRecord.image=fpCanvas.toDataURL('image/png');save();closeFloorplan()};
+}
 function fpPoint(ev){const r=fpCanvas.getBoundingClientRect(),t=ev.touches?ev.touches[0]:ev;return{x:(t.clientX-r.left)*fpCanvas.width/r.width,y:(t.clientY-r.top)*fpCanvas.height/r.height}}
 function snap(v){return Math.round(v/20)*20}
 function floorStart(ev){const p=fpPoint(ev);ev.preventDefault();if(fpTool==='wall'){fpDrawing=true;fpStart={x:snap(p.x),y:snap(p.y)};return}const x=snap(p.x),y=snap(p.y);if(fpTool==='text'){const text=prompt('Beschriftung eingeben:','');if(text)fpObjects.push({type:'text',x,y,text})}else fpObjects.push({type:fpTool,x,y});drawFloorplan()}
 function floorMove(ev){if(!fpDrawing||fpTool!=='wall')return;const p=fpPoint(ev);ev.preventDefault();drawFloorplan({type:'wall',x1:fpStart.x,y1:fpStart.y,x2:snap(p.x),y2:snap(p.y)})}
 function floorEnd(ev){if(!fpDrawing||fpTool!=='wall')return;const t=ev.changedTouches&&ev.changedTouches[0]?ev.changedTouches[0]:ev,r=fpCanvas.getBoundingClientRect(),p={x:(t.clientX-r.left)*fpCanvas.width/r.width,y:(t.clientY-r.top)*fpCanvas.height/r.height};fpObjects.push({type:'wall',x1:fpStart.x,y1:fpStart.y,x2:snap(p.x),y2:snap(p.y)});fpDrawing=false;fpStart=null;drawFloorplan();ev.preventDefault()}
-fpCanvas.addEventListener('mousedown',floorStart);fpCanvas.addEventListener('mousemove',floorMove);window.addEventListener('mouseup',floorEnd);fpCanvas.addEventListener('touchstart',floorStart,{passive:false});fpCanvas.addEventListener('touchmove',floorMove,{passive:false});fpCanvas.addEventListener('touchend',floorEnd,{passive:false});
+function initFloorplanCanvas(){
+  if(!fpCanvas)return;
+  fpCanvas.addEventListener('mousedown',floorStart);
+  fpCanvas.addEventListener('mousemove',floorMove);
+  window.addEventListener('mouseup',floorEnd);
+  fpCanvas.addEventListener('touchstart',floorStart,{passive:false});
+  fpCanvas.addEventListener('touchmove',floorMove,{passive:false});
+  fpCanvas.addEventListener('touchend',floorEnd,{passive:false});
+}
 function drawFloorplan(preview=null){fpCtx.clearRect(0,0,fpCanvas.width,fpCanvas.height);fpCtx.fillStyle='#fff';fpCtx.fillRect(0,0,fpCanvas.width,fpCanvas.height);fpCtx.strokeStyle='#eef0f3';fpCtx.lineWidth=1;for(let x=0;x<=fpCanvas.width;x+=20){fpCtx.beginPath();fpCtx.moveTo(x,0);fpCtx.lineTo(x,fpCanvas.height);fpCtx.stroke()}for(let y=0;y<=fpCanvas.height;y+=20){fpCtx.beginPath();fpCtx.moveTo(0,y);fpCtx.lineTo(fpCanvas.width,y);fpCtx.stroke()}[...fpObjects,...(preview?[preview]:[])].forEach(drawFpObject)}
 function drawFpObject(o){fpCtx.save();fpCtx.strokeStyle='#111827';fpCtx.fillStyle='#111827';fpCtx.lineWidth=8;fpCtx.lineCap='round';fpCtx.lineJoin='round';if(o.type==='wall'){fpCtx.beginPath();fpCtx.moveTo(o.x1,o.y1);fpCtx.lineTo(o.x2,o.y2);fpCtx.stroke()}else if(o.type==='door'){fpCtx.lineWidth=5;fpCtx.beginPath();fpCtx.moveTo(o.x-45,o.y);fpCtx.lineTo(o.x+45,o.y);fpCtx.stroke();fpCtx.beginPath();fpCtx.arc(o.x-45,o.y,90,0,-Math.PI/2,true);fpCtx.stroke()}else if(o.type==='window'){fpCtx.lineWidth=5;fpCtx.strokeRect(o.x-55,o.y-10,110,20);fpCtx.beginPath();fpCtx.moveTo(o.x-45,o.y);fpCtx.lineTo(o.x+45,o.y);fpCtx.stroke()}else if(o.type==='wc'){fpCtx.lineWidth=4;fpCtx.beginPath();fpCtx.ellipse(o.x,o.y+15,34,44,0,0,Math.PI*2);fpCtx.stroke();fpCtx.strokeRect(o.x-32,o.y-45,64,28);fpCtx.font='bold 22px Arial';fpCtx.textAlign='center';fpCtx.fillText('WC',o.x,o.y+22)}else if(o.type==='shower'){fpCtx.lineWidth=4;fpCtx.strokeRect(o.x-50,o.y-50,100,100);fpCtx.font='18px Arial';fpCtx.textAlign='center';fpCtx.fillText('Dusche',o.x,o.y+5)}else if(o.type==='sink'){fpCtx.lineWidth=4;fpCtx.beginPath();fpCtx.ellipse(o.x,o.y,48,30,0,0,Math.PI*2);fpCtx.stroke();fpCtx.font='17px Arial';fpCtx.textAlign='center';fpCtx.fillText('Lavabo',o.x,o.y+55)}else if(o.type==='text'){fpCtx.font='bold 24px Arial';fpCtx.textAlign='left';fpCtx.fillText(o.text,o.x,o.y)}fpCtx.restore()}
 
+initFloorplanControls();
+initFloorplanCanvas();
 render();

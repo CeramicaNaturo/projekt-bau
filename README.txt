@@ -1,11 +1,7 @@
-Projekt Bau v0.7 – Mehrere Grundrisse pro Projekt
+Projekt Bau v0.7.1 – Grundriss Button Fix
 
-- Separater Projektbereich «Grundrisse»
-- Beliebig viele Grundrisse pro Projekt
-- Eigener Name je Grundriss, z. B. Bad EG, Küche, Wohnzimmer
-- Grundriss bearbeiten und löschen
-- Touch-/Maus-Bedienung
-- Werkzeuge: Wand, Tür, Fenster, WC, Dusche, Lavabo, Text
-- Rückgängig und Alles löschen
-- Deutsch / de-CH
-- Schweizer Formate bleiben erhalten
+- «+ Neuen Grundriss erstellen» korrigiert.
+- Grundriss-Steuerelemente werden sicher initialisiert.
+- JavaScript bricht nicht mehr ab, falls ein Element beim Laden noch nicht verfügbar ist.
+- Mehrere Grundrisse pro Projekt bleiben erhalten.
+- Deutsch / de-CH und Schweizer Formate bleiben erhalten.

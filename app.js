@@ -340,7 +340,14 @@ function floorStart(ev){
     const text=prompt('Beschriftung eingeben:','');
     if(text)fpObjects.push({id:uidObj(),type:'text',x,y,text});
   }else{
-    fpObjects.push({id:uidObj(),type:fpTool,x,y,rotation:0,scale:1});
+    {
+    const dims={
+      door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],
+      bathtub:[180,80],sink:[60,50],drain:[15,15]
+    };
+    const d=dims[fpTool]||[60,40];
+    fpObjects.push({id:uidObj(),type:fpTool,x,y,rotation:0,scale:1,widthCm:d[0],depthCm:d[1]});
+  }
   }
   drawFloorplan();
 }
@@ -399,6 +406,16 @@ function setSelectedScale(value,withHistory=false){
   drawFloorplan();
   updateSelectedInfo();
 }
+
+function setSelectedDimensions(){
+  const o=selectedObject();
+  if(!o||o.type==='wall'||o.type==='dimension'||o.type==='text')return;
+  const w=Number($('fpObjectWidth').value),d=Number($('fpObjectDepth').value);
+  if(!Number.isFinite(w)||!Number.isFinite(d)||w<=0||d<=0)return;
+  pushHistory();
+  o.widthCm=w;o.depthCm=d;
+  drawFloorplan();updateSelectedInfo();
+}
 function updateSelectedInfo(){
   const el=$('fpSelectedInfo');if(!el)return;
   const o=fpObjects.find(x=>x.id===fpSelectedId);
@@ -414,6 +431,10 @@ function updateSelectedInfo(){
     const scalePct=Math.round((o.scale||1)*100);
     if(scaleSlider)scaleSlider.value=String(scalePct);
     if(scaleNum)scaleNum.value=String(scalePct);
+    const w=$('fpObjectWidth'),d=$('fpObjectDepth');
+    if(w)w.value=o.widthCm||'';
+    if(d)d.value=o.depthCm||'';
+    if(o.type!=='text' && o.widthCm && o.depthCm)txt+=` · ${o.widthCm} × ${o.depthCm} cm`;
   }
   el.textContent=txt;
 }
@@ -485,6 +506,15 @@ function drawFpObject(o,preview=false){
     fpCtx.font='bold 24px Arial';fpCtx.textAlign='left';fpCtx.fillText(o.text,o.x,o.y);
   }
   }
+  if(o.type!=='wall'&&o.type!=='dimension'&&o.type!=='text'&&o.widthCm&&o.depthCm){
+    fpCtx.save();
+    fpCtx.setTransform(1,0,0,1,0,0);
+    fpCtx.fillStyle='#475569';
+    fpCtx.font='bold 16px Arial';
+    fpCtx.textAlign='center';
+    fpCtx.fillText(`${o.widthCm} × ${o.depthCm} cm`,o.x,o.y+85*(o.scale||1));
+    fpCtx.restore();
+  }
   if(selected&&o.type!=='wall'&&o.type!=='dimension'){
     fpCtx.strokeStyle='#2563eb';fpCtx.lineWidth=2;fpCtx.setLineDash([6,4]);const ss=65*(o.scale||1);fpCtx.strokeRect(o.x-ss,o.y-ss,ss*2,ss*2);
   }
@@ -517,6 +547,9 @@ function initFloorplanControls(){
     scaleNum.onfocus=()=>{if(selectedObject())pushHistory()};
     scaleNum.oninput=e=>setSelectedScale(e.target.value,false);
   }
+  const objW=$('fpObjectWidth'),objD=$('fpObjectDepth');
+  if(objW)objW.onchange=setSelectedDimensions;
+  if(objD)objD.onchange=setSelectedDimensions;
   $('fpDeleteSelected').onclick=deleteSelected;
   $('fpClear').onclick=()=>{if(confirm('Grundriss vollständig löschen?')){pushHistory();fpObjects=[];fpSelectedId=null;drawFloorplan();updateSelectedInfo()}};
   $('fpSave').onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.wallThickness=fpWallThickness;save();closeFloorplan()};

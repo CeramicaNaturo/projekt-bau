@@ -11,7 +11,7 @@
 <body>
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.8.3</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.8.4</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -138,6 +138,12 @@
       </label>
       <label>%
         <input id="fpScaleNumber" type="number" min="25" max="300" step="1" value="100">
+      </label>
+      <label>Breite (cm)
+        <input id="fpObjectWidth" type="number" min="1" step="1" placeholder="Breite">
+      </label>
+      <label>Tiefe (cm)
+        <input id="fpObjectDepth" type="number" min="1" step="1" placeholder="Tiefe">
       </label>
       <button id="fpDeleteSelected" class="danger">Auswahl löschen</button>
       <button id="fpClear" class="danger">Alles löschen</button>

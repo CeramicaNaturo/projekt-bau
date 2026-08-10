@@ -1,10 +1,9 @@
-Projekt Bau v0.8.3 – Freie Objektgrösse
+Projekt Bau v0.8.4 – Objektmasse
 
-- Grundriss-Objekte können frei skaliert werden.
-- Grössenbereich: 25 % bis 300 %.
-- Schieberegler für schnelle Grössenänderung.
-- Prozentfeld für exakte Eingabe, z. B. 65 %, 120 %, 175 % oder 250 %.
-- Freie Drehung 0–359° bleibt erhalten.
-- Verschieben, Löschen, Rückgängig/Wiederholen bleiben erhalten.
-- Tür, Fenster, WC, Dusche, Badewanne, Lavabo, Bodenablauf und Text skalierbar.
+- Grundriss-Objekte besitzen nun reale Masse in Zentimetern.
+- Breite (cm) und Tiefe (cm) können für das ausgewählte Objekt manuell eingegeben werden.
+- Masse werden direkt beim Objekt im Plan angezeigt.
+- Standardmasse für neue Sanitärobjekte, Türen und Fenster.
+- Freie Position, Drehung 0–359° und Skalierung 25–300 % bleiben erhalten.
+- Wand- und Masslinien zeigen weiterhin ihre Länge in cm.
 - Deutsch / de-CH.

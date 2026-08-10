@@ -1,7 +1,9 @@
-Projekt Bau v0.7.1 – Grundriss Button Fix
+Projekt Bau v0.7.2 – Grundriss-Erstellung korrigiert
 
-- «+ Neuen Grundriss erstellen» korrigiert.
-- Grundriss-Steuerelemente werden sicher initialisiert.
-- JavaScript bricht nicht mehr ab, falls ein Element beim Laden noch nicht verfügbar ist.
-- Mehrere Grundrisse pro Projekt bleiben erhalten.
+- «+ Neuen Grundriss erstellen» vollständig korrigiert.
+- Kein Browser-prompt mehr.
+- Eigener Dialog für den Grundrissnamen.
+- Grundriss-Liste wird beim Öffnen eines Projekts korrekt gerendert.
+- Mehrere Grundrisse pro Projekt.
+- Bearbeiten / Löschen.
 - Deutsch / de-CH und Schweizer Formate bleiben erhalten.

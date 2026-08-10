@@ -11,7 +11,7 @@
 <body>
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.7.1</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.7.2</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -87,6 +87,25 @@
 </main>
 
 <div id="printReportRoot" class="print-report"></div>
+
+
+<div id="floorplanNameModal" class="modal hidden">
+  <div class="modal-card" style="max-width:520px">
+    <div class="title">
+      <div>
+        <div class="eyebrow">NEUER GRUNDRISS</div>
+        <h2>Neuen Grundriss erstellen</h2>
+      </div>
+      <button id="cancelFloorplanName" class="secondary">Abbrechen</button>
+    </div>
+    <label>Name des Grundrisses
+      <input id="floorplanNameInput" type="text" placeholder="z. B. Bad EG">
+    </label>
+    <div class="actions" style="margin-top:14px">
+      <button id="confirmFloorplanName" class="primary">Grundriss erstellen</button>
+    </div>
+  </div>
+</div>
 
 <div id="floorplanModal" class="modal hidden">
   <div class="modal-card">

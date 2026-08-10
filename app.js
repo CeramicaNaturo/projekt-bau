@@ -48,10 +48,16 @@ function render(){
   renderP()
 }
 function renderP(){
-  let p=cur();if(!p){$('panel').classList.add('hidden');return}
-  $('panel').classList.remove('hidden');$('pTitle').textContent=p.name;$('pMeta').textContent=[p.address,p.customer&&'Kunde: '+p.customer,p.owner&&'Verantwortlich: '+p.owner].filter(Boolean).join(' · ');
+  let p=cur();
+  if(!p){$('panel').classList.add('hidden');return}
+  p.floorplans=p.floorplans||[];
+  $('panel').classList.remove('hidden');
+  $('pTitle').textContent=p.name;
+  $('pMeta').textContent=[p.address,p.customer&&'Kunde: '+p.customer,p.owner&&'Verantwortlich: '+p.owner].filter(Boolean).join(' · ');
   $('summary').innerHTML=[['Telefon',p.phone||'-'],['Startdatum',fmtDate(p.startDate)],['Bereiche',p.areas.length],['Beschreibung',p.description||'-']].map(x=>`<div><small>${esc(x[0])}</small><br><b>${esc(x[1])}</b></div>`).join('');
-  $('areas').innerHTML='';p.areas.forEach(a=>$('areas').appendChild(area(p,a)))
+  $('areas').innerHTML='';
+  p.areas.forEach(a=>$('areas').appendChild(area(p,a)));
+  renderFloorplans(p);
 }
 function area(p,a){
   a.tasks=a.tasks||[];a.materials=a.materials||[];a.photos=a.photos||[];
@@ -245,13 +251,42 @@ function renderFloorplans(project){
 }
 function createNewFloorplan(){
   const p=cur();
-  if(!p){alert('Bitte zuerst ein Projekt öffnen.');return;}
-  const name=prompt('Name des Grundrisses eingeben:','Bad');
-  if(!name)return;
+  if(!p){
+    alert('Bitte zuerst ein Projekt öffnen.');
+    return;
+  }
+  const modal=$('floorplanNameModal');
+  const input=$('floorplanNameInput');
+  if(!modal||!input){
+    alert('Grundriss-Dialog konnte nicht geöffnet werden.');
+    return;
+  }
+  input.value='';
+  modal.classList.remove('hidden');
+  setTimeout(()=>input.focus(),50);
+}
+
+function cancelNewFloorplan(){
+  const modal=$('floorplanNameModal');
+  if(modal)modal.classList.add('hidden');
+}
+
+function confirmNewFloorplan(){
+  const p=cur();
+  const input=$('floorplanNameInput');
+  if(!p||!input)return;
+  const name=input.value.trim();
+  if(!name){
+    alert('Bitte einen Namen für den Grundriss eingeben.');
+    input.focus();
+    return;
+  }
   p.floorplans=p.floorplans||[];
-  const fp={id:u(),name:name.trim()||'Grundriss',objects:[],image:null};
+  const fp={id:u(),name,objects:[],image:null};
   p.floorplans.push(fp);
-  save();
+  localStorage.setItem(K3,JSON.stringify(S));
+  render();
+  cancelNewFloorplan();
   openFloorplan(p,fp);
 }
 function openFloorplan(project,record){fpProject=project;fpRecord=record;fpObjects=Array.isArray(record.objects)?JSON.parse(JSON.stringify(record.objects)):[];$('floorplanEditorTitle').textContent=`Grundriss · ${record.name}`;$('floorplanModal').classList.remove('hidden');setFloorTool('wall');drawFloorplan()}
@@ -260,6 +295,14 @@ function setFloorTool(tool){fpTool=tool;document.querySelectorAll('.fp-tool').fo
 function initFloorplanControls(){
   const newBtn=$('newFloorplanBtn');
   if(newBtn)newBtn.onclick=createNewFloorplan;
+  const cancelName=$('cancelFloorplanName');
+  if(cancelName)cancelName.onclick=cancelNewFloorplan;
+  const confirmName=$('confirmFloorplanName');
+  if(confirmName)confirmName.onclick=confirmNewFloorplan;
+  const nameInput=$('floorplanNameInput');
+  if(nameInput)nameInput.addEventListener('keydown',e=>{
+    if(e.key==='Enter')confirmNewFloorplan();
+  });
   document.querySelectorAll('.fp-tool').forEach(b=>b.onclick=()=>setFloorTool(b.dataset.tool));
   const closeBtn=$('closeFloorplan'); if(closeBtn)closeBtn.onclick=closeFloorplan;
   const undoBtn=$('fpUndo'); if(undoBtn)undoBtn.onclick=()=>{fpObjects.pop();drawFloorplan()};

@@ -386,9 +386,18 @@ function setSelectedRotation(value,withHistory=false){
   if(num)num.value=String(Math.round(v));
   drawFloorplan();updateSelectedInfo();
 }
-function resizeSelected(factor){
+function setSelectedScale(value,withHistory=false){
   const o=selectedObject();if(!o||o.type==='wall'||o.type==='dimension')return;
-  pushHistory();o.scale=Math.max(.45,Math.min(2.5,(o.scale||1)*factor));drawFloorplan();updateSelectedInfo();
+  if(withHistory)pushHistory();
+  let v=Number(value);
+  if(!Number.isFinite(v))v=100;
+  v=Math.max(25,Math.min(300,v));
+  o.scale=v/100;
+  const slider=$('fpScale'),num=$('fpScaleNumber');
+  if(slider)slider.value=String(Math.round(v));
+  if(num)num.value=String(Math.round(v));
+  drawFloorplan();
+  updateSelectedInfo();
 }
 function updateSelectedInfo(){
   const el=$('fpSelectedInfo');if(!el)return;
@@ -401,6 +410,10 @@ function updateSelectedInfo(){
     const slider=$('fpRotation'),num=$('fpRotationNumber');
     if(slider)slider.value=String(Math.round(o.rotation||0));
     if(num)num.value=String(Math.round(o.rotation||0));
+    const scaleSlider=$('fpScale'),scaleNum=$('fpScaleNumber');
+    const scalePct=Math.round((o.scale||1)*100);
+    if(scaleSlider)scaleSlider.value=String(scalePct);
+    if(scaleNum)scaleNum.value=String(scalePct);
   }
   el.textContent=txt;
 }
@@ -495,8 +508,15 @@ function initFloorplanControls(){
     rotNum.onfocus=()=>{if(selectedObject())pushHistory()};
     rotNum.oninput=e=>setSelectedRotation(e.target.value,false);
   }
-  $('fpSmaller').onclick=()=>resizeSelected(.9);
-  $('fpLarger').onclick=()=>resizeSelected(1.1);
+  const scale=$('fpScale'),scaleNum=$('fpScaleNumber');
+  if(scale){
+    scale.onpointerdown=()=>{if(selectedObject())pushHistory()};
+    scale.oninput=e=>setSelectedScale(e.target.value,false);
+  }
+  if(scaleNum){
+    scaleNum.onfocus=()=>{if(selectedObject())pushHistory()};
+    scaleNum.oninput=e=>setSelectedScale(e.target.value,false);
+  }
   $('fpDeleteSelected').onclick=deleteSelected;
   $('fpClear').onclick=()=>{if(confirm('Grundriss vollständig löschen?')){pushHistory();fpObjects=[];fpSelectedId=null;drawFloorplan();updateSelectedInfo()}};
   $('fpSave').onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.wallThickness=fpWallThickness;save();closeFloorplan()};

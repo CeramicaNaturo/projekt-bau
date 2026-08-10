@@ -11,7 +11,7 @@
 <body>
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.8.2</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.8.3</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -133,8 +133,12 @@
       <label>Grad
         <input id="fpRotationNumber" type="number" min="0" max="359" step="1" value="0">
       </label>
-      <button id="fpSmaller" class="secondary">− Grösse</button>
-      <button id="fpLarger" class="secondary">+ Grösse</button>
+      <label>Grösse
+        <input id="fpScale" type="range" min="25" max="300" step="1" value="100">
+      </label>
+      <label>%
+        <input id="fpScaleNumber" type="number" min="25" max="300" step="1" value="100">
+      </label>
       <button id="fpDeleteSelected" class="danger">Auswahl löschen</button>
       <button id="fpClear" class="danger">Alles löschen</button>
       <button id="fpSave" class="primary">Grundriss speichern</button>

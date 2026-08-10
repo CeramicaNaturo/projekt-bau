@@ -1,4 +1,4 @@
-const CACHE='projekt-bau-v082';
+const CACHE='projekt-bau-v083';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./manifest.webmanifest'];
 
 self.addEventListener('install',event=>{

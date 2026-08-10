@@ -11,7 +11,7 @@
 <body>
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.8</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.8.2</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -127,6 +127,14 @@
       <button class="secondary fp-tool" data-tool="text">Text</button>
       <button id="fpUndo" class="secondary">Rückgängig</button>
       <button id="fpRedo" class="secondary">Wiederholen</button>
+      <label>Drehung
+        <input id="fpRotation" type="range" min="0" max="359" step="1" value="0">
+      </label>
+      <label>Grad
+        <input id="fpRotationNumber" type="number" min="0" max="359" step="1" value="0">
+      </label>
+      <button id="fpSmaller" class="secondary">− Grösse</button>
+      <button id="fpLarger" class="secondary">+ Grösse</button>
       <button id="fpDeleteSelected" class="danger">Auswahl löschen</button>
       <button id="fpClear" class="danger">Alles löschen</button>
       <button id="fpSave" class="primary">Grundriss speichern</button>

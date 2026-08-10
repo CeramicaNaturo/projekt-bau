@@ -1,23 +1,8 @@
-Projekt Bau v0.8 – Professioneller Grundriss-Editor
+Projekt Bau v0.8.2 – Freie Objektdrehung
 
-Neu:
-- Professioneller Grundriss-Editor pro Projekt
-- Beliebig viele Grundrisse
-- Auswahlmodus
-- Objekte verschieben
-- Auswahl löschen
-- Rückgängig / Wiederholen
-- Wandstärke auswählbar
-- Rastergrösse auswählbar
-- Snap am Raster
-- Masslinien mit cm-Angabe
-- Wandlängen werden in cm angezeigt
-- Zoom 50–200 %
-- Tür, Fenster, WC, Dusche, Badewanne, Lavabo, Bodenablauf, Text
-- Grundriss speichern / bearbeiten / löschen
-- Tablet-Touch und Maus
-- Deutsch / de-CH
-- Schweizer Formate bleiben erhalten
-
-Hinweis:
-Der Grundriss ist für Baustellen-/Projektplanung und Dokumentation gedacht, nicht als behördlicher CAD-/Ausführungsplan.
+- Grundriss-Objekte nicht mehr nur in 15°-Schritten drehen.
+- Freie Drehung von 0° bis 359°.
+- Schieberegler für schnelle Drehung.
+- Gradfeld für exakte Eingabe, z. B. 7°, 43°, 127° oder 278°.
+- Verschieben, Grösse ändern, Löschen sowie Rückgängig/Wiederholen bleiben erhalten.
+- Deutsch / de-CH.

@@ -299,11 +299,9 @@ function setFloorTool(tool){
 function snap(v){return fpSnapEnabled?Math.round(v/fpGrid)*fpGrid:v}
 function fpPoint(ev){
   const r=fpCanvas.getBoundingClientRect();
-  const t=(ev.touches&&ev.touches[0])?ev.touches[0]:
-          (ev.changedTouches&&ev.changedTouches[0])?ev.changedTouches[0]:ev;
-  return{
-    x:(t.clientX-r.left)*fpCanvas.width/r.width,
-    y:(t.clientY-r.top)*fpCanvas.height/r.height
+  return {
+    x:(ev.clientX-r.left)*(fpCanvas.width/r.width),
+    y:(ev.clientY-r.top)*(fpCanvas.height/r.height)
   };
 }
 function uidObj(){return 'fp_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
@@ -325,75 +323,143 @@ function hitTest(p){
   return null;
 }
 function floorStart(ev){
-  const p=fpPoint(ev);ev.preventDefault();
+  if(!fpCanvas)return;
+  ev.preventDefault();
+
+  const p=fpPoint(ev);
+
   if(fpTool==='select'){
-    const hit=hitTest(p);fpSelectedId=hit?hit.id:null;
+    const hit=hitTest(p);
+    fpSelectedId=hit?hit.id:null;
     if(hit){
       pushHistory();
-      fpDragOffset={x:p.x-(hit.x||0),y:p.y-(hit.y||0),pStart:p,orig:JSON.parse(JSON.stringify(hit))};
+      fpDragOffset={
+        pStart:{x:p.x,y:p.y},
+        orig:JSON.parse(JSON.stringify(hit))
+      };
       fpDrawing=true;
+    }else{
+      fpDrawing=false;
     }
-    drawFloorplan();updateSelectedInfo();return;
-  }
-  if(fpTool==='wall'||fpTool==='dimension'){
-    pushHistory();fpDrawing=true;fpStart={x:snap(p.x),y:snap(p.y)};
+    drawFloorplan();
+    updateSelectedInfo();
     return;
   }
+
+  if(fpTool==='wall' || fpTool==='dimension'){
+    pushHistory();
+    fpStart={x:snap(p.x),y:snap(p.y)};
+    fpPreview={
+      id:'preview',
+      type:fpTool,
+      x1:fpStart.x,
+      y1:fpStart.y,
+      x2:fpStart.x,
+      y2:fpStart.y,
+      thickness:fpWallThickness
+    };
+    fpDrawing=true;
+    drawFloorplan(fpPreview);
+    return;
+  }
+
   pushHistory();
   const x=snap(p.x),y=snap(p.y);
+
   if(fpTool==='text'){
     const text=prompt('Beschriftung eingeben:','');
-    if(text)fpObjects.push({id:uidObj(),type:'text',x,y,text});
+    if(text){
+      fpObjects.push({id:uidObj(),type:'text',x,y,text,rotation:0,scale:1});
+    }
   }else{
-    {
     const dims={
       door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],
       bathtub:[180,80],sink:[60,50],drain:[15,15]
     };
     const d=dims[fpTool]||[60,40];
-    fpObjects.push({id:uidObj(),type:fpTool,x,y,rotation:0,scale:1,widthCm:d[0],depthCm:d[1]});
-  }
+    fpObjects.push({
+      id:uidObj(),type:fpTool,x,y,rotation:0,scale:1,
+      widthCm:d[0],depthCm:d[1]
+    });
   }
   drawFloorplan();
 }
+
 function floorMove(ev){
-  const p=fpPoint(ev);ev.preventDefault();
-  if(fpTool==='select'&&fpDrawing&&fpSelectedId){
-    const o=fpObjects.find(x=>x.id===fpSelectedId);if(!o)return;
-    const dx=p.x-fpDragOffset.pStart.x,dy=p.y-fpDragOffset.pStart.y,orig=fpDragOffset.orig;
-    if(o.type==='wall'||o.type==='dimension'){
-      o.x1=snap(orig.x1+dx);o.y1=snap(orig.y1+dy);o.x2=snap(orig.x2+dx);o.y2=snap(orig.y2+dy);
-    }else{
-      o.x=snap(orig.x+dx);o.y=snap(orig.y+dy);
-    }
-    drawFloorplan();return;
-  }
-  if(!fpDrawing||(fpTool!=='wall'&&fpTool!=='dimension'))return;
-  fpPreview={id:'preview',type:fpTool,x1:fpStart.x,y1:fpStart.y,x2:snap(p.x),y2:snap(p.y),thickness:fpWallThickness};
-  drawFloorplan(fpPreview);
-}
-function floorEnd(ev){
-  if(fpTool==='select'){
-    fpDrawing=false;fpDragOffset=null;return;
-  }
-  if(!fpDrawing||(fpTool!=='wall'&&fpTool!=='dimension'))return;
+  if(!fpDrawing)return;
+  ev.preventDefault();
 
   const p=fpPoint(ev);
-  const obj={
-    id:uidObj(),
-    type:fpTool,
-    x1:fpStart.x,y1:fpStart.y,
-    x2:snap(p.x),y2:snap(p.y),
-    thickness:fpWallThickness
-  };
 
-  if(dist({x:obj.x1,y:obj.y1},{x:obj.x2,y:obj.y2})>5){
-    fpObjects.push(obj);
+  if(fpTool==='select' && fpSelectedId){
+    const o=fpObjects.find(x=>x.id===fpSelectedId);
+    if(!o || !fpDragOffset)return;
+
+    const dx=p.x-fpDragOffset.pStart.x;
+    const dy=p.y-fpDragOffset.pStart.y;
+    const orig=fpDragOffset.orig;
+
+    if(o.type==='wall' || o.type==='dimension'){
+      o.x1=snap(orig.x1+dx);
+      o.y1=snap(orig.y1+dy);
+      o.x2=snap(orig.x2+dx);
+      o.y2=snap(orig.y2+dy);
+    }else{
+      o.x=snap(orig.x+dx);
+      o.y=snap(orig.y+dy);
+    }
+    drawFloorplan();
+    updateSelectedInfo();
+    return;
   }
-  fpDrawing=false;fpStart=null;fpPreview=null;
-  drawFloorplan();
-  updateSelectedInfo();
+
+  if((fpTool==='wall' || fpTool==='dimension') && fpStart){
+    fpPreview={
+      id:'preview',
+      type:fpTool,
+      x1:fpStart.x,
+      y1:fpStart.y,
+      x2:snap(p.x),
+      y2:snap(p.y),
+      thickness:fpWallThickness
+    };
+    drawFloorplan(fpPreview);
+  }
+}
+
+function floorEnd(ev){
+  if(!fpDrawing)return;
   ev.preventDefault();
+
+  if(fpTool==='select'){
+    fpDrawing=false;
+    fpDragOffset=null;
+    return;
+  }
+
+  if((fpTool==='wall' || fpTool==='dimension') && fpStart){
+    const p=fpPoint(ev);
+    const obj={
+      id:uidObj(),
+      type:fpTool,
+      x1:fpStart.x,
+      y1:fpStart.y,
+      x2:snap(p.x),
+      y2:snap(p.y),
+      thickness:fpWallThickness
+    };
+
+    const length=dist({x:obj.x1,y:obj.y1},{x:obj.x2,y:obj.y2});
+    if(length>=8){
+      fpObjects.push(obj);
+    }
+
+    fpDrawing=false;
+    fpStart=null;
+    fpPreview=null;
+    drawFloorplan();
+    updateSelectedInfo();
+  }
 }
 function deleteSelected(){
   if(!fpSelectedId)return;
@@ -472,7 +538,12 @@ function drawFloorplan(preview=null){
   for(let y=0;y<=fpCanvas.height;y+=fpGrid){fpCtx.beginPath();fpCtx.moveTo(0,y);fpCtx.lineTo(fpCanvas.width,y);fpCtx.stroke()}
 
   fpObjects.forEach(drawFpObject);
-  if(preview)drawFpObject(preview,true);
+  if(preview){
+    fpCtx.save();
+    fpCtx.globalAlpha=.65;
+    drawFpObject(preview,true);
+    fpCtx.restore();
+  }
 }
 function drawFpObject(o,preview=false){
   fpCtx.save();
@@ -581,28 +652,33 @@ function initFloorplanControls(){
 }
 function initFloorplanCanvas(){
   if(!fpCanvas)return;
+
   fpCanvas.style.touchAction='none';
 
-  fpCanvas.addEventListener('pointerdown',e=>{
-    if(e.pointerType==='touch'||e.pointerType==='pen'||e.pointerType==='mouse'){
-      try{fpCanvas.setPointerCapture(e.pointerId)}catch(_){}
-      floorStart(e);
-    }
-  });
+  fpCanvas.onpointerdown=e=>{
+    if(e.button!==undefined && e.button!==0 && e.pointerType==='mouse')return;
+    try{fpCanvas.setPointerCapture(e.pointerId)}catch(_){}
+    floorStart(e);
+  };
 
-  fpCanvas.addEventListener('pointermove',e=>{
+  fpCanvas.onpointermove=e=>{
     if(fpDrawing)floorMove(e);
-  });
+  };
 
-  fpCanvas.addEventListener('pointerup',e=>{
+  fpCanvas.onpointerup=e=>{
     floorEnd(e);
     try{fpCanvas.releasePointerCapture(e.pointerId)}catch(_){}
-  });
+  };
 
-  fpCanvas.addEventListener('pointercancel',e=>{
-    if(fpDrawing)floorEnd(e);
+  fpCanvas.onpointercancel=e=>{
+    if(fpDrawing){
+      fpDrawing=false;
+      fpStart=null;
+      fpPreview=null;
+      drawFloorplan();
+    }
     try{fpCanvas.releasePointerCapture(e.pointerId)}catch(_){}
-  });
+  };
 }
 initFloorplanControls();initFloorplanCanvas();
 

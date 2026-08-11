@@ -1,10 +1,11 @@
-Projekt Bau v0.8.5 – Masslinie / Touch-Zeichnung Fix
+Projekt Bau v0.8.6 – Wand / Masslinie Zeichnung repariert
 
-- Masslinie auf Tablet korrigiert.
-- Wandzeichnung auf Tablet korrigiert.
-- Einheitliche Pointer-Events für Finger, Stift und Maus.
-- Pointer Capture: Ziehen bleibt aktiv, auch wenn der Finger kurz ausserhalb des Canvas gerät.
-- Masslinie: Button wählen, Startpunkt berühren, bis Endpunkt ziehen, loslassen.
-- Wand: gleiche Bedienung.
-- Bestehende Objekt-, Dreh-, Grössen- und Massfunktionen bleiben erhalten.
+- Zeichnungs-Engine für Wand und Masslinie komplett vereinfacht.
+- Pointer-Koordinaten direkt und stabil berechnet.
+- Live-Vorschau beim Ziehen.
+- Finger, Stift und Maus funktionieren mit demselben Ablauf.
+- Startpunkt antippen, gedrückt halten, Endpunkt ziehen, loslassen.
+- Masslinie wird nach dem Loslassen dauerhaft gespeichert.
+- Wand wird nach dem Loslassen dauerhaft gespeichert.
+- Objektverschiebung im Modus «Auswählen» bleibt erhalten.
 - Deutsch / de-CH.

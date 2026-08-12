@@ -1,29 +1,34 @@
-Projekt Bau v1.6.5 – CAD Wandzeichnung
+Projekt Bau v1.6.6 – Manuelle Wandlänge / Winkel
 
-Neue CAD-Wandfunktionen:
+Neu im Eigenschaften-Panel einer ausgewählten Wand:
 
-1. Live-Wandmass
-- Beim Ziehen einer Wand wird die aktuelle Länge sofort in cm angezeigt.
-- Das Mass aktualisiert sich während jeder Finger-/Mausbewegung.
-- Dadurch kann die Wand direkt bis zur gewünschten Länge gezogen werden.
+- Länge (cm) kann direkt numerisch eingegeben werden.
+- Nach Eingabe wird die Wand sofort im Grundriss angepasst.
+- Der Startpunkt der Wand bleibt fest.
+- Der Endpunkt wird automatisch neu berechnet.
 
-2. Fortlaufende Wandzeichnung
-- Nach Abschluss einer Wand merkt sich das Programm automatisch deren Endpunkt.
-- Die nächste Wand beginnt automatisch exakt an diesem Endpunkt.
-- Wird bewusst ein bestehender Wandendpunkt angetippt, hat dieser Vorrang.
-- Beim Wechsel auf ein anderes Werkzeug wird die Wandkette beendet.
+Winkel:
+- «Aktuellen Winkel behalten»
+- 0°
+- 45°
+- 90°
+- 135°
+- 180°
+- 225°
+- 270°
+- 315°
 
-3. Gegenüberliegende Wand erkennen
-- Bei exakt horizontaler oder vertikaler Wand erkennt das Programm vorhandene Wände in Zeichenrichtung.
-- Der nächstgelegene Schnittpunkt wird live angezeigt.
-- Eine gestrichelte Hilfslinie zeigt die Gegenwand.
-- Abstand bis zur Gegenwand wird in cm angezeigt.
-- Beim Annähern an die Gegenwand oder Überschreiten des Schnittpunkts rastet die Wand automatisch am Schnittpunkt ein.
-- Der Fangpunkt wird grün angezeigt.
+CAD-Verhalten:
+- Ist Gerade/45° Fang aktiv, wird auch beim manuellen Ändern der Länge der aktuelle Winkel mathematisch exakt auf den nächstgelegenen CAD-Winkel gesetzt.
+- Eine horizontale Wand bleibt exakt horizontal.
+- Eine vertikale Wand bleibt exakt vertikal.
+- Eine 45°-Wand bleibt exakt 45°.
+- Alternativ kann der gewünschte Winkel manuell gewählt werden.
+- Allgemeine Eigenschaften zeigen nun auch den echten Wandwinkel.
 
-4. Gerade Wände
-- 0° / 90° / 45° Fang aus v1.6.4 bleibt erhalten.
-- Vorschau und gespeicherte Wand verwenden exakt dieselbe Geometrie.
+Beispiel:
+Bestehende horizontale Wand = 402 cm.
+Im Feld «Länge (cm)» 500 eingeben → Wand wird automatisch exakt auf 500 cm verlängert, ohne schräg zu werden.
 
-Alle bestehenden 2D-, 3D-, Fliesenstart- und Projektfunktionen bleiben erhalten.
+Alle Funktionen aus v1.6.5 bleiben erhalten.
 Deutsch / de-CH.

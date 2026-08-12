@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=165">
+<link rel="stylesheet" href="styles.css?v=166">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer">Version 1.6.5</div>
+  <div class="cad-sidebar-footer">Version 1.6.6</div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.6.5</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.6.6</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -426,6 +426,25 @@
 
         <div class="cad-inspector-section">
           <h4>WAND</h4>
+
+          <label>Länge (cm)
+            <input id="fpWallLength" type="number" min="1" step="1" placeholder="Länge">
+          </label>
+
+          <label>Winkel
+            <select id="fpWallAngle">
+              <option value="auto">Aktuellen Winkel behalten</option>
+              <option value="0">0° – horizontal rechts</option>
+              <option value="90">90° – vertikal unten</option>
+              <option value="180">180° – horizontal links</option>
+              <option value="270">270° – vertikal oben</option>
+              <option value="45">45°</option>
+              <option value="135">135°</option>
+              <option value="225">225°</option>
+              <option value="315">315°</option>
+            </select>
+          </label>
+
           <label>Wandstärke
             <select id="fpWallThickness">
               <option value="10">10 cm</option>
@@ -531,8 +550,8 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=165"></script>
+<script type="module" src="three_viewer.js?v=166"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=165"></script>
+<script src="app.js?v=166"></script>
 </body>
 </html>

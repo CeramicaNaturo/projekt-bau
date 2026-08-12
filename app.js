@@ -791,15 +791,90 @@ function duplicateSelected(){
   updateSelectedInfo();
 }
 
+
+function wallAngleDeg(o){
+  if(!o||o.type!=='wall')return 0;
+  let deg=Math.atan2(Number(o.y2)-Number(o.y1),Number(o.x2)-Number(o.x1))*180/Math.PI;
+  if(deg<0)deg+=360;
+  return deg;
+}
+
+function nearestCadAngle(deg){
+  const allowed=[0,45,90,135,180,225,270,315];
+  let best=allowed[0],bestDiff=Infinity;
+  for(const a of allowed){
+    const d=Math.min(Math.abs(deg-a),360-Math.abs(deg-a));
+    if(d<bestDiff){bestDiff=d;best=a}
+  }
+  return best;
+}
+
+function setSelectedWallGeometry(){
+  const o=selectedObject();
+  if(!o||o.type!=='wall')return;
+
+  const lenInput=$('fpWallLength');
+  const angleInput=$('fpWallAngle');
+
+  const length=Number(lenInput?.value);
+  if(!Number.isFinite(length)||length<=0)return;
+
+  let angleDeg=wallAngleDeg(o);
+  const requested=angleInput?.value;
+
+  if(requested && requested!=='auto'){
+    angleDeg=Number(requested);
+  }else if(fpAngleSnap){
+    // Keep current direction, but guarantee mathematically exact CAD angle.
+    angleDeg=nearestCadAngle(angleDeg);
+  }
+
+  pushHistory();
+
+  const rad=angleDeg*Math.PI/180;
+
+  // The first endpoint remains fixed; only the second endpoint moves.
+  // This is predictable in a CAD workflow and keeps connected geometry stable.
+  o.x2=o.x1+Math.cos(rad)*length;
+  o.y2=o.y1+Math.sin(rad)*length;
+
+  // Clean floating point noise, especially for 0° / 90°.
+  if(Math.abs(Math.cos(rad))<1e-10)o.x2=o.x1;
+  if(Math.abs(Math.sin(rad))<1e-10)o.y2=o.y1;
+
+  // Store with sensible precision.
+  o.x2=Math.round(o.x2*1000)/1000;
+  o.y2=Math.round(o.y2*1000)/1000;
+
+  drawFloorplan();
+  updateSelectedInfo();
+}
+
 function updateWallEndpointFields(){
   const o=selectedObject();
   const ids=['fpWallX1','fpWallY1','fpWallX2','fpWallY2'];
+  const lenEl=$('fpWallLength');
+  const angleEl=$('fpWallAngle');
+
   if(!o||o.type!=='wall'){
     ids.forEach(id=>{const el=$(id);if(el)el.value='';});
+    if(lenEl)lenEl.value='';
+    if(angleEl)angleEl.value='auto';
     return;
   }
+
   const map={fpWallX1:o.x1,fpWallY1:o.y1,fpWallX2:o.x2,fpWallY2:o.y2};
   Object.entries(map).forEach(([id,val])=>{const el=$(id);if(el)el.value=Math.round(val);});
+
+  const length=dist({x:o.x1,y:o.y1},{x:o.x2,y:o.y2});
+  if(lenEl)lenEl.value=String(Math.round(length));
+
+  if(angleEl){
+    const current=wallAngleDeg(o);
+    const snapped=nearestCadAngle(current);
+    const diff=Math.min(Math.abs(current-snapped),360-Math.abs(current-snapped));
+    angleEl.value=diff<0.5?String(snapped):'auto';
+  }
 }
 
 function setWallEndpointsFromFields(){
@@ -1851,7 +1926,7 @@ function updateCadInspector(){
     set('cadPropY',`${p.y} cm`);
     if(o.type==='wall'){
       set('cadPropSize',`${Math.round(dist({x:o.x1,y:o.y1},{x:o.x2,y:o.y2}))} cm`);
-      set('cadPropRotation','–');
+      set('cadPropRotation',`${Math.round(wallAngleDeg(o))}°`);
     }else{
       set('cadPropSize',o.widthCm&&o.depthCm?`${o.widthCm} × ${o.depthCm} cm`:`${Math.round((o.scale||1)*100)} %`);
       set('cadPropRotation',`${Math.round(o.rotation||0)}°`);
@@ -1935,6 +2010,11 @@ function initFloorplanControls(){
   ['fpWallX1','fpWallY1','fpWallX2','fpWallY2'].forEach(id=>{
     const el=$(id);if(el)el.onchange=setWallEndpointsFromFields;
   });
+
+  const wallLength=$('fpWallLength');
+  const wallAngle=$('fpWallAngle');
+  if(wallLength)wallLength.onchange=setSelectedWallGeometry;
+  if(wallAngle)wallAngle.onchange=setSelectedWallGeometry;
 
   const objW=$('fpObjectWidth'),objD=$('fpObjectDepth');
   if(objW)objW.onchange=setSelectedDimensions;

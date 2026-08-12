@@ -1178,3 +1178,9 @@ body.pdf-exporting .pdf-footer{
   color:#2563eb;
   font-weight:700;
 }
+
+/* v1.6.6 – editierbare Wandlänge */
+#fpWallLength,
+#fpWallAngle{
+  width:100%;
+}

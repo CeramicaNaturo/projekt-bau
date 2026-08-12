@@ -1,19 +1,16 @@
-Projekt Bau v1.8.1 – Workspace Root Fix
+Projekt Bau v1.8.2 – Saubere Wandecken
 
-Kök hata bulundu ve düzeltildi:
+Behoben:
+- An Wandverbindungen ragten Wandenden sichtbar über die Ecke hinaus.
+- Ursache war Canvas lineCap='square'.
+- Square verlängert eine Linie optisch über ihren echten Endpunkt hinaus.
 
-- cad-floorplan-workspace eski koddan kalma şekilde 3 satırlı grid idi.
-- fp2DWorkspace bu gridin yalnızca ilk yaklaşık 26 px satırına yerleşiyordu.
-- Bu nedenle cetvel görünürken gerçek Canvas yüksekliği neredeyse sıfır kalıyordu.
-- Sonuç: kayıtlı Grundriss görünmüyordu.
-
-v1.8.1:
-- cad-floorplan-workspace artık tek, tam yükseklik hücresidir.
-- fp2DWorkspace ve fp3DWorkspace aynı tam hücreyi kullanır.
-- 2D kendi içinde Cetvel + Canvas + Bilgi satırlarını yönetir.
-- 3D aynı yüksekliğin tamamını kullanır.
-- Canvas için eski zorunlu min-height:300px çakışması kaldırıldı.
-- HTML yapısı ve kayıtlı Grundriss verileri değiştirilmedi.
-- Açılışta ve 2D/3D geçişinde yeniden ölçüm + Fit-to-View yapılır.
+Neu:
+- Wände werden mit lineCap='butt' gezeichnet.
+- Die Wand endet exakt am geometrischen Endpunkt.
+- Rechtwinklige Ecken erscheinen bündig und ohne Nase/Überstand.
+- lineJoin='miter' bleibt für saubere CAD-Kanten aktiv.
+- Wandkoordinaten, Wandlängen, A/B/C/D-Bezeichnungen und Endpunktgriffe bleiben unverändert.
+- Keine Änderung an gespeicherten Grundrissdaten.
 
 Deutsch / de-CH.

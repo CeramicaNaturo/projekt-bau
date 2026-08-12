@@ -2155,6 +2155,12 @@ function drawFpObject(o,preview=false){
 
   if(o.type==='wall'){
     const thicknessPx=Math.max(8,(o.thickness||15)/2);
+
+    // Saubere CAD-Wandenden:
+    // 'square' verlängert jede Wand um die halbe Strichstärke über den Endpunkt.
+    // 'butt' endet exakt am geometrischen Wand-Endpunkt.
+    fpCtx.lineCap='butt';
+    fpCtx.lineJoin='miter';
     fpCtx.lineWidth=thicknessPx;
     fpCtx.beginPath();
     fpCtx.moveTo(o.x1,o.y1);

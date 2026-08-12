@@ -1548,3 +1548,11 @@ body.pdf-exporting .pdf-footer{
     padding-bottom:max(5px,env(safe-area-inset-bottom))!important;
   }
 }
+
+/* v1.7.3 – 360° Drehgriff */
+#floorplanCanvas.cad-rotate-object{
+  cursor:grab!important;
+}
+#floorplanCanvas.cad-rotate-object:active{
+  cursor:grabbing!important;
+}

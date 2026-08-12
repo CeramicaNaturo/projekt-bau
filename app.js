@@ -539,7 +539,7 @@ function initTileTools(){
 
 let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
-let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null;
+let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null,fpObjectRotateDrag=null;
 let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpLastRenderError='',fpObjectWallSnap=true,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
 const fpCanvas=$('floorplanCanvas'),fpCtx=fpCanvas.getContext('2d');
@@ -1129,6 +1129,7 @@ function openFloorplan(project,record){
 }
 function closeFloorplan(){$('floorplanModal').classList.add('hidden');fpProject=null;fpRecord=null}
 function setFloorTool(tool){
+  endObjectRotation();
   if(tool!=='wall')fpLastWallEnd=null;
   fpTool=tool;fpSelectedId=null;fpEndpointDrag=null;updateSelectedInfo();
   document.querySelectorAll('.fp-tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
@@ -1150,6 +1151,89 @@ function fpPoint(ev){
 function uidObj(){return 'fp_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function cmFromPixels(px){return Math.round(px)}
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+
+function rotationHandlePosition(o){
+  if(!o || o.type==='wall' || o.type==='text')return null;
+
+  const scale=Number(o.scale||1);
+  const width=Math.max(45,Number(o.widthCm||90)*scale);
+  const depth=Math.max(45,Number(o.depthCm||70)*scale);
+
+  // Local top-right corner + a small outward extension.
+  const localX=width/2;
+  const localY=-depth/2;
+  const len=Math.hypot(localX,localY)||1;
+  const extra=28/Math.max(.2,fpZoom||1);
+
+  const ex=localX + (localX/len)*extra;
+  const ey=localY + (localY/len)*extra;
+
+  const rad=Number(o.rotation||0)*Math.PI/180;
+  const c=Math.cos(rad),s=Math.sin(rad);
+
+  return {
+    x:Number(o.x||0)+ex*c-ey*s,
+    y:Number(o.y||0)+ex*s+ey*c
+  };
+}
+
+function rotationHandleHitTest(p,o){
+  const h=rotationHandlePosition(o);
+  if(!h)return false;
+  const radius=22/Math.max(.2,fpZoom||1);
+  return Math.hypot(p.x-h.x,p.y-h.y)<=radius;
+}
+
+function normalizeDegrees(v){
+  let n=Number(v)||0;
+  n=((n%360)+360)%360;
+  return n;
+}
+
+function beginObjectRotation(o,p){
+  const pointerAngle=Math.atan2(p.y-o.y,p.x-o.x)*180/Math.PI;
+  fpObjectRotateDrag={
+    objectId:o.id,
+    pointerStart:pointerAngle,
+    rotationStart:Number(o.rotation||0)
+  };
+  fpCanvas?.classList.add('cad-rotate-object');
+}
+
+function updateObjectRotationFromPointer(p){
+  if(!fpObjectRotateDrag)return false;
+  const o=fpObjects.find(x=>x.id===fpObjectRotateDrag.objectId);
+  if(!o)return false;
+
+  const pointerAngle=Math.atan2(p.y-o.y,p.x-o.x)*180/Math.PI;
+  let delta=pointerAngle-fpObjectRotateDrag.pointerStart;
+
+  // Avoid a jump when crossing -180 / +180.
+  if(delta>180)delta-=360;
+  if(delta<-180)delta+=360;
+
+  const proposed=normalizeDegrees(fpObjectRotateDrag.rotationStart+delta);
+  const previous=Number(o.rotation||0);
+
+  o.rotation=proposed;
+
+  // Keep the existing room-boundary protection.
+  if(typeof objectFitsRoom==='function' && !objectFitsRoom(o,o.x,o.y,o.rotation)){
+    o.rotation=previous;
+  }
+
+  const slider=$('fpRotation'),num=$('fpRotationNumber');
+  if(slider)slider.value=String(Math.round(o.rotation||0));
+  if(num)num.value=String(Math.round(o.rotation||0));
+
+  return true;
+}
+
+function endObjectRotation(){
+  fpObjectRotateDrag=null;
+  fpCanvas?.classList.remove('cad-rotate-object');
+}
+
 function hitTest(p){
   for(let i=fpObjects.length-1;i>=0;i--){
     const o=fpObjects[i]; if(!isLayerVisible(o))continue;
@@ -1179,6 +1263,18 @@ function floorStart(ev){
   }
 
   if(fpTool==='select'){
+    // First check the rotation handle of the currently selected object.
+    const current=fpObjects.find(x=>x.id===fpSelectedId);
+    if(current && rotationHandleHitTest(p,current)){
+      pushHistory();
+      beginObjectRotation(current,p);
+      fpDrawing=true;
+      fpDragOffset=null;
+      drawFloorplan();
+      updateSelectedInfo();
+      return;
+    }
+
     const hit=hitTest(p);
     fpSelectedId=hit?hit.id:null;
     if(hit){
@@ -1287,6 +1383,14 @@ function floorMove(ev){
     return;
   }
 
+  if(fpTool==='select' && fpObjectRotateDrag){
+    if(updateObjectRotationFromPointer(p)){
+      drawFloorplan();
+      updateSelectedInfo();
+    }
+    return;
+  }
+
   if(fpTool==='select' && fpSelectedId){
     const o=fpObjects.find(x=>x.id===fpSelectedId);
     if(!o || !fpDragOffset)return;
@@ -1351,6 +1455,9 @@ function floorEnd(ev){
     fpDrawing=false;
     fpDragOffset=null;
     fpEndpointDrag=null;
+    endObjectRotation();
+    drawFloorplan();
+    updateSelectedInfo();
     return;
   }
 
@@ -2193,9 +2300,53 @@ function drawFpObject(o,preview=false){
     fpCtx.strokeStyle='#2563eb';
     fpCtx.lineWidth=2;
     fpCtx.setLineDash([7,5]);
-    const ss=72*(o.scale||1);
-    fpCtx.strokeRect(o.x-ss,o.y-ss,ss*2,ss*2);
+
+    const scale=Number(o.scale||1);
+    const bw=Math.max(45,Number(o.widthCm||90)*scale);
+    const bd=Math.max(45,Number(o.depthCm||70)*scale);
+
+    // Rotated selection rectangle.
+    fpCtx.translate(o.x||0,o.y||0);
+    fpCtx.rotate((o.rotation||0)*Math.PI/180);
+    fpCtx.strokeRect(-bw/2,-bd/2,bw,bd);
     fpCtx.restore();
+
+    const handle=rotationHandlePosition(o);
+    if(handle){
+      const z=Math.max(.2,fpZoom||1);
+      const radius=14/z;
+
+      // Connector line from top-right corner to handle.
+      const rad=Number(o.rotation||0)*Math.PI/180;
+      const cx=(o.x||0)+(bw/2)*Math.cos(rad)-(-bd/2)*Math.sin(rad);
+      const cy=(o.y||0)+(bw/2)*Math.sin(rad)+(-bd/2)*Math.cos(rad);
+
+      fpCtx.save();
+      fpCtx.setLineDash([]);
+      fpCtx.strokeStyle='#2563eb';
+      fpCtx.fillStyle='#ffffff';
+      fpCtx.lineWidth=2/z;
+
+      fpCtx.beginPath();
+      fpCtx.moveTo(cx,cy);
+      fpCtx.lineTo(handle.x,handle.y);
+      fpCtx.stroke();
+
+      // White circular handle.
+      fpCtx.beginPath();
+      fpCtx.arc(handle.x,handle.y,radius,0,Math.PI*2);
+      fpCtx.fill();
+      fpCtx.stroke();
+
+      // Rotation arrow glyph.
+      fpCtx.fillStyle='#2563eb';
+      fpCtx.font=`bold ${16/z}px Arial`;
+      fpCtx.textAlign='center';
+      fpCtx.textBaseline='middle';
+      fpCtx.fillText('↻',handle.x,handle.y+0.5/z);
+
+      fpCtx.restore();
+    }
   }
 }
 

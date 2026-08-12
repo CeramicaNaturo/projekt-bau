@@ -1124,6 +1124,7 @@ function openFloorplan(project,record){
   fpShowGrid=true;fpShowPositions=true;fpShowMeasures=true;
   $('floorplanEditorTitle').textContent=`Grundriss · ${record.name}`;
   $('floorplanModal').classList.remove('hidden');
+  setTimeout(()=>{initTabletCadUi();if(fp3DMode)window.ProjectBau3D?.fitView?.();else fitFloorplan2D?.();},220);
   setTimeout(()=>{if(fp3DMode)window.ProjectBau3D?.fitView?.();else fitFloorplan2D?.();},180);
   setFloorTool('select');setFloorplanView('2d');drawFloorplan();updateSelectedInfo();requestAnimationFrame(()=>requestAnimationFrame(()=>{fitFloorplan2D();setTimeout(fitFloorplan2D,120)}));
 }
@@ -2417,32 +2418,46 @@ function initTabletCadUi(){
   const toggleInspector=$('fpToggleInspector');
   const compact=$('fpCompactUi');
 
-  const applyDefaultTabletLayout=()=>{
+  const isTabletLandscape=()=>{
+    const coarse=window.matchMedia('(pointer:coarse)').matches;
+    const landscape=window.matchMedia('(orientation:landscape)').matches;
+    const touch=(navigator.maxTouchPoints||0)>0;
+    const shortSide=Math.min(window.innerWidth,window.innerHeight);
+    return landscape && (coarse||touch) && shortSide>=500;
+  };
+
+  const applyMode=()=>{
     if(!card)return;
-    const landscape=window.matchMedia('(min-width:700px) and (max-width:1400px) and (orientation:landscape)').matches;
-    if(landscape){
-      // On tablet landscape start with inspector visible but compact.
-      card.classList.add('tablet-compact');
-    }else{
+    if(isTabletLandscape()){
+      card.classList.add('tablet-hardmode');
       card.classList.remove('tablet-compact','tablet-inspector-hidden');
+      card.classList.remove('inspector-open'); // CAD canvas gets priority
+    }else{
+      card.classList.remove('tablet-hardmode','inspector-open');
     }
   };
 
   if(toggleInspector){
     toggleInspector.onclick=()=>{
       if(!card)return;
-      card.classList.toggle('tablet-inspector-hidden');
-      requestAnimationFrame(()=>{
+      if(card.classList.contains('tablet-hardmode')){
+        card.classList.toggle('inspector-open');
+      }else{
+        card.classList.toggle('tablet-inspector-hidden');
+      }
+      setTimeout(()=>{
         if(fp3DMode)window.ProjectBau3D?.fitView?.();
         else fitFloorplan2D?.();
-      });
+      },50);
     };
   }
 
   if(compact){
     compact.onclick=()=>{
       if(!card)return;
-      card.classList.toggle('tablet-compact');
+      if(!card.classList.contains('tablet-hardmode')){
+        card.classList.toggle('tablet-compact');
+      }
       requestAnimationFrame(()=>{
         if(fp3DMode)window.ProjectBau3D?.fitView?.();
         else fitFloorplan2D?.();
@@ -2450,15 +2465,17 @@ function initTabletCadUi(){
     };
   }
 
-  window.addEventListener('orientationchange',()=>{
+  const refresh=()=>{
+    applyMode();
     setTimeout(()=>{
-      applyDefaultTabletLayout();
       if(fp3DMode)window.ProjectBau3D?.fitView?.();
       else fitFloorplan2D?.();
-    },250);
-  });
+    },120);
+  };
 
-  applyDefaultTabletLayout();
+  window.addEventListener('resize',refresh);
+  window.addEventListener('orientationchange',()=>setTimeout(refresh,250));
+  applyMode();
 }
 
 function initFloorplanControls(){

@@ -1,19 +1,30 @@
-Projekt Bau v1.7.3 – 360° Drehgriff
+Projekt Bau v1.7.4 – Tablet Hard Mode
 
-Neu:
-- Ausgewählte Objekte zeigen oben an der Ecke einen runden Drehgriff mit ↻ Symbol.
-- Drehgriff kann mit Maus oder Finger gezogen werden.
-- Objekte können stufenlos über den kompletten Bereich 0–359° gedreht werden.
-- Keine 15°-Begrenzung.
-- Der Winkel wird während des Ziehens live aktualisiert.
-- Eigenschaften → Drehung / Grad wird gleichzeitig aktualisiert.
-- Auswahlrahmen dreht sich mit dem Objekt mit.
-- Tablet-/Touch-Bedienung unterstützt.
+Samsung/Android Tablet Querformat komplett neu optimiert.
 
-Sicherheit:
-- Bestehende Raumbegrenzung bleibt aktiv.
-- Falls eine Drehung das Objekt aus dem geschlossenen Raum bewegen würde,
-  wird diese ungültige Drehposition nicht übernommen.
+Wichtigste Änderungen:
+- Tablet wird über Touch/Pointer + Querformat erkannt, nicht nur über Bildschirmbreite.
+- Tablet-Hardmode wird automatisch aktiviert.
+- Eigenschaften-Panel startet standardmässig geschlossen.
+- Eigenschaften-Button öffnet/schliesst das Panel.
+- 2D-CAD erhält damit deutlich mehr Breite und Höhe.
+- Appbar nur 44 px.
+- CAD-Kontrollzeile nur 40 px.
+- Bodenfläche/Raumhöhe nur 36 px.
+- Linke Werkzeugleiste nur 52 px.
 
-Alle Funktionen aus v1.7.2 bleiben erhalten.
+Objektpalette:
+- Nicht mehr normale Grid-Zeile.
+- Schwebt fest am unteren Rand des CAD-Bereichs.
+- Bleibt über Samsung/Android-Navigationsleiste sichtbar.
+- Horizontal scrollbar.
+- Kleine, touchfreundliche Objektbuttons.
+- Bei geöffnetem Eigenschaften-Panel passt sich die Palette automatisch an.
+
+CAD:
+- Zeichenfläche nutzt den kompletten restlichen Bildschirm.
+- Ruler und Statuszeile verkleinert.
+- Nach Layout-/Orientierungsänderung automatisch Fit-to-View.
+
+Alle v1.7.3 Funktionen inklusive 360° Drehgriff bleiben erhalten.
 Deutsch / de-CH.

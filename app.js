@@ -1124,6 +1124,7 @@ function openFloorplan(project,record){
   fpShowGrid=true;fpShowPositions=true;fpShowMeasures=true;
   $('floorplanEditorTitle').textContent=`Grundriss · ${record.name}`;
   $('floorplanModal').classList.remove('hidden');
+  setTimeout(()=>{if(fp3DMode)window.ProjectBau3D?.fitView?.();else fitFloorplan2D?.();},180);
   setFloorTool('select');setFloorplanView('2d');drawFloorplan();updateSelectedInfo();requestAnimationFrame(()=>requestAnimationFrame(()=>{fitFloorplan2D();setTimeout(fitFloorplan2D,120)}));
 }
 function closeFloorplan(){$('floorplanModal').classList.add('hidden');fpProject=null;fpRecord=null}
@@ -2259,6 +2260,56 @@ function drawCadRulers(){
   }
 }
 
+
+function initTabletCadUi(){
+  const card=document.querySelector('.floorplan-modal-card');
+  const toggleInspector=$('fpToggleInspector');
+  const compact=$('fpCompactUi');
+
+  const applyDefaultTabletLayout=()=>{
+    if(!card)return;
+    const landscape=window.matchMedia('(min-width:700px) and (max-width:1400px) and (orientation:landscape)').matches;
+    if(landscape){
+      // On tablet landscape start with inspector visible but compact.
+      card.classList.add('tablet-compact');
+    }else{
+      card.classList.remove('tablet-compact','tablet-inspector-hidden');
+    }
+  };
+
+  if(toggleInspector){
+    toggleInspector.onclick=()=>{
+      if(!card)return;
+      card.classList.toggle('tablet-inspector-hidden');
+      requestAnimationFrame(()=>{
+        if(fp3DMode)window.ProjectBau3D?.fitView?.();
+        else fitFloorplan2D?.();
+      });
+    };
+  }
+
+  if(compact){
+    compact.onclick=()=>{
+      if(!card)return;
+      card.classList.toggle('tablet-compact');
+      requestAnimationFrame(()=>{
+        if(fp3DMode)window.ProjectBau3D?.fitView?.();
+        else fitFloorplan2D?.();
+      });
+    };
+  }
+
+  window.addEventListener('orientationchange',()=>{
+    setTimeout(()=>{
+      applyDefaultTabletLayout();
+      if(fp3DMode)window.ProjectBau3D?.fitView?.();
+      else fitFloorplan2D?.();
+    },250);
+  });
+
+  applyDefaultTabletLayout();
+}
+
 function initFloorplanControls(){
   const newBtn=$('newFloorplanBtn');if(newBtn)newBtn.onclick=createNewFloorplan;
   const cancelName=$('cancelFloorplanName');if(cancelName)cancelName.onclick=cancelNewFloorplan;
@@ -2495,6 +2546,6 @@ function initFloorplanCanvas(){
     try{fpCanvas.releasePointerCapture(e.pointerId)}catch(_){}
   };
 }
-initCadShell();initTileTools();initFloorplanControls();initFloorplanCanvas();initCadKeyboard();
+initCadShell();initTileTools();initTabletCadUi();initFloorplanControls();initFloorplanCanvas();initCadKeyboard();
 
 render();

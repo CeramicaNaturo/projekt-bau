@@ -1,29 +1,27 @@
-Projekt Bau v1.7.1 – Automatischer Wandfang / Raumbegrenzung
+Projekt Bau v1.7.2 – Tablet CAD Optimierung
 
-Neu:
-- «Objekte an Wand fangen» standardmässig aktiviert.
+Für Tablet im Querformat optimiert:
 
-Objekte:
-- Wird ein Objekt in Wandnähe platziert oder verschoben, erkennt es automatisch die nächstgelegene Wand.
-- Das Objekt dreht sich automatisch parallel zur Wand.
-- Es wird exakt auf der Rauminnenseite an die Wand gesetzt.
-- Wandstärke und Objekttiefe werden bei der Positionierung berücksichtigt.
+- 2D-Arbeitsbereich deutlich höher.
+- Obere App-Leiste kompakter.
+- Raster-/Feinposition-/Snap-Leiste auf eine schmale Zeile reduziert.
+- Bodenfläche / Raumhöhe deutlich flacher.
+- Linke Werkzeugleiste schmaler.
+- Eigenschaften-Panel schmaler.
+- Untere Objektpalette bleibt vollständig sichtbar.
+- Objektpalette horizontal scrollbar.
+- Objektbuttons kleiner und tabletfreundlich.
+- Safe-Area-Unterstützung für Samsung/Android Navigationsleiste.
 
-Raumbegrenzung:
-- Bei einem geschlossenen Grundriss werden alle vier Objektecken geprüft.
-- Ein Objekt darf nicht ausserhalb des geschlossenen Raums liegen.
-- Beim Herausziehen bleibt es an der letzten gültigen Position.
-- Auch manuelle X/Y-Eingabe, Pfeiltasten, Drehung und Skalierung respektieren die Raumgrenze.
+Neue Tablet-Steuerung:
+- «Eigenschaften» blendet das rechte Panel ein/aus.
+- «↕» aktiviert/deaktiviert eine besonders kompakte CAD-Ansicht.
+- Beim Aus-/Einblenden wird 2D/3D automatisch neu eingepasst.
 
-Tür / Fenster:
-- Werden direkt auf die erkannte Wandachse gesetzt.
-- Drehen sich automatisch in Wandrichtung.
-- Links/Rechts-Öffnungsrichtung bleibt erhalten.
+Tablet Landscape:
+- Startet automatisch in kompakter Ansicht.
+- Zeichenfläche erhält Priorität vor Bedienleisten.
+- Untere Objekte bleiben trotz Browser- und Samsung-Navigationsleisten erreichbar.
 
-Sanitär / Möbel:
-- WC, Lavabo, Dusche, Badewanne, Küchenspüle, Herd, Kühlschrank,
-  Waschmaschine, Schrank usw. können sauber an die Wand gesetzt werden.
-- Tisch/Stuhl/Sofa usw. bleiben frei im Raum, solange sie nicht in Wandnähe kommen.
-
-Alle bestehenden 2D-, 3D-, Wand-, Fliesen- und Projektfunktionen bleiben erhalten.
+Alle CAD-, 3D-, Wandfang-, Fliesen- und Projektfunktionen bleiben erhalten.
 Deutsch / de-CH.

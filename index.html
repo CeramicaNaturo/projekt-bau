@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=167">
+<link rel="stylesheet" href="styles.css?v=168">
 </head>
 <body class="cad-app">
 
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.6.7</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.6.8</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -396,6 +396,18 @@
           <div class="cad-property"><span>Drehung</span><b id="cadPropRotation">–</b></div>
         </div>
 
+        <div id="fpOpeningPanel" class="cad-inspector-section opening-panel hidden">
+          <h4>ÖFFNUNG</h4>
+          <div class="opening-title" id="fpOpeningTitle">Tür / Fenster</div>
+          <label>Öffnungsrichtung
+            <select id="fpOpeningDirection">
+              <option value="right">Rechts</option>
+              <option value="left">Links</option>
+            </select>
+          </label>
+          <div class="opening-help">Links/Rechts ändert den Anschlag direkt im Grundriss.</div>
+        </div>
+
         <div class="cad-inspector-section cad-edit-properties">
           <h4>OBJEKT BEARBEITEN</h4>
           <label>Drehung
@@ -421,12 +433,6 @@
           </label>
           <label>Position Y (cm)
             <input id="fpObjectY" type="number" step="1">
-          </label>
-          <label id="fpOpeningDirectionRow" class="opening-direction-row hidden">Öffnungsrichtung
-            <select id="fpOpeningDirection">
-              <option value="right">Rechts</option>
-              <option value="left">Links</option>
-            </select>
           </label>
         </div>
 
@@ -556,8 +562,8 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=167"></script>
+<script type="module" src="three_viewer.js?v=168"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=167"></script>
+<script src="app.js?v=168"></script>
 </body>
 </html>

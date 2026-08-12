@@ -199,13 +199,14 @@ function simpleBox(o,height,color=0xcbd5e1){
 function objectMesh(o){
   const type=o.type;
   if(type==='door'){
-    const mesh=simpleBox(o,2.05,0x9b6b43);mesh.scale.z=.35;
-    if((o.openingDirection||'right')==='left')mesh.rotation.y+=Math.PI;
+    const mesh=simpleBox(o,2.05,0x9b6b43);
+    mesh.scale.z=.35;
     return mesh;
   }
   if(type==='window'){
-    const mesh=simpleBox(o,1.2,0x99c9e8);mesh.position.y=1.2;mesh.scale.z=.28;
-    if((o.openingDirection||'right')==='left')mesh.rotation.y+=Math.PI;
+    const mesh=simpleBox(o,1.2,0x99c9e8);
+    mesh.position.y=1.2;
+    mesh.scale.z=.28;
     return mesh;
   }
   if(type==='wc'){

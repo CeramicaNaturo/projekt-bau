@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=166">
+<link rel="stylesheet" href="styles.css?v=167">
 </head>
 <body class="cad-app">
 
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.6.6</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.6.7</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -422,6 +422,12 @@
           <label>Position Y (cm)
             <input id="fpObjectY" type="number" step="1">
           </label>
+          <label id="fpOpeningDirectionRow" class="opening-direction-row hidden">Öffnungsrichtung
+            <select id="fpOpeningDirection">
+              <option value="right">Rechts</option>
+              <option value="left">Links</option>
+            </select>
+          </label>
         </div>
 
         <div class="cad-inspector-section">
@@ -550,8 +556,8 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=166"></script>
+<script type="module" src="three_viewer.js?v=167"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=166"></script>
+<script src="app.js?v=167"></script>
 </body>
 </html>

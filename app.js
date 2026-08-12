@@ -2413,6 +2413,25 @@ function drawCadRulers(){
 }
 
 
+
+function updateTabletViewportMetrics(){
+  const root=document.documentElement;
+  const visualH=window.visualViewport?.height||window.innerHeight;
+  const layoutH=window.innerHeight;
+  const keyboardOrBrowserInset=Math.max(0,layoutH-visualH);
+
+  root.style.setProperty('--browser-bottom-inset',`${keyboardOrBrowserInset}px`);
+
+  const card=document.querySelector('.floorplan-modal-card');
+  if(!card || !card.classList.contains('tablet-hardmode'))return;
+
+  // Re-fit CAD only after actual viewport metrics are stable.
+  requestAnimationFrame(()=>{
+    if(fp3DMode)window.ProjectBau3D?.fitView?.();
+    else fitFloorplan2D?.();
+  });
+}
+
 function initTabletCadUi(){
   const card=document.querySelector('.floorplan-modal-card');
   const toggleInspector=$('fpToggleInspector');
@@ -2473,9 +2492,13 @@ function initTabletCadUi(){
     },120);
   };
 
-  window.addEventListener('resize',refresh);
+  window.addEventListener('resize',()=>{refresh();updateTabletViewportMetrics()});
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',updateTabletViewportMetrics);
+  }
   window.addEventListener('orientationchange',()=>setTimeout(refresh,250));
   applyMode();
+  updateTabletViewportMetrics();
 }
 
 function initFloorplanControls(){

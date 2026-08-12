@@ -1832,3 +1832,216 @@ body.pdf-exporting .pdf-footer{
   touch-action:none!important;
   overscroll-behavior:none!important;
 }
+
+/* ============================================================
+   v1.7.6 – Adaptive Tablet Layout
+   ============================================================ */
+
+:root{
+  --tablet-left-toolbar:clamp(58px,4.2vw,68px);
+  --tablet-object-height:clamp(78px,8.5vh,96px);
+  --tablet-object-width:clamp(78px,6.2vw,94px);
+  --tablet-topbar:clamp(48px,5.4vh,58px);
+  --tablet-controls:clamp(42px,4.8vh,52px);
+  --tablet-roomstrip:clamp(42px,4.6vh,50px);
+  --tablet-status:24px;
+}
+
+/* Real full-height use on tablets */
+.floorplan-modal-card.tablet-hardmode{
+  height:100dvh!important;
+  max-height:100dvh!important;
+  grid-template-rows:
+    var(--tablet-topbar)
+    var(--tablet-controls)
+    var(--tablet-roomstrip)
+    minmax(0,1fr)
+    var(--tablet-status)!important;
+}
+
+/* CAD area fills all remaining height */
+.floorplan-modal-card.tablet-hardmode .fp-editor-grid{
+  min-height:0!important;
+  height:100%!important;
+  grid-template-columns:var(--tablet-left-toolbar) minmax(0,1fr)!important;
+  padding-bottom:calc(var(--tablet-object-height) + 8px)!important;
+}
+
+.floorplan-modal-card.tablet-hardmode.inspector-open .fp-editor-grid{
+  grid-template-columns:
+    var(--tablet-left-toolbar)
+    minmax(0,1fr)
+    clamp(230px,19vw,280px)!important;
+}
+
+/* LEFT TOOLBAR: much larger and touch friendly */
+.floorplan-modal-card.tablet-hardmode .fp-left-tools{
+  width:var(--tablet-left-toolbar)!important;
+  padding:6px 4px!important;
+  gap:4px!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .fp-left-tools .fp-tool{
+  width:calc(var(--tablet-left-toolbar) - 8px)!important;
+  min-height:clamp(54px,6.2vh,66px)!important;
+  height:clamp(54px,6.2vh,66px)!important;
+  border-radius:9px!important;
+  font-size:clamp(9px,0.72vw,11px)!important;
+  gap:4px!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .fp-left-tools .fp-tool b{
+  font-size:clamp(20px,1.55vw,25px)!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .fp-mini-tool{
+  width:clamp(36px,2.8vw,42px)!important;
+  height:clamp(36px,2.8vw,42px)!important;
+  min-height:clamp(36px,2.8vw,42px)!important;
+  font-size:16px!important;
+}
+
+/* BOTTOM OBJECT PALETTE: larger and readable */
+.floorplan-modal-card.tablet-hardmode .cad-object-palette{
+  left:var(--tablet-left-toolbar)!important;
+  right:0!important;
+  bottom:max(26px,env(safe-area-inset-bottom))!important;
+  height:var(--tablet-object-height)!important;
+  min-height:var(--tablet-object-height)!important;
+  padding:6px 8px!important;
+  gap:7px!important;
+  align-items:center!important;
+}
+
+.floorplan-modal-card.tablet-hardmode.inspector-open .cad-object-palette{
+  right:clamp(230px,19vw,280px)!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .cad-object-palette button{
+  flex:0 0 var(--tablet-object-width)!important;
+  width:var(--tablet-object-width)!important;
+  min-width:var(--tablet-object-width)!important;
+  height:calc(var(--tablet-object-height) - 12px)!important;
+  min-height:calc(var(--tablet-object-height) - 12px)!important;
+  border-radius:10px!important;
+  padding:5px!important;
+  gap:5px!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .cad-object-palette button b{
+  font-size:clamp(22px,1.7vw,28px)!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .cad-object-palette button span{
+  font-size:clamp(8px,0.68vw,10px)!important;
+  line-height:1.15!important;
+  max-width:calc(var(--tablet-object-width) - 10px)!important;
+  white-space:normal!important;
+  text-align:center!important;
+}
+
+/* Canvas / rulers optimized */
+.floorplan-modal-card.tablet-hardmode #fp2DWorkspace{
+  grid-template-rows:22px minmax(0,1fr) 22px!important;
+}
+.floorplan-modal-card.tablet-hardmode .cad-ruler-top{
+  height:22px!important;
+  min-height:22px!important;
+  font-size:9px!important;
+}
+.floorplan-modal-card.tablet-hardmode .cad-canvas-inner{
+  grid-template-columns:24px minmax(0,1fr)!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-selected-info{
+  height:22px!important;
+  min-height:22px!important;
+  padding:3px 8px!important;
+  font-size:9px!important;
+}
+
+/* Main top UI remains compact, but not microscopic */
+.floorplan-modal-card.tablet-hardmode .fp-appbar{
+  height:var(--tablet-topbar)!important;
+  min-height:var(--tablet-topbar)!important;
+  padding:0 10px!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-appbar-left strong{
+  font-size:clamp(13px,1vw,16px)!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-plan-select{
+  min-width:140px!important;
+  max-width:190px!important;
+  height:34px!important;
+  font-size:11px!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-appbar-actions button{
+  height:34px!important;
+  min-height:34px!important;
+  font-size:10px!important;
+  padding:5px 10px!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .fp-top-controls{
+  height:var(--tablet-controls)!important;
+  min-height:var(--tablet-controls)!important;
+  padding:5px 7px!important;
+  gap:7px!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-top-controls select{
+  height:30px!important;
+  min-height:30px!important;
+  min-width:86px!important;
+  font-size:10px!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-top-controls .check-inline{
+  font-size:10px!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-zoom-controls button{
+  height:30px!important;
+  min-height:30px!important;
+  min-width:32px!important;
+  font-size:10px!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .fp-room-strip{
+  height:var(--tablet-roomstrip)!important;
+  min-height:var(--tablet-roomstrip)!important;
+  padding:0 7px 5px!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-room-strip>div,
+.floorplan-modal-card.tablet-hardmode .fp-room-strip>label{
+  height:calc(var(--tablet-roomstrip) - 5px)!important;
+  min-height:calc(var(--tablet-roomstrip) - 5px)!important;
+  padding:5px 9px!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-room-strip strong{
+  font-size:15px!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-room-strip input{
+  font-size:14px!important;
+}
+
+/* Samsung tablet like screenshot: taller work area */
+@media (pointer:coarse) and (orientation:landscape) and (min-height:700px){
+  :root{
+    --tablet-left-toolbar:64px;
+    --tablet-object-height:92px;
+    --tablet-object-width:88px;
+    --tablet-topbar:52px;
+    --tablet-controls:46px;
+    --tablet-roomstrip:44px;
+  }
+
+  .floorplan-modal-card.tablet-hardmode .fp-editor-grid{
+    padding-bottom:100px!important;
+  }
+}
+
+/* Very wide tablet displays */
+@media (pointer:coarse) and (orientation:landscape) and (min-width:1400px){
+  :root{
+    --tablet-left-toolbar:68px;
+    --tablet-object-height:96px;
+    --tablet-object-width:94px;
+  }
+}

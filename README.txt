@@ -1,30 +1,19 @@
-Projekt Bau v1.7.9 – Workspace Rebuild
+Projekt Bau v1.8.0 – SAFE Workspace Fix
 
-Bu sürümde tablet CAD düzeni yapısal olarak yeniden kuruldu.
+Bu sürüm v1.7.8 çalışan çizim motorunu temel alır.
 
-2D + 3D:
-- Kullanıcının mavi ile işaretlediği orta alan artık gerçek workspace satırıdır.
-- Üst cetvelden alt nesne paletinin üst kenarına kadar kalan yüksekliğin TAMAMI 2D/3D çalışma alanına ayrılır.
-- 2D ve 3D aynı workspace yüksekliğini kullanır.
-- Eski padding-bottom / absolute palette / phantom boşluk çözümleri kaldırıldı.
+Önemli:
+- v1.7.9'daki HTML yeniden yapılandırması tamamen iptal edildi.
+- floorplanCanvas, fp2DWorkspace, fp3DWorkspace ve editor HTML yapısı değiştirilmedi.
+- Bu nedenle kayıtlı Grundriss tekrar görünür olmalıdır.
 
-Yeni yapı:
-1. Appbar
-2. CAD kontrolleri
-3. Bodenfläche / Raumhöhe
-4. Tam yükseklik 2D/3D workspace
-5. Nesne paleti
-6. Status
+Tablet çalışma alanı:
+- 2D ve 3D alanları üst cetvelden alt nesne paletine kadar kalan yüksekliğin tamamını kullanır.
+- Sol araç çubuğu aynı yüksekliğe uzar.
+- Alt nesne paleti ayrı 92–96 px satırdır.
+- Palette çalışma alanının üzerine binmez.
+- Sağ Eigenschaften açıldığında sadece genişlik değişir, yükseklik değişmez.
+- Tablet açılışında ve ekran döndüğünde 2D/3D yeniden ölçülüp Fit-to-View uygulanır.
 
-Alt nesneler:
-- Workspace’in üzerine binmez.
-- Ayrı gerçek satırdadır.
-- 88–92 px genişliğinde daha büyük butonlar.
-- Yatay kaydırılabilir.
-
-Tablet:
-- Sol araç çubuğu workspace ile aynı yüksekliği kullanır.
-- Sağ Eigenschaften paneli açılırsa aynı workspace satırında görünür.
-- 2D ve 3D geçişlerinde gerçek alan yeniden ölçülür ve fit-to-view uygulanır.
-
+Tüm v1.7.8 işlevleri korunur.
 Deutsch / de-CH.

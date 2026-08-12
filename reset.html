@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Projekt Bau – Update v1.7.9</title>
+<title>Projekt Bau – Update v1.8.0</title>
 </head>
 <body style="font-family:Segoe UI,Arial;padding:32px">
-<h2>Projekt Bau wird auf v1.7.9 aktualisiert…</h2>
+<h2>Projekt Bau wird auf v1.8.0 aktualisiert…</h2>
 <p id="m">Cache und Service Worker werden vollständig gelöscht.</p>
 <script>
 (async()=>{
@@ -22,7 +22,7 @@
     sessionStorage.clear();
     document.getElementById('m').textContent='Fertig. Version 1.6.9 wird jetzt geladen…';
     setTimeout(()=>{
-      location.replace('./index.html?v=179&nocache='+Date.now());
+      location.replace('./index.html?v=180&nocache='+Date.now());
     },900);
   }catch(e){
     document.getElementById('m').textContent='Bitte Edge vollständig schliessen und danach diese Seite erneut öffnen.';

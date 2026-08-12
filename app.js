@@ -972,10 +972,8 @@ function setFloorplanView(mode){
     requestAnimationFrame(()=>{
       drawFloorplan();
       requestAnimationFrame(fitFloorplan2D);
-      setTimeout(refitTabletCadArea,120);
     });
   }
-  setTimeout(refitTabletCadArea,160);
 }
 
 function renderFloorplans(project){
@@ -1126,6 +1124,8 @@ function openFloorplan(project,record){
   fpShowGrid=true;fpShowPositions=true;fpShowMeasures=true;
   $('floorplanEditorTitle').textContent=`Grundriss · ${record.name}`;
   $('floorplanModal').classList.remove('hidden');
+  setTimeout(safeTabletWorkspaceRefit,120);
+  setTimeout(safeTabletWorkspaceRefit,380);
   setTimeout(()=>{initTabletCadUi();if(fp3DMode)window.ProjectBau3D?.fitView?.();else fitFloorplan2D?.();},220);
   setTimeout(()=>{if(fp3DMode)window.ProjectBau3D?.fitView?.();else fitFloorplan2D?.();},180);
   setTimeout(()=>{if(!fp3DMode)fitFloorplan2D?.();},420);
@@ -2447,38 +2447,32 @@ function drawCadRulers(){
 
 
 function refitTabletCadArea(){
-  const card=document.querySelector('.floorplan-modal-card.tablet-hardmode');
-  if(!card)return;
+  if(!document.querySelector('.floorplan-modal-card.tablet-hardmode'))return;
+  requestAnimationFrame(()=>{
+    resize2DCanvas?.();
+    if(fp3DMode)window.ProjectBau3D?.fitView?.();
+    else fitFloorplan2D?.();
+  });
+}
 
-  const body=card.querySelector('.fp-cad-body');
-  const editor=card.querySelector('.fp-editor-grid');
-  const wrap=card.querySelector('.floorplan-canvas-wrap');
-  const view3=card.querySelector('#fp3DViewport');
 
-  // Force browser to resolve final layout first.
-  void card.offsetHeight;
-  void body?.offsetHeight;
-  void editor?.offsetHeight;
+function safeTabletWorkspaceRefit(){
+  const card=document.querySelector('.floorplan-modal-card');
+  if(!card || !card.classList.contains('tablet-hardmode'))return;
 
   requestAnimationFrame(()=>{
-    if(!fp3DMode){
-      resize2DCanvas?.();
-      fitFloorplan2D?.();
-    }else{
-      window.ProjectBau3D?.resize?.();
-      window.ProjectBau3D?.fitView?.();
+    try{
+      if(fp3DMode){
+        window.ProjectBau3D?.resize?.();
+        window.ProjectBau3D?.fitView?.();
+      }else{
+        resize2DCanvas?.();
+        fitFloorplan2D?.();
+      }
+    }catch(e){
+      console.error('Tablet workspace refit',e);
     }
   });
-
-  setTimeout(()=>{
-    if(!fp3DMode){
-      resize2DCanvas?.();
-      fitFloorplan2D?.();
-    }else{
-      window.ProjectBau3D?.resize?.();
-      window.ProjectBau3D?.fitView?.();
-    }
-  },180);
 }
 
 function updateTabletViewportMetrics(){
@@ -2566,10 +2560,10 @@ function initTabletCadUi(){
       setTimeout(()=>{if(!fp3DMode)fitFloorplan2D?.();},120);
     });
   }
-  window.addEventListener('orientationchange',()=>setTimeout(refresh,250));
+  window.addEventListener('orientationchange',()=>{setTimeout(refresh,250);setTimeout(safeTabletWorkspaceRefit,420)});
   applyMode();
   updateTabletViewportMetrics();
-  setTimeout(refitTabletCadArea,100);
+  setTimeout(refitTabletCadArea,80);
   setTimeout(refitTabletCadArea,300);
 }
 

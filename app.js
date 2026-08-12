@@ -51,6 +51,8 @@ function renderP(){
   let p=cur();
   if(!p){$('panel').classList.add('hidden');return}
   p.floorplans=p.floorplans||[];
+  p.tileMaterials=p.tileMaterials||[];
+  p.tileSettings=p.tileSettings||{layoutPattern:'',jointWidth:'',jointColor:'',siliconeColor:'',wastePercent:10};
   $('panel').classList.remove('hidden');
   $('pTitle').textContent=p.name;
   $('pMeta').textContent=[p.address,p.customer&&'Kunde: '+p.customer,p.owner&&'Verantwortlich: '+p.owner].filter(Boolean).join(' · ');
@@ -374,6 +376,166 @@ function buildPrintReport(){
   }
 }
 
+
+
+let tileEditingId=null;
+let tilePhotoData=null;
+
+function renderTileLibrary(project){
+  const list=$('tileMaterialList');
+  if(!list)return;
+
+  project.tileMaterials=project.tileMaterials||[];
+  project.tileSettings=project.tileSettings||{layoutPattern:'',jointWidth:'',jointColor:'',siliconeColor:'',wastePercent:10};
+
+  const layout=$('tileLayoutPattern'),jointW=$('tileJointWidth'),jointC=$('tileJointColor'),silicone=$('tileSiliconeColor'),waste=$('tileWastePercent');
+  if(layout)layout.value=project.tileSettings.layoutPattern||'';
+  if(jointW)jointW.value=project.tileSettings.jointWidth||'';
+  if(jointC)jointC.value=project.tileSettings.jointColor||'';
+  if(silicone)silicone.value=project.tileSettings.siliconeColor||'';
+  if(waste)waste.value=project.tileSettings.wastePercent??10;
+
+  list.innerHTML='';
+  if(!project.tileMaterials.length){
+    list.innerHTML='<div class="muted">Noch keine Fliesenmaterialien erfasst.</div>';
+    return;
+  }
+
+  project.tileMaterials.forEach(item=>{
+    const card=document.createElement('article');
+    card.className='tile-material-card';
+
+    const image=item.photo
+      ? `<img class="tile-material-image" src="${item.photo}" alt="${esc(item.model||'Fliese')}">`
+      : '<div class="tile-material-placeholder">Kein Fliesenfoto</div>';
+
+    const price=item.price?`CHF ${formatCHNumber(Number(item.price),2)}`:'–';
+
+    card.innerHTML=`
+      ${image}
+      <div>
+        <div class="tile-material-title">${esc([item.brand,item.model].filter(Boolean).join(' · ')||'Fliese')}</div>
+        <div class="tile-material-meta">
+          <div><b>Format:</b> ${esc(item.format||'–')}</div>
+          <div><b>Farbe:</b> ${esc(item.color||'–')}</div>
+          <div><b>Oberfläche:</b> ${esc(item.surface||'–')}</div>
+          <div><b>Menge:</b> ${esc(item.quantity||'–')}</div>
+          <div><b>Preis:</b> ${price}</div>
+        </div>
+        <div class="tile-material-actions">
+          <button class="secondary editTile">Bearbeiten</button>
+          <button class="danger deleteTile">Löschen</button>
+        </div>
+      </div>`;
+
+    card.querySelector('.editTile').onclick=()=>openTileMaterialModal(item);
+    card.querySelector('.deleteTile').onclick=()=>{
+      if(confirm('Fliesenmaterial wirklich löschen?')){
+        project.tileMaterials=project.tileMaterials.filter(x=>x.id!==item.id);
+        save();
+      }
+    };
+    list.appendChild(card);
+  });
+}
+
+function openTileMaterialModal(item=null){
+  tileEditingId=item?.id||null;
+  tilePhotoData=item?.photo||null;
+
+  const set=(id,val)=>{const el=$(id);if(el)el.value=val??''};
+  set('tileBrand',item?.brand);
+  set('tileModel',item?.model);
+  set('tileFormat',item?.format);
+  set('tileColor',item?.color);
+  set('tileSurface',item?.surface);
+  set('tileArticle',item?.article);
+  set('tileQuantity',item?.quantity);
+  set('tilePrice',item?.price);
+  set('tileNotes',item?.notes);
+
+  updateTilePhotoPreview();
+  $('tileMaterialModal').classList.remove('hidden');
+}
+
+function closeTileMaterialModal(){
+  $('tileMaterialModal').classList.add('hidden');
+  tileEditingId=null;
+  tilePhotoData=null;
+  const input=$('tilePhotoInput');if(input)input.value='';
+}
+
+function updateTilePhotoPreview(){
+  const host=$('tilePhotoPreview');
+  if(!host)return;
+  host.innerHTML=tilePhotoData
+    ? `<img src="${tilePhotoData}" alt="Fliesenfoto">`
+    : 'Noch kein Bild ausgewählt';
+}
+
+async function tileImageFromFile(file){
+  return await img(file);
+}
+
+function saveTileMaterialRecord(){
+  const p=cur();if(!p)return;
+  p.tileMaterials=p.tileMaterials||[];
+
+  const value=id=>$(id)?.value?.trim?.()??$(id)?.value??'';
+  const record={
+    id:tileEditingId||u(),
+    brand:value('tileBrand'),
+    model:value('tileModel'),
+    format:value('tileFormat'),
+    color:value('tileColor'),
+    surface:value('tileSurface'),
+    article:value('tileArticle'),
+    quantity:value('tileQuantity'),
+    price:value('tilePrice'),
+    notes:value('tileNotes'),
+    photo:tilePhotoData
+  };
+
+  const index=p.tileMaterials.findIndex(x=>x.id===record.id);
+  if(index>=0)p.tileMaterials[index]=record;
+  else p.tileMaterials.push(record);
+
+  save();
+  closeTileMaterialModal();
+}
+
+function saveTileProjectSettings(){
+  const p=cur();if(!p)return;
+  p.tileSettings=p.tileSettings||{};
+  p.tileSettings.layoutPattern=$('tileLayoutPattern')?.value||'';
+  p.tileSettings.jointWidth=$('tileJointWidth')?.value||'';
+  p.tileSettings.jointColor=$('tileJointColor')?.value||'';
+  p.tileSettings.siliconeColor=$('tileSiliconeColor')?.value||'';
+  p.tileSettings.wastePercent=Number($('tileWastePercent')?.value||10);
+  localStorage.setItem(K3,JSON.stringify(S));
+}
+
+function initTileTools(){
+  const add=$('addTileMaterial');if(add)add.onclick=()=>openTileMaterialModal();
+  const close=$('closeTileMaterialModal');if(close)close.onclick=closeTileMaterialModal;
+  const cancel=$('cancelTileMaterial');if(cancel)cancel.onclick=closeTileMaterialModal;
+  const saveBtn=$('saveTileMaterial');if(saveBtn)saveBtn.onclick=saveTileMaterialRecord;
+
+  const photo=$('tilePhotoInput');
+  if(photo)photo.onchange=async e=>{
+    const file=e.target.files?.[0];
+    if(file){
+      tilePhotoData=await tileImageFromFile(file);
+      updateTilePhotoPreview();
+    }
+  };
+
+  ['tileLayoutPattern','tileJointWidth','tileJointColor','tileSiliconeColor','tileWastePercent']
+    .forEach(id=>{
+      const el=$(id);
+      if(el)el.onchange=saveTileProjectSettings;
+    });
+}
 
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
 let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null;
@@ -1284,6 +1446,6 @@ function initFloorplanCanvas(){
     try{fpCanvas.releasePointerCapture(e.pointerId)}catch(_){}
   };
 }
-initCadShell();initFloorplanControls();initFloorplanCanvas();
+initCadShell();initTileTools();initFloorplanControls();initFloorplanCanvas();
 
 render();

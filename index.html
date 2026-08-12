@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=120">
+<link rel="stylesheet" href="styles.css?v=130">
 </head>
 <body class="cad-app">
 
@@ -21,32 +21,37 @@
 
   <nav class="cad-nav">
     <div class="cad-nav-section">ÜBERSICHT</div>
-    <button class="cad-nav-item" data-scroll="#projects">⌂ <span>Dashboard</span></button>
+    <button class="cad-nav-item active" data-scroll="#projects"><span class="nav-icon">⌂</span><span>Dashboard</span></button>
 
     <div class="cad-nav-section">PROJEKT</div>
-    <button class="cad-nav-item" data-scroll=".editor">▤ <span>Projektdetails</span></button>
-    <button class="cad-nav-item" data-scroll="#areas">▧ <span>Dokumente</span></button>
-    <button class="cad-nav-item" data-scroll="#areas">☑ <span>Aufgaben</span></button>
-    <button class="cad-nav-item" data-scroll="#areas">♙ <span>Mitarbeiter</span></button>
+    <button class="cad-nav-item" data-scroll=".editor"><span class="nav-icon">▤</span><span>Projektdetails</span></button>
+    <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">▧</span><span>Räume / Bereiche</span></button>
+    <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">↔</span><span>Aufmass</span></button>
+    <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">☑</span><span>Arbeiten</span></button>
+
+    <div class="cad-nav-section">FLIESEN</div>
+    <button class="cad-nav-item" data-scroll="#tileLibrary"><span class="nav-icon">▦</span><span>Fliesen</span></button>
+    <button class="cad-nav-item" data-scroll="#tileLibrary"><span class="nav-icon">◇</span><span>Fugen / Silikon</span></button>
+    <button class="cad-nav-item" data-scroll="#tileLibrary"><span class="nav-icon">▥</span><span>Verlegeart</span></button>
+    <button class="cad-nav-item" data-scroll="#tileLibrary"><span class="nav-icon">Σ</span><span>Materialbedarf</span></button>
 
     <div class="cad-nav-section">GRUNDRISS</div>
-    <button class="cad-nav-item active" data-scroll=".project-floorplans">⌂ <span>Grundrisse</span></button>
-    <button class="cad-nav-item" id="cadNewFloorplan">⊕ <span>Grundriss erstellen</span></button>
+    <button class="cad-nav-item" data-scroll=".project-floorplans"><span class="nav-icon">⌗</span><span>Grundrisse</span></button>
+    <button class="cad-nav-item" id="cadNewFloorplan"><span class="nav-icon">⊕</span><span>Grundriss erstellen</span></button>
 
     <div class="cad-nav-section">FOTOS</div>
-    <button class="cad-nav-item" data-scroll="#areas">▧ <span>Fotos</span></button>
-    <button class="cad-nav-item" id="cadPdfReport">▤ <span>Foto-Berichte</span></button>
+    <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">▧</span><span>Baustellenfotos</span></button>
+    <button class="cad-nav-item" id="cadPdfReport"><span class="nav-icon">▤</span><span>Foto-Berichte</span></button>
 
-    <div class="cad-nav-section">MATERIALIEN</div>
-    <button class="cad-nav-item" data-scroll="#areas">◇ <span>Materialien</span></button>
-    <button class="cad-nav-item" data-scroll="#areas">▣ <span>Lieferanten</span></button>
+    <div class="cad-nav-section">AUSWERTUNG</div>
+    <button class="cad-nav-item" data-scroll="#tileLibrary"><span class="nav-icon">CHF</span><span>Material</span></button>
+    <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">◷</span><span>Arbeitsaufwand</span></button>
 
     <div class="cad-nav-section">EINSTELLUNGEN</div>
-    <button class="cad-nav-item" id="cadResetView">⚙ <span>Einstellungen</span></button>
-    <button class="cad-nav-item" data-scroll="#projects">▱ <span>Vorlagen</span></button>
+    <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer">Version 1.2</div>
+  <div class="cad-sidebar-footer">Version 1.3</div>
 </aside>
 
 <header class="cad-topbar">
@@ -62,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.2</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.3</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -122,6 +127,47 @@
 
   <div id="areas"></div>
 <div class="divider editor"></div>
+
+<section id="tileLibrary" class="tile-library editor">
+  <div class="section-heading">
+    <div>
+      <div class="eyebrow">FLIESEN / MATERIAL</div>
+      <h3>Fliesen-Materialbibliothek</h3>
+      <p>Verwendete Fliesen, Fugenfarben, Silikon und Verlegeart direkt beim Projekt dokumentieren.</p>
+    </div>
+    <button id="addTileMaterial" class="primary">+ Fliese hinzufügen</button>
+  </div>
+
+  <div class="tile-project-settings">
+    <label>Verlegeart
+      <select id="tileLayoutPattern">
+        <option value="">Bitte wählen</option>
+        <option>Gerade Verlegung</option>
+        <option>Halbverband</option>
+        <option>Drittelverband</option>
+        <option>Diagonal</option>
+        <option>Fischgrät</option>
+        <option>Freier Verband</option>
+      </select>
+    </label>
+    <label>Fugenbreite (mm)
+      <input id="tileJointWidth" type="number" min="0" step="0.5" placeholder="z. B. 3">
+    </label>
+    <label>Fugenfarbe
+      <input id="tileJointColor" type="text" placeholder="z. B. Manhattan">
+    </label>
+    <label>Silikonfarbe
+      <input id="tileSiliconeColor" type="text" placeholder="z. B. Grau">
+    </label>
+    <label>Verschnitt (%)
+      <input id="tileWastePercent" type="number" min="0" max="100" step="1" value="10">
+    </label>
+  </div>
+
+  <div id="tileMaterialList" class="tile-material-grid"></div>
+</section>
+
+<div class="divider editor"></div>
 <section class="project-floorplans editor">
   <div class="title">
     <div><div class="eyebrow">GRUNDRISSE</div><h3>Grundrisse</h3></div>
@@ -139,6 +185,70 @@
 
 <div id="printReportRoot" class="print-report"></div>
 
+
+
+<div id="tileMaterialModal" class="modal hidden">
+  <div class="modal-card tile-material-modal">
+    <div class="title">
+      <div>
+        <div class="eyebrow">FLIESE</div>
+        <h2>Fliesenmaterial hinzufügen</h2>
+      </div>
+      <button id="closeTileMaterialModal" class="secondary">Schliessen</button>
+    </div>
+
+    <div class="tile-material-form">
+      <label>Hersteller / Marke
+        <input id="tileBrand" type="text" placeholder="z. B. Marazzi">
+      </label>
+      <label>Serie / Modell
+        <input id="tileModel" type="text" placeholder="z. B. Mystone">
+      </label>
+      <label>Format
+        <input id="tileFormat" type="text" placeholder="z. B. 60 × 120 cm">
+      </label>
+      <label>Farbe
+        <input id="tileColor" type="text" placeholder="z. B. Beige">
+      </label>
+      <label>Oberfläche
+        <select id="tileSurface">
+          <option value="">Bitte wählen</option>
+          <option>Matt</option>
+          <option>Glänzend</option>
+          <option>Poliert</option>
+          <option>Rutschhemmend</option>
+          <option>Strukturiert</option>
+        </select>
+      </label>
+      <label>Artikel-Nr.
+        <input id="tileArticle" type="text">
+      </label>
+      <label>Menge / Fläche
+        <input id="tileQuantity" type="text" placeholder="z. B. 42.50 m²">
+      </label>
+      <label>Einkaufspreis / Einheit (CHF)
+        <input id="tilePrice" type="number" min="0" step="0.05">
+      </label>
+
+      <div class="tile-photo-field">
+        <span>Fliesenfoto</span>
+        <label class="primary file">Foto auswählen
+          <input id="tilePhotoInput" type="file" accept="image/*">
+        </label>
+        <div id="tilePhotoPreview" class="tile-photo-preview">Noch kein Bild ausgewählt</div>
+      </div>
+
+      <label class="tile-notes">Notizen
+        <textarea id="tileNotes" rows="4" placeholder="Lieferant, Charge, Besonderheiten, Restmenge..."></textarea>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="saveTileMaterial" class="primary">Fliese speichern</button>
+      <button id="cancelTileMaterial" class="secondary">Abbrechen</button>
+    </div>
+  </div>
+</div>
 
 <div id="floorplanNameModal" class="modal hidden">
   <div class="modal-card" style="max-width:520px">
@@ -337,6 +447,6 @@
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=120"></script>
+<script src="app.js?v=130"></script>
 </body>
 </html>

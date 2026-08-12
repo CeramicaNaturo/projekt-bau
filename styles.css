@@ -859,3 +859,155 @@ body.pdf-exporting .pdf-footer{
   .cad-object-palette{height:80px}
   .cad-object-palette button{height:62px!important;min-height:62px!important;min-width:72px!important}
 }
+
+/* v1.3 — Tiler-oriented professional layout */
+.cad-nav-item{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+  text-align:left!important;
+  padding:10px 12px!important;
+}
+.cad-nav-item .nav-icon{
+  width:24px;
+  flex:0 0 24px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  font-weight:700;
+  color:#64748b;
+}
+.cad-nav-item span:last-child{
+  flex:1;
+  text-align:left;
+}
+.cad-nav-item.active .nav-icon,
+.cad-nav-item:hover .nav-icon{color:var(--cad-blue)}
+
+.section-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:14px;
+}
+.section-heading h3{margin:2px 0 4px}
+.section-heading p{margin:0;color:#667085;font-size:13px}
+
+.tile-library{
+  background:#fff;
+  border:1px solid #e4e7ec;
+  border-radius:16px;
+  padding:18px;
+}
+.tile-project-settings{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(140px,1fr));
+  gap:10px;
+  padding:12px;
+  background:#f8fafc;
+  border:1px solid #e4e7ec;
+  border-radius:12px;
+  margin-bottom:14px;
+}
+.tile-material-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+.tile-material-card{
+  display:grid;
+  grid-template-columns:120px 1fr;
+  gap:12px;
+  border:1px solid #e4e7ec;
+  border-radius:12px;
+  background:#fff;
+  padding:10px;
+  min-height:135px;
+}
+.tile-material-image{
+  width:120px;
+  height:120px;
+  object-fit:cover;
+  border-radius:9px;
+  border:1px solid #e4e7ec;
+  background:#f3f4f6;
+}
+.tile-material-placeholder{
+  width:120px;height:120px;
+  border-radius:9px;
+  border:1px dashed #cbd5e1;
+  background:#f8fafc;
+  display:grid;place-items:center;
+  color:#94a3b8;
+  font-size:11px;
+  text-align:center;
+  padding:8px;
+}
+.tile-material-title{
+  font-weight:800;
+  font-size:15px;
+  margin-bottom:5px;
+}
+.tile-material-meta{
+  font-size:12px;
+  line-height:1.5;
+  color:#475467;
+}
+.tile-material-actions{
+  display:flex;
+  gap:6px;
+  margin-top:8px;
+}
+.tile-material-actions button{
+  padding:6px 8px;
+  font-size:11px;
+}
+
+.tile-material-modal{
+  width:min(900px,95vw)!important;
+}
+.tile-material-form{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.tile-photo-field{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:140px 180px 1fr;
+  align-items:center;
+  gap:10px;
+}
+.tile-photo-preview{
+  min-height:96px;
+  border:1px dashed #cbd5e1;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#94a3b8;
+  background:#f8fafc;
+  overflow:hidden;
+}
+.tile-photo-preview img{
+  width:100%;
+  height:160px;
+  object-fit:contain;
+  background:#fff;
+}
+.tile-notes{grid-column:1/-1}
+
+@media(max-width:1100px){
+  .tile-project-settings{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tile-material-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+  .tile-project-settings{grid-template-columns:1fr}
+  .tile-material-grid{grid-template-columns:1fr}
+  .tile-material-form{grid-template-columns:1fr}
+  .tile-photo-field{grid-column:auto;grid-template-columns:1fr}
+  .tile-notes{grid-column:auto}
+}

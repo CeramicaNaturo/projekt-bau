@@ -1196,3 +1196,6 @@ body.pdf-exporting .pdf-footer{
 
 /* v1.7.0 realistic 3D object library */
 .fp-3d-help span{backdrop-filter:blur(4px)}
+
+/* v1.7.1 – Objekt-Wandfang */
+#fpObjectWallSnap{accent-color:#2563eb}

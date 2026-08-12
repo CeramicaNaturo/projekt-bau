@@ -1,33 +1,29 @@
-Projekt Bau v1.7.0 – Realistische 3D-Objekte
+Projekt Bau v1.7.1 – Automatischer Wandfang / Raumbegrenzung
 
-3D-Objektbibliothek komplett überarbeitet.
+Neu:
+- «Objekte an Wand fangen» standardmässig aktiviert.
 
-Neu modelliert:
-- Waschbecken mit Becken, Sockel und Armatur
-- WC mit Schüssel, Sitz und Spülkasten
-- Dusche mit Duschtasse, Glaswänden, Profilen und Brause
-- Badewanne mit Innenbecken, Rand, Ablauf und Armatur
-- Küche-Spüle mit Unterschrank, Edelstahlbecken und Armatur
-- Herd mit Kochfeld, vier Kochzonen und Ofenfront
-- Kühlschrank mit Türen und Griffen
-- Waschmaschine mit echter runder Fronttür und Bedienfeld
-- Tisch mit Tischplatte und vier Beinen
-- Stuhl mit Sitzfläche, Rückenlehne und Beinen
-- Sofa mit Sitzkissen, Rückenlehne und Armlehnen
-- Bett mit Rahmen, Matratze, Kissen und Kopfteil
-- Schrank mit Türen und Griffen
-- Pflanze mit Topf, Stamm und Blättern
-- Bodenablauf mit Metallrost
-- Tür und Fenster deutlich realistischer
+Objekte:
+- Wird ein Objekt in Wandnähe platziert oder verschoben, erkennt es automatisch die nächstgelegene Wand.
+- Das Objekt dreht sich automatisch parallel zur Wand.
+- Es wird exakt auf der Rauminnenseite an die Wand gesetzt.
+- Wandstärke und Objekttiefe werden bei der Positionierung berücksichtigt.
 
-Materialien:
-- Keramik
-- Chrom / Metall
-- Glas / transparent
-- Holz
-- Stoff
-- Edelstahl
+Raumbegrenzung:
+- Bei einem geschlossenen Grundriss werden alle vier Objektecken geprüft.
+- Ein Objekt darf nicht ausserhalb des geschlossenen Raums liegen.
+- Beim Herausziehen bleibt es an der letzten gültigen Position.
+- Auch manuelle X/Y-Eingabe, Pfeiltasten, Drehung und Skalierung respektieren die Raumgrenze.
 
-2D CAD, Wandmasse, Wandnamen, Öffnungsrichtung, 3D-Raum, Fliesenstart und alle Projektfunktionen bleiben erhalten.
+Tür / Fenster:
+- Werden direkt auf die erkannte Wandachse gesetzt.
+- Drehen sich automatisch in Wandrichtung.
+- Links/Rechts-Öffnungsrichtung bleibt erhalten.
 
+Sanitär / Möbel:
+- WC, Lavabo, Dusche, Badewanne, Küchenspüle, Herd, Kühlschrank,
+  Waschmaschine, Schrank usw. können sauber an die Wand gesetzt werden.
+- Tisch/Stuhl/Sofa usw. bleiben frei im Raum, solange sie nicht in Wandnähe kommen.
+
+Alle bestehenden 2D-, 3D-, Wand-, Fliesen- und Projektfunktionen bleiben erhalten.
 Deutsch / de-CH.

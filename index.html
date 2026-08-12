@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=170">
+<link rel="stylesheet" href="styles.css?v=171">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer"><strong>Version 1.7.0</strong></div>
+  <div class="cad-sidebar-footer"><strong>Version 1.7.1</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.7.0</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.7.1</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -310,6 +310,7 @@
       <label class="check-inline"><input id="fpShowGrid" type="checkbox" checked> Raster anzeigen</label>
       <label class="check-inline"><input id="fpShowPositions" type="checkbox" checked> Positionen anzeigen</label>
       <label class="check-inline"><input id="fpShowMeasures" type="checkbox" checked> Masse anzeigen</label>
+      <label class="check-inline"><input id="fpObjectWallSnap" type="checkbox" checked> Objekte an Wand fangen</label>
       <label class="check-inline"><input id="fpAngleSnap" type="checkbox" checked> Gerade / 45° Fang</label>
 
       <label>Aktive Ebene
@@ -562,8 +563,8 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=170"></script>
+<script type="module" src="three_viewer.js?v=171"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=170"></script>
+<script src="app.js?v=171"></script>
 </body>
 </html>

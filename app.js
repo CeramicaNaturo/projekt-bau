@@ -540,7 +540,7 @@ function initTileTools(){
 let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
 let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null;
-let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpLastRenderError='',fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
+let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpLastRenderError='',fpObjectWallSnap=true,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
 const fpCanvas=$('floorplanCanvas'),fpCtx=fpCanvas.getContext('2d');
 
@@ -1256,11 +1256,16 @@ function floorStart(ev){
       table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45]
     };
     const d=dims[fpTool]||[60,40];
-    fpObjects.push({
+    const newObj={
       id:uidObj(),type:fpTool,x,y,rotation:0,scale:1,
       widthCm:d[0],depthCm:d[1],layer:layerForType(fpTool),
       openingDirection:(fpTool==='door'||fpTool==='window')?'right':undefined
-    });
+    };
+    const placed=constrainObjectPlacement(newObj,x,y);
+    newObj.x=placed.x;
+    newObj.y=placed.y;
+    newObj.rotation=placed.rotation;
+    fpObjects.push(newObj);
   }
   drawFloorplan();
 }
@@ -1303,8 +1308,12 @@ function floorMove(ev){
         o.y2=snap(orig.y2+dy);
       }
     }else{
-      o.x=snap(orig.x+dx);
-      o.y=snap(orig.y+dy);
+      const desiredX=snap(orig.x+dx);
+      const desiredY=snap(orig.y+dy);
+      const placed=constrainObjectPlacement(o,desiredX,desiredY);
+      o.x=placed.x;
+      o.y=placed.y;
+      o.rotation=placed.rotation;
     }
     drawFloorplan();
     updateSelectedInfo();
@@ -1381,6 +1390,214 @@ function deleteSelected(){
   pushHistory();fpObjects=fpObjects.filter(o=>o.id!==fpSelectedId);fpSelectedId=null;drawFloorplan();updateSelectedInfo();
 }
 
+
+function getRoomPolygon(){
+  const walls=(fpObjects||[]).filter(o=>o.type==='wall');
+  if(walls.length<3)return null;
+
+  const tolerance=30;
+  const nodes=[];
+
+  function getNode(x,y){
+    let best=null,bestD=Infinity;
+    for(const n of nodes){
+      const d=Math.hypot(n.x-x,n.y-y);
+      if(d<tolerance && d<bestD){best=n;bestD=d}
+    }
+    if(best)return best;
+    const n={x:Number(x),y:Number(y),neighbors:[]};
+    nodes.push(n);
+    return n;
+  }
+
+  walls.forEach(w=>{
+    const a=getNode(w.x1,w.y1),b=getNode(w.x2,w.y2);
+    if(!a.neighbors.includes(b))a.neighbors.push(b);
+    if(!b.neighbors.includes(a))b.neighbors.push(a);
+  });
+
+  if(nodes.length<3 || nodes.some(n=>n.neighbors.length!==2))return null;
+
+  const first=nodes[0],poly=[];
+  let current=first,previous=null;
+  const seen=new Set();
+
+  for(let guard=0;guard<nodes.length+2;guard++){
+    poly.push({x:current.x,y:current.y});
+    seen.add(current);
+    const next=current.neighbors.find(n=>n!==previous);
+    if(!next)return null;
+    previous=current;
+    current=next;
+    if(current===first)break;
+  }
+
+  if(current!==first || seen.size!==nodes.length)return null;
+  return poly;
+}
+
+function pointInPolygon(p,poly){
+  if(!poly||poly.length<3)return true;
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const a=poly[i],b=poly[j];
+    const intersects=((a.y>p.y)!==(b.y>p.y)) &&
+      (p.x < (b.x-a.x)*(p.y-a.y)/((b.y-a.y)||1e-9)+a.x);
+    if(intersects)inside=!inside;
+  }
+  return inside;
+}
+
+function polygonCentroid(poly){
+  if(!poly||!poly.length)return {x:0,y:0};
+  return {
+    x:poly.reduce((s,p)=>s+p.x,0)/poly.length,
+    y:poly.reduce((s,p)=>s+p.y,0)/poly.length
+  };
+}
+
+function nearestPointOnSegment(p,a,b){
+  const dx=b.x-a.x,dy=b.y-a.y;
+  const l2=dx*dx+dy*dy || 1;
+  const t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/l2));
+  return {x:a.x+t*dx,y:a.y+t*dy,t};
+}
+
+function nearestWallForObject(p){
+  let best=null,bestD=Infinity;
+  for(const w of fpObjects){
+    if(w.type!=='wall')continue;
+    const a={x:Number(w.x1),y:Number(w.y1)};
+    const b={x:Number(w.x2),y:Number(w.y2)};
+    const q=nearestPointOnSegment(p,a,b);
+    const d=Math.hypot(p.x-q.x,p.y-q.y);
+    if(d<bestD){
+      bestD=d;
+      best={wall:w,point:q,distance:d,a,b};
+    }
+  }
+  return best;
+}
+
+function objectFootprintCorners(o,x=o.x,y=o.y,rotation=o.rotation||0){
+  const w=Math.max(1,Number(o.widthCm||60)*(o.scale||1));
+  const d=Math.max(1,Number(o.depthCm||40)*(o.scale||1));
+  const hw=w/2,hd=d/2;
+  const rad=Number(rotation||0)*Math.PI/180;
+  const c=Math.cos(rad),s=Math.sin(rad);
+  const local=[[-hw,-hd],[hw,-hd],[hw,hd],[-hw,hd]];
+  return local.map(([lx,ly])=>({
+    x:x+lx*c-ly*s,
+    y:y+lx*s+ly*c
+  }));
+}
+
+function objectFitsRoom(o,x,y,rotation){
+  if(o.type==='door'||o.type==='window')return true;
+  const poly=getRoomPolygon();
+  if(!poly)return true;
+  return objectFootprintCorners(o,x,y,rotation).every(p=>pointInPolygon(p,poly));
+}
+
+function snapObjectToWall(o,x,y){
+  if(!fpObjectWallSnap || o.type==='text')return {x,y,rotation:o.rotation||0,snapped:false};
+
+  const near=nearestWallForObject({x,y});
+  if(!near)return {x,y,rotation:o.rotation||0,snapped:false};
+
+  const w=near.wall;
+  const dx=Number(w.x2)-Number(w.x1);
+  const dy=Number(w.y2)-Number(w.y1);
+  const wallLen=Math.hypot(dx,dy)||1;
+  const ux=dx/wallLen,uy=dy/wallLen;
+  let nx=-uy,ny=ux;
+
+  const wallAngle=Math.atan2(dy,dx)*180/Math.PI;
+  const poly=getRoomPolygon();
+  const roomC=polygonCentroid(poly);
+
+  // Pick normal pointing toward the room interior.
+  const mid={
+    x:(Number(w.x1)+Number(w.x2))/2,
+    y:(Number(w.y1)+Number(w.y2))/2
+  };
+  const toCenter={x:roomC.x-mid.x,y:roomC.y-mid.y};
+  if(nx*toCenter.x+ny*toCenter.y<0){nx=-nx;ny=-ny}
+
+  // Door/window belongs exactly on wall axis.
+  if(o.type==='door'||o.type==='window'){
+    const q=near.point;
+    return {
+      x:snap(q.x),
+      y:snap(q.y),
+      rotation:wallAngle,
+      snapped:true,
+      wallId:w.id
+    };
+  }
+
+  // Only snap furniture/sanitary when near enough to a wall.
+  const snapDistance=Math.max(55,Number(o.depthCm||40)*(o.scale||1)*.75);
+  if(near.distance>snapDistance){
+    return {x,y,rotation:o.rotation||0,snapped:false};
+  }
+
+  // Object depth is perpendicular to wall after rotation.
+  const depth=Math.max(1,Number(o.depthCm||40)*(o.scale||1));
+  const wallThickness=Number(w.thickness||15);
+  const offset=depth/2 + wallThickness/2 + 1;
+
+  const sx=near.point.x+nx*offset;
+  const sy=near.point.y+ny*offset;
+  let rotation=wallAngle;
+
+  // Try wall-parallel orientation first.
+  if(objectFitsRoom(o,sx,sy,rotation)){
+    return {x:snap(sx),y:snap(sy),rotation,snapped:true,wallId:w.id};
+  }
+
+  // If width/depth orientation makes it invalid, try perpendicular orientation.
+  rotation=wallAngle+90;
+  if(objectFitsRoom(o,sx,sy,rotation)){
+    return {x:snap(sx),y:snap(sy),rotation,snapped:true,wallId:w.id};
+  }
+
+  return {x,y,rotation:o.rotation||0,snapped:false};
+}
+
+function constrainObjectPlacement(o,x,y){
+  if(o.type==='wall'||o.type==='text')return {x,y,rotation:o.rotation||0,valid:true};
+
+  const snapped=snapObjectToWall(o,x,y);
+  const candidate={
+    x:snapped.x,
+    y:snapped.y,
+    rotation:snapped.rotation
+  };
+
+  if(objectFitsRoom(o,candidate.x,candidate.y,candidate.rotation)){
+    return {...candidate,valid:true,snapped:snapped.snapped};
+  }
+
+  // Keep current/last valid position instead of allowing outside.
+  const currentX=Number(o.x),currentY=Number(o.y),currentRot=Number(o.rotation||0);
+  if(objectFitsRoom(o,currentX,currentY,currentRot)){
+    return {x:currentX,y:currentY,rotation:currentRot,valid:false,snapped:false};
+  }
+
+  // For old invalid data, move center toward room centroid as safe fallback.
+  const poly=getRoomPolygon();
+  if(poly){
+    const c=polygonCentroid(poly);
+    if(objectFitsRoom(o,c.x,c.y,currentRot)){
+      return {x:c.x,y:c.y,rotation:currentRot,valid:false,snapped:false};
+    }
+  }
+
+  return {x,y,rotation:o.rotation||0,valid:false,snapped:false};
+}
+
+
 function selectedObject(){return fpObjects.find(x=>x.id===fpSelectedId)||null}
 
 function objectPositionCm(o){
@@ -1412,7 +1629,10 @@ function setSelectedPosition(){
     const dx=x-pos.x,dy=y-pos.y;
     o.x1+=dx;o.x2+=dx;o.y1+=dy;o.y2+=dy;
   }else{
-    o.x=x;o.y=y;
+    const placed=constrainObjectPlacement(o,x,y);
+    o.x=placed.x;
+    o.y=placed.y;
+    o.rotation=placed.rotation;
   }
 
   drawFloorplan();
@@ -1424,7 +1644,12 @@ function setSelectedRotation(value,withHistory=false){
   if(withHistory)pushHistory();
   let v=Number(value);if(!Number.isFinite(v))v=0;
   v=((v%360)+360)%360;
+  const oldRotation=o.rotation||0;
   o.rotation=v;
+  if(!objectFitsRoom(o,o.x,o.y,o.rotation)){
+    o.rotation=oldRotation;
+    v=oldRotation;
+  }
   const slider=$('fpRotation'),num=$('fpRotationNumber');
   if(slider)slider.value=String(Math.round(v));
   if(num)num.value=String(Math.round(v));
@@ -1436,7 +1661,12 @@ function setSelectedScale(value,withHistory=false){
   let v=Number(value);
   if(!Number.isFinite(v))v=100;
   v=Math.max(25,Math.min(300,v));
+  const oldScale=o.scale||1;
   o.scale=v/100;
+  if(!objectFitsRoom(o,o.x,o.y,o.rotation||0)){
+    o.scale=oldScale;
+    v=oldScale*100;
+  }
   const slider=$('fpScale'),num=$('fpScaleNumber');
   if(slider)slider.value=String(Math.round(v));
   if(num)num.value=String(Math.round(v));
@@ -2057,6 +2287,11 @@ function initFloorplanControls(){
     scaleNum.oninput=e=>setSelectedScale(e.target.value,false);
   }
   const duplicate=$('fpDuplicate');if(duplicate)duplicate.onclick=duplicateSelected;
+  const objectWallSnap=$('fpObjectWallSnap');
+  if(objectWallSnap){
+    objectWallSnap.checked=fpObjectWallSnap;
+    objectWallSnap.onchange=e=>{fpObjectWallSnap=e.target.checked};
+  }
   const angle=$('fpAngleSnap');if(angle)angle.onchange=e=>{fpAngleSnap=e.target.checked};
   const activeLayer=$('fpActiveLayer');if(activeLayer){
     activeLayer.value=fpActiveLayer;
@@ -2222,7 +2457,8 @@ function initCadKeyboard(){
       if(o.type==='wall'){
         o.x1+=dx;o.x2+=dx;o.y1+=dy;o.y2+=dy;
       }else{
-        o.x=(o.x||0)+dx;o.y=(o.y||0)+dy;
+        const placed=constrainObjectPlacement(o,(o.x||0)+dx,(o.y||0)+dy);
+        o.x=placed.x;o.y=placed.y;o.rotation=placed.rotation;
       }
       drawFloorplan();updateSelectedInfo();
     }

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=110">
+<link rel="stylesheet" href="styles.css?v=120">
 </head>
 <body class="cad-app">
 
@@ -21,25 +21,32 @@
 
   <nav class="cad-nav">
     <div class="cad-nav-section">ÜBERSICHT</div>
-    <button class="cad-nav-item" data-scroll="#projects">Dashboard</button>
+    <button class="cad-nav-item" data-scroll="#projects">⌂ <span>Dashboard</span></button>
 
     <div class="cad-nav-section">PROJEKT</div>
-    <button class="cad-nav-item" data-scroll="#projectForm">Projektdetails</button>
-    <button class="cad-nav-item" data-scroll="#areas">Bereiche</button>
+    <button class="cad-nav-item" data-scroll=".editor">▤ <span>Projektdetails</span></button>
+    <button class="cad-nav-item" data-scroll="#areas">▧ <span>Dokumente</span></button>
+    <button class="cad-nav-item" data-scroll="#areas">☑ <span>Aufgaben</span></button>
+    <button class="cad-nav-item" data-scroll="#areas">♙ <span>Mitarbeiter</span></button>
 
     <div class="cad-nav-section">GRUNDRISS</div>
-    <button class="cad-nav-item active" data-scroll=".project-floorplans">Grundrisse</button>
-    <button class="cad-nav-item" id="cadNewFloorplan">Grundriss erstellen</button>
+    <button class="cad-nav-item active" data-scroll=".project-floorplans">⌂ <span>Grundrisse</span></button>
+    <button class="cad-nav-item" id="cadNewFloorplan">⊕ <span>Grundriss erstellen</span></button>
 
     <div class="cad-nav-section">FOTOS</div>
-    <button class="cad-nav-item" data-scroll="#areas">Fotos</button>
-    <button class="cad-nav-item" id="cadPdfReport">PDF-Bericht</button>
+    <button class="cad-nav-item" data-scroll="#areas">▧ <span>Fotos</span></button>
+    <button class="cad-nav-item" id="cadPdfReport">▤ <span>Foto-Berichte</span></button>
+
+    <div class="cad-nav-section">MATERIALIEN</div>
+    <button class="cad-nav-item" data-scroll="#areas">◇ <span>Materialien</span></button>
+    <button class="cad-nav-item" data-scroll="#areas">▣ <span>Lieferanten</span></button>
 
     <div class="cad-nav-section">EINSTELLUNGEN</div>
-    <button class="cad-nav-item" id="cadResetView">Ansicht zurücksetzen</button>
+    <button class="cad-nav-item" id="cadResetView">⚙ <span>Einstellungen</span></button>
+    <button class="cad-nav-item" data-scroll="#projects">▱ <span>Vorlagen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer">Version 1.1</div>
+  <div class="cad-sidebar-footer">Version 1.2</div>
 </aside>
 
 <header class="cad-topbar">
@@ -55,7 +62,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.1</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.2</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -151,91 +158,80 @@
   </div>
 </div>
 
-<div id="floorplanModal" class="modal hidden">
-  <div class="modal-card">
-    <div class="title">
-      <div><div class="eyebrow">GRUNDRISS</div><h2 id="floorplanEditorTitle">Grundriss zeichnen</h2></div>
-      <button id="closeFloorplan" class="secondary">Schliessen</button>
-    </div>
-    <div class="floorplan-toolbar">
-      <button class="secondary fp-tool active" data-tool="select">Auswählen</button>
-      <button class="secondary fp-tool" data-tool="wall">Wand</button>
-      <button class="secondary fp-tool" data-tool="door">Tür</button>
-      <button class="secondary fp-tool" data-tool="window">Fenster</button>
-      <button class="secondary fp-tool" data-tool="wc">WC</button>
-      <button class="secondary fp-tool" data-tool="shower">Dusche</button>
-      <button class="secondary fp-tool" data-tool="bathtub">Badewanne</button>
-      <button class="secondary fp-tool" data-tool="sink">Lavabo</button>
-      <button class="secondary fp-tool" data-tool="drain">Bodenablauf</button>
-      <button class="secondary fp-tool" data-tool="text">Text</button>
-      <button id="fpUndo" class="secondary">Rückgängig</button>
-      <button id="fpRedo" class="secondary">Wiederholen</button>
-      <label>Drehung
-        <input id="fpRotation" type="range" min="0" max="359" step="1" value="0">
-      </label>
-      <label>Grad
-        <input id="fpRotationNumber" type="number" min="0" max="359" step="1" value="0">
-      </label>
-      <label>Grösse
-        <input id="fpScale" type="range" min="25" max="300" step="1" value="100">
-      </label>
-      <label>%
-        <input id="fpScaleNumber" type="number" min="25" max="300" step="1" value="100">
-      </label>
-      <label>Breite (cm)
-        <input id="fpObjectWidth" type="number" min="1" step="1" placeholder="Breite">
-      </label>
-      <label>Tiefe (cm)
-        <input id="fpObjectDepth" type="number" min="1" step="1" placeholder="Tiefe">
-      </label>
-      <label>Position X (cm)
-        <input id="fpObjectX" type="number" step="1" placeholder="X">
-      </label>
-      <label>Position Y (cm)
-        <input id="fpObjectY" type="number" step="1" placeholder="Y">
-      </label>
-      <button id="fpDeleteSelected" class="danger">Auswahl löschen</button>
-      <button id="fpClear" class="danger">Alles löschen</button>
-      <button id="fpSave" class="primary">Grundriss speichern</button>
-    </div>
-    <div class="floorplan-options">
+<div id="floorplanModal" class="modal hidden cad-fullscreen-modal">
+  <div class="modal-card floorplan-modal-card">
+    <header class="fp-appbar">
+      <div class="fp-appbar-left">
+        <button id="closeFloorplan" class="icon-button" title="Zurück">⌂</button>
+        <strong>Grundriss bearbeiten</strong>
+        <span id="floorplanEditorTitle" class="fp-plan-select">Grundriss</span>
+      </div>
+      <div class="fp-appbar-actions">
+        <button id="fpSave" class="primary">Speichern</button>
+        <button id="fpPdfButton" class="secondary">PDF-Bericht erstellen</button>
+      </div>
+    </header>
+
+    <div class="fp-top-controls">
       <label>Raster
         <select id="fpGridSize">
+          <option value="5" selected>5 cm</option>
           <option value="10">10 cm</option>
-          <option value="20" selected>20 cm</option>
+          <option value="20">20 cm</option>
           <option value="25">25 cm</option>
           <option value="50">50 cm</option>
         </select>
       </label>
-      <label>Wandstärke
-        <select id="fpWallThickness">
+
+      <label>Feinposition
+        <select id="fpFineStep">
+          <option value="1" selected>1 cm</option>
+          <option value="2">2 cm</option>
+          <option value="5">5 cm</option>
           <option value="10">10 cm</option>
-          <option value="12">12 cm</option>
-          <option value="15" selected>15 cm</option>
-          <option value="20">20 cm</option>
-          <option value="25">25 cm</option>
         </select>
       </label>
+
       <label class="check-inline"><input id="fpSnap" type="checkbox" checked> Am Raster einrasten</label>
       <label class="check-inline"><input id="fpShowGrid" type="checkbox" checked> Raster anzeigen</label>
       <label class="check-inline"><input id="fpShowPositions" type="checkbox" checked> Positionen anzeigen</label>
       <label class="check-inline"><input id="fpShowMeasures" type="checkbox" checked> Masse anzeigen</label>
-      <button id="fpZoomOut" class="secondary">− Zoom</button>
-      <button id="fpZoomReset" class="secondary">100%</button>
-      <button id="fpZoomIn" class="secondary">+ Zoom</button>
+
+      <div class="fp-zoom-controls">
+        <button id="fpZoomOut" class="secondary">−</button>
+        <button id="fpZoomReset" class="secondary">100%</button>
+        <button id="fpZoomIn" class="secondary">+</button>
+        <button id="fpFullscreen" class="secondary" title="Vollbild">⛶</button>
+      </div>
     </div>
-    <div class="floorplan-room-info">
-      <div class="room-area-box">
-        <span class="room-label">Bodenfläche</span>
+
+    <div class="fp-room-strip">
+      <div>
+        <span>BODENFLÄCHE</span>
         <strong id="fpFloorArea">Grundriss nicht geschlossen</strong>
       </div>
-      <label>Raumhöhe (m)
-        <input id="fpRoomHeight" type="number" min="0" max="10" step="0.01" placeholder="z. B. 2.40">
+      <label>RAUMHÖHE (m)
+        <input id="fpRoomHeight" type="number" min="0" max="10" step="0.01" placeholder="2.40">
       </label>
     </div>
-    <div class="floorplan-hint">Professioneller Modus: Objekte auswählen, verschieben und löschen. Wände mit dem Finger ziehen. Wandlänge und Objektpositionen werden automatisch in cm angezeigt.</div>
-    <div class="cad-floorplan-layout">
-      <section class="cad-floorplan-workspace">
+
+    <div class="fp-editor-grid">
+      <aside class="fp-left-tools">
+        <button class="fp-tool active" data-tool="select"><b>⌁</b><span>Auswählen</span></button>
+        <button class="fp-tool" data-tool="wall"><b>╱</b><span>Wand</span></button>
+        <button class="fp-tool" data-tool="door"><b>◧</b><span>Tür</span></button>
+        <button class="fp-tool" data-tool="window"><b>▤</b><span>Fenster</span></button>
+        <button class="fp-tool" data-tool="sink"><b>◇</b><span>Objekte</span></button>
+        <button class="fp-tool" data-tool="text"><b>T</b><span>Text</span></button>
+
+        <div class="fp-tool-separator"></div>
+        <button id="fpUndo" class="fp-mini-tool" title="Rückgängig">↶</button>
+        <button id="fpRedo" class="fp-mini-tool" title="Wiederholen">↷</button>
+        <button id="fpDeleteSelected" class="fp-mini-tool danger" title="Löschen">⌫</button>
+        <button id="fpClear" class="fp-mini-tool danger" title="Alles löschen">🗑</button>
+      </aside>
+
+      <main class="cad-floorplan-workspace">
         <div class="cad-canvas-ruler cad-ruler-top" id="fpRulerTop"></div>
         <div class="cad-canvas-inner">
           <div class="cad-canvas-ruler cad-ruler-left" id="fpRulerLeft"></div>
@@ -244,7 +240,7 @@
           </div>
         </div>
         <div id="fpSelectedInfo" class="fp-selected-info">Keine Auswahl</div>
-      </section>
+      </main>
 
       <aside class="cad-inspector">
         <div class="cad-inspector-title">EIGENSCHAFTEN</div>
@@ -257,6 +253,47 @@
           <div class="cad-property"><span>Position Y</span><b id="cadPropY">–</b></div>
           <div class="cad-property"><span>Grösse</span><b id="cadPropSize">–</b></div>
           <div class="cad-property"><span>Drehung</span><b id="cadPropRotation">–</b></div>
+        </div>
+
+        <div class="cad-inspector-section cad-edit-properties">
+          <h4>OBJEKT BEARBEITEN</h4>
+          <label>Drehung
+            <input id="fpRotation" type="range" min="0" max="359" step="1" value="0">
+          </label>
+          <label>Grad
+            <input id="fpRotationNumber" type="number" min="0" max="359" step="1" value="0">
+          </label>
+          <label>Grösse
+            <input id="fpScale" type="range" min="25" max="300" step="1" value="100">
+          </label>
+          <label>%
+            <input id="fpScaleNumber" type="number" min="25" max="300" step="1" value="100">
+          </label>
+          <label>Breite (cm)
+            <input id="fpObjectWidth" type="number" min="1" step="1">
+          </label>
+          <label>Tiefe (cm)
+            <input id="fpObjectDepth" type="number" min="1" step="1">
+          </label>
+          <label>Position X (cm)
+            <input id="fpObjectX" type="number" step="1">
+          </label>
+          <label>Position Y (cm)
+            <input id="fpObjectY" type="number" step="1">
+          </label>
+        </div>
+
+        <div class="cad-inspector-section">
+          <h4>WAND</h4>
+          <label>Wandstärke
+            <select id="fpWallThickness">
+              <option value="10">10 cm</option>
+              <option value="12">12 cm</option>
+              <option value="15" selected>15 cm</option>
+              <option value="20">20 cm</option>
+              <option value="25">25 cm</option>
+            </select>
+          </label>
         </div>
 
         <div class="cad-inspector-section">
@@ -276,18 +313,30 @@
     </div>
 
     <div class="cad-object-palette">
-      <button data-add-object="sink">Lavabo</button>
-      <button data-add-object="wc">WC</button>
-      <button data-add-object="shower">Dusche</button>
-      <button data-add-object="bathtub">Badewanne</button>
-      <button data-add-object="door">Tür</button>
-      <button data-add-object="window">Fenster</button>
-      <button data-add-object="drain">Bodenablauf</button>
-      <button data-add-object="text">Text</button>
+      <button data-add-object="sink"><b>◇</b><span>Waschbecken</span></button>
+      <button data-add-object="wc"><b>▱</b><span>WC</span></button>
+      <button data-add-object="shower"><b>☒</b><span>Dusche</span></button>
+      <button data-add-object="bathtub"><b>▭</b><span>Badewanne</span></button>
+      <button data-add-object="kitchenSink"><b>▣</b><span>Küche Spüle</span></button>
+      <button data-add-object="stove"><b>▦</b><span>Herd</span></button>
+      <button data-add-object="fridge"><b>▯</b><span>Kühlschrank</span></button>
+      <button data-add-object="washingMachine"><b>◉</b><span>Waschmaschine</span></button>
+      <button data-add-object="table"><b>▭</b><span>Tisch</span></button>
+      <button data-add-object="chair"><b>♧</b><span>Stuhl</span></button>
+      <button data-add-object="sofa"><b>▰</b><span>Sofa</span></button>
+      <button data-add-object="bed"><b>▤</b><span>Bett</span></button>
+      <button data-add-object="cabinet"><b>▯</b><span>Schrank</span></button>
+      <button data-add-object="plant"><b>♧</b><span>Pflanze</span></button>
+      <button data-add-object="drain"><b>⊠</b><span>Bodenablauf</span></button>
+    </div>
+
+    <div class="fp-statusbar">
+      <span>TIPP: Objekt auswählen und ziehen · Feinposition: <b id="fpFineStatus">1 cm</b></span>
+      <span id="fpStatusSelection">Keine Auswahl</span>
     </div>
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=110"></script>
+<script src="app.js?v=120"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-Projekt Bau v1.6.8 – verifizierter UI-Fix
+Projekt Bau v1.6.9 – verifizierter UI-Fix
 - Wandbeschriftung A, B, C, D ... direkt sichtbar als blaue Markierung.
 - Bestehende und neue Wände werden automatisch beschriftet.
 - Bei Auswahl von Tür oder Fenster erscheint rechts ein eigener, blau markierter Bereich «ÖFFNUNG».

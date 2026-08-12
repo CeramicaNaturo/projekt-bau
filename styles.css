@@ -1185,7 +1185,7 @@ body.pdf-exporting .pdf-footer{
   width:100%;
 }
 
-/* v1.6.8 verified UI */
+/* v1.6.9 verified UI */
 .opening-panel{border:2px solid #2563eb!important;background:#eff6ff!important}
 .opening-panel.hidden{display:none!important}
 .opening-title{font-weight:800;margin:0 0 10px;color:#0f172a}

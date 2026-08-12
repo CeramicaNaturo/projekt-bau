@@ -2319,3 +2319,90 @@ body.pdf-exporting .pdf-footer{
     min-height:80px!important;
   }
 }
+
+/* ============================================================
+   v1.8.1 – ROOT FIX
+   cad-floorplan-workspace must NOT split itself into ruler rows.
+   fp2DWorkspace owns those rows internally.
+   ============================================================ */
+
+.floorplan-modal-card .cad-floorplan-workspace{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  min-width:0!important;
+  min-height:0!important;
+  width:100%!important;
+  height:100%!important;
+  overflow:hidden!important;
+}
+
+/* Both views occupy the one full workspace cell. */
+.floorplan-modal-card .cad-floorplan-workspace > #fp2DWorkspace,
+.floorplan-modal-card .cad-floorplan-workspace > #fp3DWorkspace{
+  grid-column:1!important;
+  grid-row:1!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+}
+
+/* 2D owns its own ruler / canvas / info rows. */
+.floorplan-modal-card #fp2DWorkspace{
+  display:grid!important;
+  grid-template-rows:22px minmax(0,1fr) 22px!important;
+  overflow:hidden!important;
+}
+
+.floorplan-modal-card #fp2DWorkspace.hidden{
+  display:none!important;
+}
+
+/* 3D fills the exact same full cell. */
+.floorplan-modal-card #fp3DWorkspace{
+  position:relative!important;
+  overflow:hidden!important;
+}
+
+.floorplan-modal-card #fp3DWorkspace.hidden{
+  display:none!important;
+}
+
+/* Canvas row must be allowed to expand. */
+.floorplan-modal-card #fp2DWorkspace .cad-canvas-inner{
+  height:100%!important;
+  min-height:0!important;
+}
+
+.floorplan-modal-card #fp2DWorkspace .floorplan-canvas-wrap{
+  height:100%!important;
+  min-height:0!important;
+  width:100%!important;
+  min-width:0!important;
+  overflow:hidden!important;
+}
+
+.floorplan-modal-card #floorplanCanvas{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+}
+
+/* Remove the old forced 300 px minimum which fights responsive height. */
+.floorplan-modal-card #fp2DWorkspace .cad-canvas-inner,
+.floorplan-modal-card #fp2DWorkspace .floorplan-canvas-wrap,
+.floorplan-modal-card #floorplanCanvas{
+  min-height:0!important;
+}
+
+/* Tablet: preserve the large blue-marked workspace area. */
+.floorplan-modal-card.tablet-hardmode .cad-floorplan-workspace{
+  grid-template-rows:minmax(0,1fr)!important;
+}

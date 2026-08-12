@@ -953,6 +953,7 @@ function setFloorplanView(mode){
 
   if(w2)w2.classList.toggle('hidden',fp3DMode);
   if(w3)w3.classList.toggle('hidden',!fp3DMode);
+  setTimeout(forceWorkspaceRootRefit,80);
   if(b2)b2.classList.toggle('active',!fp3DMode);
   if(b3)b3.classList.toggle('active',fp3DMode);
 
@@ -1124,6 +1125,8 @@ function openFloorplan(project,record){
   fpShowGrid=true;fpShowPositions=true;fpShowMeasures=true;
   $('floorplanEditorTitle').textContent=`Grundriss · ${record.name}`;
   $('floorplanModal').classList.remove('hidden');
+  setTimeout(forceWorkspaceRootRefit,100);
+  setTimeout(forceWorkspaceRootRefit,300);
   setTimeout(safeTabletWorkspaceRefit,120);
   setTimeout(safeTabletWorkspaceRefit,380);
   setTimeout(()=>{initTabletCadUi();if(fp3DMode)window.ProjectBau3D?.fitView?.();else fitFloorplan2D?.();},220);
@@ -2455,6 +2458,23 @@ function refitTabletCadArea(){
   });
 }
 
+
+
+function forceWorkspaceRootRefit(){
+  requestAnimationFrame(()=>{
+    try{
+      if(fp3DMode){
+        window.ProjectBau3D?.resize?.();
+        window.ProjectBau3D?.fitView?.();
+      }else{
+        resize2DCanvas?.();
+        fitFloorplan2D?.();
+      }
+    }catch(e){
+      console.error('Workspace root refit',e);
+    }
+  });
+}
 
 function safeTabletWorkspaceRefit(){
   const card=document.querySelector('.floorplan-modal-card');

@@ -537,6 +537,7 @@ function initTileTools(){
     });
 }
 
+let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
 let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null;
 let fpZoom=1,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
@@ -617,6 +618,50 @@ function setWallEndpointsFromFields(){
   Object.assign(o,vals);
   drawFloorplan();
   updateSelectedInfo();
+}
+
+
+function populate3DMaterialSelects(project){
+  const floor=$('fp3DFloorMaterial'),wall=$('fp3DWallMaterial');
+  if(!floor||!wall)return;
+  const mats=(project?.tileMaterials||[]);
+  const html='<option value="">Neutral</option>'+mats.map(m=>`<option value="${m.id}">${esc([m.brand,m.model,m.format].filter(Boolean).join(' · ')||'Fliese')}</option>`).join('');
+  floor.innerHTML=html;wall.innerHTML=html;
+  floor.value=fp3DOptions.floorMaterialId||'';
+  wall.value=fp3DOptions.wallMaterialId||'';
+}
+
+function current3DData(){
+  return {
+    objects:fpObjects,
+    record:fpRecord,
+    project:fpProject,
+    options:{...fp3DOptions}
+  };
+}
+
+function refresh3D(){
+  if(!fp3DMode || !window.ProjectBau3D)return;
+  window.ProjectBau3D.update(current3DData());
+}
+
+function setFloorplanView(mode){
+  fp3DMode=mode==='3d';
+  const w2=$('fp2DWorkspace'),w3=$('fp3DWorkspace'),b2=$('fpView2D'),b3=$('fpView3D');
+  if(w2)w2.classList.toggle('hidden',fp3DMode);
+  if(w3)w3.classList.toggle('hidden',!fp3DMode);
+  if(b2)b2.classList.toggle('active',!fp3DMode);
+  if(b3)b3.classList.toggle('active',fp3DMode);
+
+  if(fp3DMode){
+    populate3DMaterialSelects(fpProject);
+    const host=$('fp3DViewport');
+    if(window.ProjectBau3D&&host){
+      window.ProjectBau3D.open(host,current3DData());
+    }else{
+      setTimeout(()=>setFloorplanView('3d'),250);
+    }
+  }
 }
 
 function renderFloorplans(project){
@@ -749,7 +794,7 @@ function openFloorplan(project,record){
   fpProject=project;fpRecord=record;
   fpObjects=Array.isArray(record.objects)?JSON.parse(JSON.stringify(record.objects)):[];
   fpGrid=record.grid||5;fpFineStep=record.fineStep||1;fpWallThickness=record.wallThickness||15;
-  fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpZoom=1;fpActiveLayer=record.activeLayer||'walls';fpLayerVisibility=record.layerVisibility||{walls:true,openings:true,sanitary:true,furniture:true,notes:true};
+  fp3DMode=false;fp3DOptions=record.threeDOptions||{floorMaterialId:'',wallMaterialId:'',showCeiling:false};fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpZoom=1;fpActiveLayer=record.activeLayer||'walls';fpLayerVisibility=record.layerVisibility||{walls:true,openings:true,sanitary:true,furniture:true,notes:true};
   const roomHeight=$('fpRoomHeight');if(roomHeight)roomHeight.value=record.roomHeightM??'';
   $('fpGridSize').value=String(fpGrid);
   const fine=$('fpFineStep');if(fine)fine.value=String(fpFineStep);
@@ -1098,7 +1143,7 @@ function getFloorplanBounds(objects){
   };
 }
 function drawFloorplan(preview=null){
-  if(!preview){updateFloorRoomInfo();updateCadInspector();drawCadRulers();}
+  if(!preview){updateFloorRoomInfo();updateCadInspector();drawCadRulers();refresh3D();}
 
   fpCtx.clearRect(0,0,fpCanvas.width,fpCanvas.height);
   fpCtx.fillStyle='#ffffff';
@@ -1477,7 +1522,7 @@ function initFloorplanControls(){
   if(objY)objY.onchange=setSelectedPosition;
   $('fpDeleteSelected').onclick=deleteSelected;
   $('fpClear').onclick=()=>{if(confirm('Grundriss vollständig löschen?')){pushHistory();fpObjects=[];fpSelectedId=null;drawFloorplan();updateSelectedInfo()}};
-  $('fpSave').onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.fineStep=fpFineStep;fpRecord.wallThickness=fpWallThickness;fpRecord.activeLayer=fpActiveLayer;fpRecord.layerVisibility={...fpLayerVisibility};fpRecord.floorAreaM2=calculateFloorAreaM2(fpObjects);save();closeFloorplan()};
+  $('fpSave').onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.fineStep=fpFineStep;fpRecord.wallThickness=fpWallThickness;fpRecord.activeLayer=fpActiveLayer;fpRecord.layerVisibility={...fpLayerVisibility};fpRecord.threeDOptions={...fp3DOptions};fpRecord.floorAreaM2=calculateFloorAreaM2(fpObjects);save();closeFloorplan()};
   const roomHeightInput=$('fpRoomHeight');
   if(roomHeightInput)roomHeightInput.onchange=e=>{
     if(!fpRecord)return;
@@ -1501,6 +1546,16 @@ function initFloorplanControls(){
   $('fpZoomOut').onclick=()=>{fpZoom=Math.max(.5,fpZoom-.1);applyZoom()};
   $('fpZoomIn').onclick=()=>{fpZoom=Math.min(2,fpZoom+.1);applyZoom()};
   $('fpZoomReset').onclick=()=>{fpZoom=1;applyZoom()};
+  const view2=$('fpView2D'),view3=$('fpView3D');
+  if(view2)view2.onclick=()=>setFloorplanView('2d');
+  if(view3)view3.onclick=()=>setFloorplanView('3d');
+
+  const floorMat=$('fp3DFloorMaterial'),wallMat=$('fp3DWallMaterial'),ceiling=$('fp3DShowCeiling');
+  if(floorMat)floorMat.onchange=e=>{fp3DOptions.floorMaterialId=e.target.value;refresh3D()};
+  if(wallMat)wallMat.onchange=e=>{fp3DOptions.wallMaterialId=e.target.value;refresh3D()};
+  if(ceiling)ceiling.onchange=e=>{fp3DOptions.showCeiling=e.target.checked;refresh3D()};
+  const reset3d=$('fp3DResetCamera');if(reset3d)reset3d.onclick=()=>window.ProjectBau3D?.resetCamera();
+
   const full=$('fpFullscreen');
   if(full)full.onclick=()=>{
     const el=$('floorplanModal');

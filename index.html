@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=140">
+<link rel="stylesheet" href="styles.css?v=150">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer">Version 1.4</div>
+  <div class="cad-sidebar-footer">Version 1.5</div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.4</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.5</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -277,6 +277,10 @@
         <span id="floorplanEditorTitle" class="fp-plan-select">Grundriss</span>
       </div>
       <div class="fp-appbar-actions">
+        <div class="fp-view-switch">
+          <button id="fpView2D" class="secondary active">2D CAD</button>
+          <button id="fpView3D" class="secondary">3D</button>
+        </div>
         <button id="fpSave" class="primary">Speichern</button>
         <button id="fpPdfButton" class="secondary">PDF-Bericht erstellen</button>
       </div>
@@ -355,14 +359,25 @@
       </aside>
 
       <main class="cad-floorplan-workspace">
-        <div class="cad-canvas-ruler cad-ruler-top" id="fpRulerTop"></div>
-        <div class="cad-canvas-inner">
-          <div class="cad-canvas-ruler cad-ruler-left" id="fpRulerLeft"></div>
-          <div class="floorplan-canvas-wrap">
-            <canvas id="floorplanCanvas" width="1600" height="1100"></canvas>
+        <div id="fp2DWorkspace" class="fp-mode-workspace">
+          <div class="cad-canvas-ruler cad-ruler-top" id="fpRulerTop"></div>
+          <div class="cad-canvas-inner">
+            <div class="cad-canvas-ruler cad-ruler-left" id="fpRulerLeft"></div>
+            <div class="floorplan-canvas-wrap">
+              <canvas id="floorplanCanvas" width="1600" height="1100"></canvas>
+            </div>
+          </div>
+          <div id="fpSelectedInfo" class="fp-selected-info">Keine Auswahl</div>
+        </div>
+
+        <div id="fp3DWorkspace" class="fp-3d-workspace hidden">
+          <div id="fp3DViewport" class="fp-3d-viewport"></div>
+          <div class="fp-3d-help">
+            <span>1 Finger / Maus: Drehen</span>
+            <span>2 Finger / Mausrad: Zoom</span>
+            <span>2 Finger / Rechtsklick: Verschieben</span>
           </div>
         </div>
-        <div id="fpSelectedInfo" class="fp-selected-info">Keine Auswahl</div>
       </main>
 
       <aside class="cad-inspector">
@@ -435,6 +450,22 @@
           <label class="check-inline"><input class="fp-layer-toggle" data-layer="notes" type="checkbox" checked> Texte</label>
         </div>
 
+        <div class="cad-inspector-section fp-3d-controls">
+          <h4>3D-EINSTELLUNGEN</h4>
+          <label>Bodenmaterial
+            <select id="fp3DFloorMaterial">
+              <option value="">Neutral</option>
+            </select>
+          </label>
+          <label>Wandmaterial
+            <select id="fp3DWallMaterial">
+              <option value="">Neutral</option>
+            </select>
+          </label>
+          <label class="check-inline"><input id="fp3DShowCeiling" type="checkbox"> Decke anzeigen</label>
+          <button id="fp3DResetCamera" class="secondary">3D-Ansicht zentrieren</button>
+        </div>
+
         <div class="cad-inspector-section">
           <h4>BEREICH-INFORMATION</h4>
           <div class="cad-property"><span>Name</span><b id="cadRoomName">–</b></div>
@@ -475,7 +506,16 @@
     </div>
   </div>
 </div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="three_viewer.js?v=150"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=140"></script>
+<script src="app.js?v=150"></script>
 </body>
 </html>

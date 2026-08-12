@@ -1,43 +1,37 @@
-Projekt Bau v1.4 – CAD Grundriss
+Projekt Bau v1.5 – 2D CAD + 3D
 
-Grundriss wurde zu einem Mini-CAD-Editor erweitert.
+Neu:
+- Grundriss kann zwischen «2D CAD» und «3D» umgeschaltet werden.
+- 2D-Wände werden automatisch als 3D-Wände aufgebaut.
+- Raumhöhe bestimmt automatisch die 3D-Wandhöhe.
+- Geschlossener Grundriss erzeugt einen 3D-Boden.
+- Türen, Fenster, WC, Dusche, Badewanne, Waschbecken, Küche, Möbel und weitere Objekte werden als 3D-Körper dargestellt.
+- 3D-Navigation mit OrbitControls:
+  - Drehen
+  - Zoom
+  - Verschieben
+- 3D-Kamera automatisch auf den Raum zentrieren.
+- Optionale Decke.
+- Fliesen-Materialbibliothek kann als Boden- oder Wandmaterial ausgewählt werden.
+- Hochgeladenes Fliesenfoto wird als 3D-Textur verwendet.
+- 3D-Einstellungen werden pro Grundriss gespeichert.
 
-CAD-Funktionen:
-- Auswahlmodus
-- Pan / Zeichenfläche verschieben
-- Wand zeichnen
-- 45° / 90° Winkel-Fang
-- Wand-Endpunkte einzeln greifen und verschieben
-- Wand Start/Ende X/Y numerisch eingeben
-- Objekt X/Y numerisch eingeben
-- 1 cm Feinpositionierung
-- Raster / Snap
-- Zoom
-- Ebenen (Layer):
-  - Wände
-  - Türen / Fenster
-  - Sanitär
-  - Möbel
-  - Texte
-- Layer einzeln ein-/ausblenden
-- Aktive Ebene
+2D-CAD-Funktionen aus v1.4 bleiben vollständig erhalten:
+- Wand-Endpunkte
+- 45°/90° Fang
+- Layer
+- Feinpositionierung
+- X/Y
 - Duplizieren
-- Löschen
-- Rückgängig / Wiederholen
-- Tastatur:
-  - Entf = Löschen
-  - Ctrl/Cmd + D = Duplizieren
-  - Ctrl/Cmd + Z = Rückgängig
-  - Ctrl/Cmd + Y = Wiederholen
-  - Pfeiltasten = Objekt verschieben
-  - Ctrl + Pfeiltaste = 1 cm Feinbewegung
-- Wandlängen in cm
-- Objektmasse im Objekt
-- Bodenfläche automatisch
+- Rückgängig/Wiederholen
+- Bodenfläche
 - Raumhöhe
-- Umfang
-- X/Y Positionen
-- Mausposition in cm
+- Wandlängen
+- Objektmasse
 
-Fliesenleger-spezifische Module aus v1.3 bleiben erhalten.
+3D-Technik:
+- Three.js
+- OrbitControls
+- WebGL
+
 Deutsch / de-CH.

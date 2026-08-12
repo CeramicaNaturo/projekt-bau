@@ -1193,3 +1193,6 @@ body.pdf-exporting .pdf-footer{
 .wall-letter{
   font-weight:900;
 }
+
+/* v1.7.0 realistic 3D object library */
+.fp-3d-help span{backdrop-filter:blur(4px)}

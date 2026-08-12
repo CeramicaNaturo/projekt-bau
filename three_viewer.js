@@ -196,69 +196,352 @@ function simpleBox(o,height,color=0xcbd5e1){
   return mesh;
 }
 
+
+function mat(color, roughness=.55, metalness=0){
+  return new THREE.MeshStandardMaterial({color,roughness,metalness});
+}
+function glassMat(){
+  return new THREE.MeshPhysicalMaterial({
+    color:0xd8f3ff,
+    transparent:true,
+    opacity:.28,
+    roughness:.08,
+    metalness:0,
+    transmission:.55,
+    thickness:.012,
+    side:THREE.DoubleSide
+  });
+}
+const CERAMIC=()=>mat(0xf7f7f4,.22,0);
+const CHROME=()=>mat(0xbec6cf,.2,.78);
+const DARK=()=>mat(0x30343b,.42,.35);
+const WOOD=()=>mat(0xa7774f,.62,.02);
+const FABRIC=()=>mat(0x7b8797,.82,0);
+const WHITE=()=>mat(0xf1f3f5,.45,0);
+
+function addBox(group,w,h,d,x,y,z,material,rx=0,ry=0,rz=0){
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
+  mesh.position.set(x,y,z);
+  mesh.rotation.set(rx,ry,rz);
+  mesh.castShadow=true;mesh.receiveShadow=true;
+  group.add(mesh);
+  return mesh;
+}
+function addCylinder(group,rTop,rBottom,h,x,y,z,material,radial=32,rx=0,ry=0,rz=0){
+  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(rTop,rBottom,h,radial),material);
+  mesh.position.set(x,y,z);
+  mesh.rotation.set(rx,ry,rz);
+  mesh.castShadow=true;mesh.receiveShadow=true;
+  group.add(mesh);
+  return mesh;
+}
+function addSphere(group,rx,ry,rz,x,y,z,material){
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,32,20),material);
+  mesh.scale.set(rx,ry,rz);
+  mesh.position.set(x,y,z);
+  mesh.castShadow=true;mesh.receiveShadow=true;
+  group.add(mesh);
+  return mesh;
+}
+function finishObject(group,o){
+  group.position.set(m(o.x),0,m(o.y));
+  group.rotation.y=-(o.rotation||0)*Math.PI/180;
+  group.scale.setScalar(o.scale||1);
+  return group;
+}
+
+function realisticSink(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||60),d=m(o.depthCm||50);
+  const ceramic=CERAMIC(), chrome=CHROME();
+
+  // basin rim
+  addBox(g,w,.07,d,0,.82,0,ceramic);
+  // bowl cavity illusion
+  addSphere(g,w*.38,.08,d*.32,0,.79,0,mat(0xdfe4e7,.18,0));
+  addSphere(g,w*.30,.035,d*.25,0,.77,0,mat(0x9ea7ad,.22,.15));
+
+  // pedestal / vanity support
+  addCylinder(g,.11,.14,.70,0,.39,0,ceramic,32);
+
+  // tap
+  addCylinder(g,.018,.018,.23,0,.97,-d*.22,chrome,20);
+  addCylinder(g,.014,.014,.15,0,.99,-d*.16,chrome,20,Math.PI/2,0,0);
+
+  return finishObject(g,o);
+}
+
+function realisticWC(o){
+  const g=new THREE.Group();
+  const ceramic=CERAMIC(), chrome=CHROME();
+
+  // base
+  addBox(g,.34,.18,.48,0,.12,.08,ceramic);
+  // bowl
+  addSphere(g,.27,.19,.37,0,.30,.02,ceramic);
+  // seat ring (dark thin)
+  const ring=new THREE.Mesh(
+    new THREE.TorusGeometry(.19,.025,12,36),
+    mat(0xe7e7e4,.35,0)
+  );
+  ring.scale.z=1.28;
+  ring.rotation.x=Math.PI/2;
+  ring.position.set(0,.43,-.02);
+  g.add(ring);
+
+  // cistern
+  addBox(g,.38,.48,.20,0,.52,-.30,ceramic);
+  addCylinder(g,.018,.018,.018,.12,.77,-.405,chrome,16);
+
+  return finishObject(g,o);
+}
+
+function realisticShower(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||90),d=m(o.depthCm||90);
+
+  // tray
+  addBox(g,w,.045,d,0,.025,0,WHITE());
+  addCylinder(g,.035,.035,.012,0,.055,0,CHROME(),24);
+
+  // glass walls
+  const glass=glassMat();
+  addBox(g,w,1.95,.012,0,.98,-d/2,glass);
+  addBox(g,.012,1.95,d,-w/2,.98,0,glass);
+
+  // vertical frames
+  const chrome=CHROME();
+  addCylinder(g,.012,.012,1.95,-w/2,.98,-d/2,chrome,12);
+  addCylinder(g,.012,.012,1.95,w/2,.98,-d/2,chrome,12);
+
+  // shower bar / head
+  addCylinder(g,.012,.012,1.45,w*.28,.90,d*.30,chrome,12);
+  addSphere(g,.055,.018,.055,w*.28,1.58,d*.30,chrome);
+
+  return finishObject(g,o);
+}
+
+function realisticBathtub(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||180),d=m(o.depthCm||80);
+  const ceramic=CERAMIC();
+
+  // tub body
+  addBox(g,w,.52,d,0,.28,0,ceramic);
+
+  // inner cavity illusion
+  addBox(g,w*.82,.16,d*.66,0,.48,0,mat(0xd9e0e4,.2,0));
+
+  // rim
+  addBox(g,w,.045,d,0,.56,0,ceramic);
+
+  // chrome drain + faucet
+  addCylinder(g,.03,.03,.012,-w*.28,.575,0,CHROME(),24);
+  addCylinder(g,.018,.018,.20,w*.34,.66,-d*.34,CHROME(),16);
+
+  return finishObject(g,o);
+}
+
+function realisticKitchenSink(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||60),d=m(o.depthCm||60);
+  const steel=mat(0xb9c1c8,.24,.72);
+
+  // counter block
+  addBox(g,w,.07,d,0,.90,0,mat(0xd8d8d3,.5,.08));
+  // inset bowl
+  addBox(g,w*.66,.20,d*.56,0,.79,0,steel);
+  // dark interior
+  addBox(g,w*.56,.05,d*.46,0,.73,0,mat(0x808a93,.3,.45));
+
+  // faucet
+  addCylinder(g,.014,.014,.25,0,1.02,-d*.28,CHROME(),16);
+  addCylinder(g,.012,.012,.16,0,1.12,-d*.20,CHROME(),16,Math.PI/2,0,0);
+
+  // cabinet
+  addBox(g,w*.94,.78,d*.86,0,.46,0,mat(0xe9e6df,.62,0));
+  return finishObject(g,o);
+}
+
+function realisticStove(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||60),d=m(o.depthCm||60);
+
+  addBox(g,w,.86,d,0,.43,0,mat(0x454b52,.38,.48));
+  addBox(g,w*.96,.055,d*.96,0,.89,0,mat(0x15181c,.22,.6));
+
+  const steel=CHROME();
+  for(const x of [-w*.22,w*.22]){
+    for(const z of [-d*.22,d*.22]){
+      addCylinder(g,.075,.075,.012,x,.925,z,steel,32);
+      addCylinder(g,.045,.045,.016,x,.934,z,DARK(),24);
+    }
+  }
+  // oven window
+  addBox(g,w*.72,.34,.015,0,.48,d/2+.008,mat(0x111827,.2,.45));
+  return finishObject(g,o);
+}
+
+function realisticFridge(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||60),d=m(o.depthCm||65);
+  addBox(g,w,1.85,d,0,.925,0,mat(0xe4e7ea,.34,.26));
+  // freezer separation
+  addBox(g,w*.92,.008,.012,0,1.15,d/2+.01,DARK());
+  // handles
+  addCylinder(g,.010,.010,.50,w*.32,1.40,d/2+.03,CHROME(),12);
+  addCylinder(g,.010,.010,.38,w*.32,.70,d/2+.03,CHROME(),12);
+  return finishObject(g,o);
+}
+
+function realisticWasher(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||60),d=m(o.depthCm||65);
+  addBox(g,w,.86,d,0,.43,0,WHITE());
+  // door
+  const outer=new THREE.Mesh(new THREE.TorusGeometry(.19,.028,16,40),DARK());
+  outer.rotation.x=Math.PI/2;
+  outer.position.set(0,.42,d/2+.015);
+  g.add(outer);
+  addCylinder(g,.16,.16,.015,0,.42,d/2+.028,glassMat(),40,Math.PI/2);
+  // control strip
+  addBox(g,w*.9,.13,.02,0,.76,d/2+.02,mat(0xdde2e6,.35,.08));
+  addCylinder(g,.035,.035,.02,w*.22,.77,d/2+.04,DARK(),24,Math.PI/2);
+  return finishObject(g,o);
+}
+
+function realisticTable(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||160),d=m(o.depthCm||90);
+  addBox(g,w,.07,d,0,.76,0,WOOD());
+  const legMat=mat(0x5c4635,.62,.04);
+  for(const x of [-w*.42,w*.42])for(const z of [-d*.38,d*.38]){
+    addBox(g,.07,.74,.07,x,.37,z,legMat);
+  }
+  return finishObject(g,o);
+}
+
+function realisticChair(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||50),d=m(o.depthCm||50);
+  addBox(g,w*.78,.06,d*.78,0,.48,0,WOOD());
+  for(const x of [-w*.3,w*.3])for(const z of [-d*.3,d*.3]){
+    addBox(g,.045,.48,.045,x,.24,z,mat(0x634a38,.66,.03));
+  }
+  addBox(g,w*.78,.56,.06,0,.78,-d*.34,WOOD());
+  return finishObject(g,o);
+}
+
+function realisticSofa(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||220),d=m(o.depthCm||90);
+  const fab=FABRIC();
+
+  addBox(g,w,.26,d*.82,0,.26,0,fab);
+  addBox(g,w*.92,.18,d*.60,0,.48,d*.08,mat(0x8693a4,.85,0));
+  addBox(g,w*.92,.58,.18,0,.74,-d*.31,fab);
+  addBox(g,.18,.48,d*.78,-w*.46,.51,0,fab);
+  addBox(g,.18,.48,d*.78,w*.46,.51,0,fab);
+
+  return finishObject(g,o);
+}
+
+function realisticBed(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||200),d=m(o.depthCm||100);
+
+  addBox(g,w,.22,d,0,.18,0,WOOD());
+  addBox(g,w*.96,.24,d*.92,0,.35,0,mat(0xf0ede8,.9,0));
+  addBox(g,w*.86,.12,d*.25,0,.52,-d*.30,WHITE());
+  addBox(g,w,.70,.10,0,.48,-d*.47,WOOD());
+
+  return finishObject(g,o);
+}
+
+function realisticCabinet(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||120),d=m(o.depthCm||60);
+  addBox(g,w,2.05,d,0,1.025,0,mat(0xc6b195,.64,.02));
+  addBox(g,.012,1.92,.015,0,1.03,d/2+.012,mat(0x8f785d,.55,.08));
+  addCylinder(g,.012,.012,.12,-.06,1.05,d/2+.025,CHROME(),12);
+  addCylinder(g,.012,.012,.12,.06,1.05,d/2+.025,CHROME(),12);
+  return finishObject(g,o);
+}
+
+function realisticPlant(o){
+  const g=new THREE.Group();
+  // pot
+  const pot=new THREE.Mesh(new THREE.CylinderGeometry(.18,.23,.34,28),mat(0x9a6548,.72,.02));
+  pot.position.y=.17;pot.castShadow=true;g.add(pot);
+  // trunk
+  addCylinder(g,.025,.035,.55,0,.58,0,mat(0x6b4f36,.75,0),12);
+  // leaves
+  const leafMat=mat(0x4f8d59,.65,0);
+  const leafPos=[
+    [-.18,.82,0], [.18,.85,.02], [0,.95,.14],
+    [0,.90,-.16], [-.13,1.03,.10], [.14,1.08,-.05]
+  ];
+  leafPos.forEach(([x,y,z])=>addSphere(g,.17,.07,.09,x,y,z,leafMat));
+  return finishObject(g,o);
+}
+
+function realisticDrain(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||15);
+  addBox(g,w,.018,w,0,.012,0,CHROME());
+  const dark=DARK();
+  for(let i=-2;i<=2;i++){
+    addBox(g,w*.72,.006,.008,0,.025,i*w*.12,dark);
+    addBox(g,.008,.006,w*.72,i*w*.12,.026,0,dark);
+  }
+  return finishObject(g,o);
+}
+
 function objectMesh(o){
   const type=o.type;
+
   if(type==='door'){
-    const mesh=simpleBox(o,2.05,0x9b6b43);
-    mesh.scale.z=.35;
-    return mesh;
+    const g=new THREE.Group();
+    const w=m(o.widthCm||90);
+    // door leaf
+    addBox(g,w,2.05,.045,0,1.025,0,WOOD());
+    // handle
+    addCylinder(g,.018,.018,.11,w*.34,1.05,.04,CHROME(),16,Math.PI/2);
+    if((o.openingDirection||'right')==='left')g.rotation.y=Math.PI;
+    return finishObject(g,o);
   }
+
   if(type==='window'){
-    const mesh=simpleBox(o,1.2,0x99c9e8);
-    mesh.position.y=1.2;
-    mesh.scale.z=.28;
-    return mesh;
+    const g=new THREE.Group();
+    const w=m(o.widthCm||100);
+    // frame
+    addBox(g,w,.055,.06,0,.58,0,CHROME());
+    addBox(g,w,.055,.06,0,1.72,0,CHROME());
+    addBox(g,.055,1.18,.06,-w/2,.15+1.13,0,CHROME());
+    addBox(g,.055,1.18,.06,w/2,.15+1.13,0,CHROME());
+    // glass
+    addBox(g,w*.92,1.08,.02,0,1.15,0,glassMat());
+    if((o.openingDirection||'right')==='left')g.rotation.y=Math.PI;
+    return finishObject(g,o);
   }
-  if(type==='wc'){
-    const group=new THREE.Group();
-    const bowl=new THREE.Mesh(
-      new THREE.CapsuleGeometry(.22,.28,8,16),
-      new THREE.MeshStandardMaterial({color:0xf7f7f7,roughness:.3})
-    );
-    bowl.rotation.x=Math.PI/2;
-    bowl.scale.set(1,.65,1);
-    bowl.position.y=.22;
-    group.add(bowl);
-    group.position.set(m(o.x),0,m(o.y));
-    group.rotation.y=-(o.rotation||0)*Math.PI/180;
-    group.scale.setScalar(o.scale||1);
-    return group;
-  }
-  if(type==='shower'){
-    const group=new THREE.Group();
-    const base=new THREE.Mesh(
-      new THREE.BoxGeometry(m(o.widthCm||90),.04,m(o.depthCm||90)),
-      new THREE.MeshStandardMaterial({color:0xf3f5f7})
-    );
-    base.position.y=.02;group.add(base);
-    const glassMat=new THREE.MeshStandardMaterial({color:0xbfe5f5,transparent:true,opacity:.28,roughness:.1});
-    const w=m(o.widthCm||90),d=m(o.depthCm||90);
-    const g1=new THREE.Mesh(new THREE.BoxGeometry(w,1.9,.012),glassMat);
-    g1.position.set(0,.95,-d/2); group.add(g1);
-    const g2=new THREE.Mesh(new THREE.BoxGeometry(.012,1.9,d),glassMat);
-    g2.position.set(-w/2,.95,0); group.add(g2);
-    group.position.set(m(o.x),0,m(o.y));
-    group.rotation.y=-(o.rotation||0)*Math.PI/180;
-    group.scale.setScalar(o.scale||1);
-    return group;
-  }
-  if(type==='bathtub'){
-    return simpleBox(o,.55,0xf4f5f6);
-  }
-  if(type==='sink'||type==='kitchenSink'){
-    return simpleBox(o,.82,0xf0f2f4);
-  }
-  if(type==='stove') return simpleBox(o,.9,0x4c5563);
-  if(type==='fridge') return simpleBox(o,1.85,0xe5e7eb);
-  if(type==='washingMachine') return simpleBox(o,.85,0xf7f7f7);
-  if(type==='table') return simpleBox(o,.75,0xa77b55);
-  if(type==='chair') return simpleBox(o,.85,0x8b6d54);
-  if(type==='sofa') return simpleBox(o,.78,0x72829a);
-  if(type==='bed') return simpleBox(o,.48,0xd7c9b8);
-  if(type==='cabinet') return simpleBox(o,2.1,0xa68a6a);
-  if(type==='plant') return simpleBox(o,.7,0x558b5c);
-  if(type==='drain') return simpleBox(o,.02,0x59616b);
-  return null;
+
+  if(type==='wc')return realisticWC(o);
+  if(type==='shower')return realisticShower(o);
+  if(type==='bathtub')return realisticBathtub(o);
+  if(type==='sink')return realisticSink(o);
+  if(type==='kitchenSink')return realisticKitchenSink(o);
+  if(type==='stove')return realisticStove(o);
+  if(type==='fridge')return realisticFridge(o);
+  if(type==='washingMachine')return realisticWasher(o);
+  if(type==='table')return realisticTable(o);
+  if(type==='chair')return realisticChair(o);
+  if(type==='sofa')return realisticSofa(o);
+  if(type==='bed')return realisticBed(o);
+  if(type==='cabinet')return realisticCabinet(o);
+  if(type==='plant')return realisticPlant(o);
+  if(type==='drain')return realisticDrain(o);
+
+  return simpleBox(o,.5,0xcbd5e1);
 }
 
 function centerCamera(group){

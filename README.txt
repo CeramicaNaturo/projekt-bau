@@ -1,16 +1,19 @@
-Projekt Bau v1.8.2 – Saubere Wandecken
+Projekt Bau v1.8.3 – L-Wandverbindung + Live Anschluss
 
-Behoben:
-- An Wandverbindungen ragten Wandenden sichtbar über die Ecke hinaus.
-- Ursache war Canvas lineCap='square'.
-- Square verlängert eine Linie optisch über ihren echten Endpunkt hinaus.
+Wandverbindungen:
+- Rechtwinklige Wände werden an gemeinsamen Endpunkten als ein sauberer L-Knoten dargestellt.
+- Zwischen zwei verbundenen Butt-Linien wird automatisch ein gemeinsames Eckstück gezeichnet.
+- Dadurch entstehen keine Nasen und keine offenen Spalten.
+- Der sichtbare Außen-/Innenwinkel wirkt wie eine durchgehende CAD-Wand.
 
-Neu:
-- Wände werden mit lineCap='butt' gezeichnet.
-- Die Wand endet exakt am geometrischen Endpunkt.
-- Rechtwinklige Ecken erscheinen bündig und ohne Nase/Überstand.
-- lineJoin='miter' bleibt für saubere CAD-Kanten aktiv.
-- Wandkoordinaten, Wandlängen, A/B/C/D-Bezeichnungen und Endpunktgriffe bleiben unverändert.
-- Keine Änderung an gespeicherten Grundrissdaten.
+Beim Zeichnen:
+- Startet eine neue Wand an einem bestehenden Wandende, bleibt die bestehende Wand sichtbar.
+- Die bestehende Anschlusswand wird während des Ziehens zusätzlich blau transparent hervorgehoben.
+- Neue Wand und bestehende Wand sind gleichzeitig sichtbar.
+- Der gemeinsame Eckpunkt wird während des Ziehens live als geschlossene Verbindung dargestellt.
+- Live-Längenanzeige bleibt erhalten.
+- Gegenwand-Erkennung / Wandfang bleibt erhalten.
 
+Bestehende Grundrissdaten werden nicht verändert.
+Alle Funktionen aus v1.8.2 bleiben erhalten.
 Deutsch / de-CH.

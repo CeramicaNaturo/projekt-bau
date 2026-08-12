@@ -1315,6 +1315,8 @@ function floorStart(ev){
       fpStart={x:snap(p.x),y:snap(p.y)};
     }
 
+    const connectedWall=connectedWallAtStart(fpStart);
+
     fpPreview={
       id:'preview',
       type:fpTool,
@@ -1325,7 +1327,8 @@ function floorStart(ev){
       thickness:fpWallThickness,
       layer:'walls',
       snapTarget:null,
-      snappedToTarget:false
+      snappedToTarget:false,
+      connectedWallId:connectedWall?.id||null
     };
     fpDrawing=true;
     drawFloorplan(fpPreview);
@@ -1434,6 +1437,7 @@ function floorMove(ev){
 
   if((fpTool==='wall') && fpStart){
     const smart=smartWallEndpoint(fpStart,p);
+    const connectedWallId=fpPreview?.connectedWallId||connectedWallAtStart(fpStart)?.id||null;
     fpPreview={
       id:'preview',
       type:fpTool,
@@ -1444,7 +1448,8 @@ function floorMove(ev){
       thickness:fpWallThickness,
       layer:'walls',
       snapTarget:smart.target,
-      snappedToTarget:smart.snapped
+      snappedToTarget:smart.snapped,
+      connectedWallId
     };
     drawFloorplan(fpPreview);
   }
@@ -2016,14 +2021,33 @@ function drawFloorplan(preview=null){
       }
     });
 
+    // Close perpendicular wall corners as one continuous L-shaped construction.
+    try{drawAllWallJoints()}catch(e){console.error('Wandverbindung',e)}
+
     if(preview){
       try{
+        const connected=preview.connectedWallId
+          ? fpObjects.find(o=>o.id===preview.connectedWallId)
+          : connectedWallAtStart({x:preview.x1,y:preview.y1});
+
+        // Keep the wall being continued clearly visible while drawing.
+        if(connected)drawConnectedWallPreview(connected);
+
         fpCtx.save();
-        fpCtx.globalAlpha=.78;
+        fpCtx.globalAlpha=.88;
         drawFpObject(preview,true);
         fpCtx.restore();
 
-        // CAD live measurement must remain fully opaque and readable.
+        // Live L-joint at the shared endpoint.
+        if(connected){
+          drawWallJointAt(
+            {x:preview.x1,y:preview.y1},
+            [connected,preview],
+            '#2563eb'
+          );
+        }
+
+        // CAD live measurement remains fully readable.
         drawLiveWallDimension(preview);
       }catch(e){console.error(e)}
     }
@@ -2141,6 +2165,82 @@ function drawPositionText(o,x,y){
   fpCtx.textAlign='center';
   fpCtx.fillStyle='#64748b';
   fpCtx.fillText(`X ${Math.round(x)} · Y ${Math.round(y)} cm`,x,y);
+  fpCtx.restore();
+}
+
+
+function wallsAtPoint(point, excludeId=null, tolerance=3){
+  const result=[];
+  for(const w of fpObjects){
+    if(w.type!=='wall' || w.id===excludeId)continue;
+    const d1=Math.hypot(Number(w.x1)-point.x,Number(w.y1)-point.y);
+    const d2=Math.hypot(Number(w.x2)-point.x,Number(w.y2)-point.y);
+    if(d1<=tolerance || d2<=tolerance)result.push(w);
+  }
+  return result;
+}
+
+function connectedWallAtStart(start){
+  const walls=wallsAtPoint(start,null,4);
+  if(!walls.length)return null;
+  // Prefer the most recently drawn wall; this is normally the chain predecessor.
+  return walls[walls.length-1];
+}
+
+function wallVisualWidth(w){
+  return Math.max(8,(Number(w?.thickness||15))/2);
+}
+
+function drawWallJointAt(point, walls, color='#111827'){
+  if(!point || !walls || walls.length<2)return;
+
+  // Use the largest connected visual width. A centered square makes
+  // two perpendicular butt-ended strokes become one clean L/miter corner.
+  const size=Math.max(...walls.map(wallVisualWidth));
+
+  fpCtx.save();
+  fpCtx.fillStyle=color;
+  fpCtx.fillRect(point.x-size/2, point.y-size/2, size, size);
+  fpCtx.restore();
+}
+
+function drawAllWallJoints(){
+  const walls=fpObjects.filter(o=>o.type==='wall');
+  const seen=[];
+
+  const addPoint=(p,w)=>{
+    let group=seen.find(g=>Math.hypot(g.x-p.x,g.y-p.y)<=3);
+    if(!group){
+      group={x:p.x,y:p.y,walls:[]};
+      seen.push(group);
+    }
+    group.walls.push(w);
+  };
+
+  walls.forEach(w=>{
+    addPoint({x:Number(w.x1),y:Number(w.y1)},w);
+    addPoint({x:Number(w.x2),y:Number(w.y2)},w);
+  });
+
+  seen.forEach(g=>{
+    if(g.walls.length>=2){
+      drawWallJointAt({x:g.x,y:g.y},g.walls,'#111827');
+    }
+  });
+}
+
+function drawConnectedWallPreview(w){
+  if(!w)return;
+  fpCtx.save();
+  fpCtx.strokeStyle='#2563eb';
+  fpCtx.globalAlpha=.40;
+  fpCtx.lineWidth=wallVisualWidth(w);
+  fpCtx.lineCap='butt';
+  fpCtx.lineJoin='miter';
+  fpCtx.beginPath();
+  fpCtx.moveTo(w.x1,w.y1);
+  fpCtx.lineTo(w.x2,w.y2);
+  fpCtx.stroke();
   fpCtx.restore();
 }
 

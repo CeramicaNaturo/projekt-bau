@@ -1,17 +1,17 @@
-Projekt Bau v1.6.3 – 2D CAD Render-Sicherheitsfix
+Projekt Bau v1.6.4 – Gerade Wände
 
-Der 2D-Renderer wurde vom restlichen Interface entkoppelt.
+Behoben:
+- Wand-Vorschau war gerade, aber beim Loslassen wurde ein anderer, roher Endpunkt gespeichert.
+- Dadurch konnten horizontale oder vertikale Wände nach dem Loslassen schräg werden.
 
-Wichtig:
-- Fehler im Eigenschaften-Panel, Lineal oder 3D-Modul können den 2D-Grundriss nicht mehr unsichtbar machen.
-- Jedes Objekt wird einzeln gezeichnet. Ein beschädigtes Objekt stoppt nicht mehr den ganzen Plan.
-- Beim Öffnen wird Fit-to-View mehrfach nach dem tatsächlichen Layout ausgeführt.
-- Canvas erhält garantiert eine Mindestgrösse.
-- Zeichnung wird über Objektkoordinaten gemessen und in der sichtbaren Fläche zentriert.
-- Zusätzlicher Button «2D↺» baut die komplette 2D-Anzeige neu auf.
+Neu:
+- Vorschau und gespeicherte Wand verwenden exakt dieselbe Fangberechnung.
+- Intelligenter Gerade-/45°-Fang:
+  - nahezu horizontal → exakt 0°
+  - nahezu vertikal → exakt 90°
+  - deutlich diagonal → exakt 45°
+- Finger- oder Mausabweichungen von einigen Pixeln erzeugen keine schrägen Wände mehr.
+- Beim nachträglichen Verschieben eines Wand-Endpunkts gilt derselbe Fang.
 
-Fallback:
-- Falls der normale CAD-Renderer trotzdem einen Fehler hat, werden mindestens alle Wände über einen unabhängigen Notfall-Renderer sichtbar dargestellt.
-
-Bestehende Daten werden nicht verändert.
-3D, Fliesenstart und Projektfunktionen bleiben erhalten.
+Alle 2D-, 3D-, Fliesenstart- und Projektfunktionen bleiben erhalten.
+Deutsch / de-CH.

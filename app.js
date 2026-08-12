@@ -565,16 +565,32 @@ function isLayerVisible(o){
 }
 
 function snapAnglePoint(start,p){
-  if(!fpAngleSnap)return {x:snap(p.x),y:snap(p.y)};
-  const dx=p.x-start.x,dy=p.y-start.y;
-  const len=Math.hypot(dx,dy);
-  if(len<1)return {x:start.x,y:start.y};
-  const step=Math.PI/4;
-  const ang=Math.atan2(dy,dx);
-  const snapped=Math.round(ang/step)*step;
+  const rawX=Number(p.x),rawY=Number(p.y);
+  if(!fpAngleSnap)return {x:snap(rawX),y:snap(rawY)};
+
+  const dx=rawX-start.x;
+  const dy=rawY-start.y;
+  const ax=Math.abs(dx),ay=Math.abs(dy);
+
+  if(ax<.5 && ay<.5)return {x:start.x,y:start.y};
+
+  // Strong orthogonal lock:
+  // if the pointer is reasonably close to horizontal/vertical,
+  // force the wall to be mathematically exact.
+  const orthoTolerance=.40;
+
+  if(ay <= ax*orthoTolerance){
+    return {x:snap(rawX),y:start.y};
+  }
+  if(ax <= ay*orthoTolerance){
+    return {x:start.x,y:snap(rawY)};
+  }
+
+  // Otherwise allow an exact 45° diagonal.
+  const length=Math.max(ax,ay);
   return {
-    x:snap(start.x+Math.cos(snapped)*len),
-    y:snap(start.y+Math.sin(snapped)*len)
+    x:snap(start.x + Math.sign(dx||1)*length),
+    y:snap(start.y + Math.sign(dy||1)*length)
   };
 }
 
@@ -1024,14 +1040,16 @@ function floorEnd(ev){
 
   if((fpTool==='wall') && fpStart){
     const p=fpPoint(ev);
+    const ep=snapAnglePoint(fpStart,p);
     const obj={
       id:uidObj(),
       type:fpTool,
       x1:fpStart.x,
       y1:fpStart.y,
-      x2:snap(p.x),
-      y2:snap(p.y),
-      thickness:fpWallThickness
+      x2:ep.x,
+      y2:ep.y,
+      thickness:fpWallThickness,
+      layer:'walls'
     };
 
     const length=dist({x:obj.x1,y:obj.y1},{x:obj.x2,y:obj.y2});

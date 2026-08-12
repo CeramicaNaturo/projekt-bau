@@ -1126,6 +1126,7 @@ function openFloorplan(project,record){
   $('floorplanModal').classList.remove('hidden');
   setTimeout(()=>{initTabletCadUi();if(fp3DMode)window.ProjectBau3D?.fitView?.();else fitFloorplan2D?.();},220);
   setTimeout(()=>{if(fp3DMode)window.ProjectBau3D?.fitView?.();else fitFloorplan2D?.();},180);
+  setTimeout(()=>{if(!fp3DMode)fitFloorplan2D?.();},420);
   setFloorTool('select');setFloorplanView('2d');drawFloorplan();updateSelectedInfo();requestAnimationFrame(()=>requestAnimationFrame(()=>{fitFloorplan2D();setTimeout(fitFloorplan2D,120)}));
 }
 function closeFloorplan(){$('floorplanModal').classList.add('hidden');fpProject=null;fpRecord=null}
@@ -1882,25 +1883,29 @@ function centerFloorplan2D(){
 
 function fitFloorplan2D(){
   if(fp3DMode||!fpCanvas)return;
+
   resize2DCanvas();
 
   const xs=[],ys=[];
   (fpObjects||[]).forEach(o=>{
     if(o.type==='wall'){
-      if(Number.isFinite(Number(o.x1))&&Number.isFinite(Number(o.x2))){
+      if([o.x1,o.y1,o.x2,o.y2].every(v=>Number.isFinite(Number(v)))){
         xs.push(Number(o.x1),Number(o.x2));
         ys.push(Number(o.y1),Number(o.y2));
       }
     }else if(Number.isFinite(Number(o.x))&&Number.isFinite(Number(o.y))){
-      const hw=Math.max(40,Number(o.widthCm||80)/2);
-      const hd=Math.max(40,Number(o.depthCm||80)/2);
+      const scale=Number(o.scale||1);
+      const hw=Math.max(35,Number(o.widthCm||80)*scale/2);
+      const hd=Math.max(35,Number(o.depthCm||80)*scale/2);
       xs.push(Number(o.x)-hw,Number(o.x)+hw);
       ys.push(Number(o.y)-hd,Number(o.y)+hd);
     }
   });
 
   if(!xs.length){
-    fpZoom=1;fpViewOffsetX=80;fpViewOffsetY=80;
+    fpZoom=1;
+    fpViewOffsetX=80;
+    fpViewOffsetY=80;
     drawFloorplan();
     return;
   }
@@ -1910,17 +1915,41 @@ function fitFloorplan2D(){
   const bw=Math.max(100,maxX-minX);
   const bh=Math.max(100,maxY-minY);
 
-  const marginX=Math.max(90,fpCanvas.width*.08);
-  const marginY=Math.max(90,fpCanvas.height*.10);
+  // Use the ACTUAL visible CAD size, not only backing-store dimensions.
+  const wrap=fpCanvas.parentElement;
+  const rect=wrap?.getBoundingClientRect?.();
+  const cssW=Math.max(320,rect?.width||wrap?.clientWidth||window.innerWidth);
+  const cssH=Math.max(260,rect?.height||wrap?.clientHeight||window.innerHeight);
 
-  fpZoom=Math.max(.08,Math.min(4,
-    (fpCanvas.width-marginX*2)/bw,
-    (fpCanvas.height-marginY*2)/bh
-  ));
+  const canvasRect=fpCanvas.getBoundingClientRect();
+  const sx=fpCanvas.width/Math.max(1,canvasRect.width);
+  const sy=fpCanvas.height/Math.max(1,canvasRect.height);
 
-  const cx=(minX+maxX)/2,cy=(minY+maxY)/2;
+  const visibleW=cssW*sx;
+  const visibleH=cssH*sy;
+
+  const isTablet=window.matchMedia('(pointer:coarse)').matches &&
+                 window.matchMedia('(orientation:landscape)').matches;
+
+  // Tablet: fill most of the available workspace.
+  const fillX=isTablet?0.78:0.72;
+  const fillY=isTablet?0.76:0.70;
+
+  const fitX=(visibleW*fillX)/bw;
+  const fitY=(visibleH*fillY)/bh;
+
+  // Allow significantly larger automatic zoom on tablets.
+  const maxZoom=isTablet?4.5:3.0;
+  fpZoom=Math.max(.08,Math.min(maxZoom,fitX,fitY));
+
+  const cx=(minX+maxX)/2;
+  const cy=(minY+maxY)/2;
+
   fpViewOffsetX=fpCanvas.width/2-cx*fpZoom;
-  fpViewOffsetY=fpCanvas.height/2-cy*fpZoom;
+
+  // Slight upward bias because the object palette occupies the bottom visually.
+  const verticalBias=isTablet ? fpCanvas.height*0.04 : 0;
+  fpViewOffsetY=fpCanvas.height/2-cy*fpZoom-verticalBias;
 
   const z=$('fpZoomReset');
   if(z)z.textContent=`${Math.round(fpZoom*100)}%`;
@@ -2494,7 +2523,10 @@ function initTabletCadUi(){
 
   window.addEventListener('resize',()=>{refresh();updateTabletViewportMetrics()});
   if(window.visualViewport){
-    window.visualViewport.addEventListener('resize',updateTabletViewportMetrics);
+    window.visualViewport.addEventListener('resize',()=>{
+      updateTabletViewportMetrics();
+      setTimeout(()=>{if(!fp3DMode)fitFloorplan2D?.();},120);
+    });
   }
   window.addEventListener('orientationchange',()=>setTimeout(refresh,250));
   applyMode();

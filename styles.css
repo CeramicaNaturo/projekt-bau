@@ -2045,3 +2045,33 @@ body.pdf-exporting .pdf-footer{
     --tablet-object-width:94px;
   }
 }
+
+/* ============================================================
+   v1.7.7 – Tablet Focus / plan fills visible CAD area
+   ============================================================ */
+
+.floorplan-modal-card.tablet-hardmode .fp-editor-grid{
+  padding-bottom:calc(var(--tablet-object-height) + 4px)!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .cad-object-palette{
+  bottom:max(24px,env(safe-area-inset-bottom))!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .floorplan-canvas-wrap{
+  background:#fff!important;
+}
+
+.floorplan-modal-card.tablet-hardmode #floorplanCanvas{
+  width:100%!important;
+  height:100%!important;
+}
+
+/* Slightly reduce top bars on landscape tablets to give CAD extra height */
+@media (pointer:coarse) and (orientation:landscape){
+  :root{
+    --tablet-topbar:48px;
+    --tablet-controls:42px;
+    --tablet-roomstrip:40px;
+  }
+}

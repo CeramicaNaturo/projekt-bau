@@ -422,51 +422,86 @@ function confirmNewFloorplan(){
 }
 
 
-function floorPointKey(x,y){return `${Math.round(x)}:${Math.round(y)}`}
-
 function calculateFloorAreaM2(objects){
-  const walls=(objects||[]).filter(o=>o.type==='wall');
-  if(walls.length<3)return null;
+  // Für die Flächenberechnung werden die Wände verwendet.
+  const lines=(objects||[]).filter(o=>o.type==='wall');
+  if(lines.length<3)return null;
 
-  const map=new Map();
-  function getPoint(x,y){
-    const key=floorPointKey(x,y);
-    if(!map.has(key))map.set(key,{key,x:Math.round(x),y:Math.round(y),neighbors:[]});
-    return map.get(key);
+  // Endpunkte müssen auf einem Tablet nicht pixelgenau zusammentreffen.
+  // Punkte innerhalb dieser Toleranz werden als derselbe Eckpunkt behandelt.
+  const tolerance=30;
+  const nodes=[];
+
+  function findOrCreateNode(x,y){
+    let best=null,bestDist=Infinity;
+    for(const n of nodes){
+      const d=Math.hypot(n.x-x,n.y-y);
+      if(d<tolerance && d<bestDist){
+        best=n;bestDist=d;
+      }
+    }
+    if(best){
+      // Mittelwert stabilisiert leicht versetzte Finger-Endpunkte.
+      best.x=(best.x*best.count+x)/(best.count+1);
+      best.y=(best.y*best.count+y)/(best.count+1);
+      best.count++;
+      return best;
+    }
+    const n={id:nodes.length,x,y,count:1,neighbors:[]};
+    nodes.push(n);
+    return n;
   }
 
-  walls.forEach(w=>{
-    const a=getPoint(w.x1,w.y1),b=getPoint(w.x2,w.y2);
-    a.neighbors.push(b.key);b.neighbors.push(a.key);
-  });
+  for(const l of lines){
+    const n1=findOrCreateNode(Number(l.x1),Number(l.y1));
+    const n2=findOrCreateNode(Number(l.x2),Number(l.y2));
+    if(n1===n2)continue;
+    if(!n1.neighbors.includes(n2.id))n1.neighbors.push(n2.id);
+    if(!n2.neighbors.includes(n1.id))n2.neighbors.push(n1.id);
+  }
 
-  const pts=[...map.values()];
-  if(pts.length<3 || pts.some(p=>p.neighbors.length!==2))return null;
+  if(nodes.length<3)return null;
 
-  const start=pts[0];
+  // Ein einfacher geschlossener Raum hat an jeder Ecke genau zwei Verbindungen.
+  if(nodes.some(n=>n.neighbors.length!==2))return null;
+
   const polygon=[];
   const visited=new Set();
-  let current=start.key,previous=null;
+  const first=nodes[0];
+  let current=first.id;
+  let previous=null;
 
-  for(let guard=0;guard<pts.length+2;guard++){
-    const p=map.get(current);
-    if(!p)return null;
-    polygon.push({x:p.x,y:p.y});
+  for(let guard=0;guard<nodes.length+2;guard++){
+    const n=nodes[current];
+    if(!n)return null;
+
+    polygon.push({x:n.x,y:n.y});
     visited.add(current);
-    const next=p.neighbors.find(k=>k!==previous);
-    if(!next)return null;
-    previous=current;current=next;
-    if(current===start.key)break;
+
+    const next=n.neighbors.find(id=>id!==previous);
+    if(next===undefined)return null;
+
+    previous=current;
+    current=next;
+
+    if(current===first.id)break;
   }
 
-  if(current!==start.key || visited.size!==pts.length)return null;
+  if(current!==first.id || visited.size!==nodes.length || polygon.length<3)return null;
 
-  let sum=0;
+  // Shoelace-Formel.
+  // Im Grundriss gilt weiterhin 1 Canvas-Einheit = 1 cm.
+  let twiceArea=0;
   for(let i=0;i<polygon.length;i++){
-    const a=polygon[i],b=polygon[(i+1)%polygon.length];
-    sum+=a.x*b.y-b.x*a.y;
+    const p=polygon[i];
+    const q=polygon[(i+1)%polygon.length];
+    twiceArea+=p.x*q.y-q.x*p.y;
   }
-  return (Math.abs(sum)/2)/10000;
+
+  const areaCm2=Math.abs(twiceArea)/2;
+  if(areaCm2<=0)return null;
+
+  return areaCm2/10000;
 }
 
 function updateFloorRoomInfo(){
@@ -511,7 +546,7 @@ function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function hitTest(p){
   for(let i=fpObjects.length-1;i>=0;i--){
     const o=fpObjects[i];
-    if(o.type==='wall'||o.type==='dimension'){
+    if(o.type==='wall'){
       const A={x:o.x1,y:o.y1},B={x:o.x2,y:o.y2};
       const len=dist(A,B)||1;
       const t=Math.max(0,Math.min(1,((p.x-A.x)*(B.x-A.x)+(p.y-A.y)*(B.y-A.y))/(len*len)));
@@ -547,7 +582,7 @@ function floorStart(ev){
     return;
   }
 
-  if(fpTool==='wall' || fpTool==='dimension'){
+  if(fpTool==='wall'){
     pushHistory();
     fpStart={x:snap(p.x),y:snap(p.y)};
     fpPreview={
@@ -600,7 +635,7 @@ function floorMove(ev){
     const dy=p.y-fpDragOffset.pStart.y;
     const orig=fpDragOffset.orig;
 
-    if(o.type==='wall' || o.type==='dimension'){
+    if(o.type==='wall'){
       o.x1=snap(orig.x1+dx);
       o.y1=snap(orig.y1+dy);
       o.x2=snap(orig.x2+dx);
@@ -614,7 +649,7 @@ function floorMove(ev){
     return;
   }
 
-  if((fpTool==='wall' || fpTool==='dimension') && fpStart){
+  if((fpTool==='wall') && fpStart){
     fpPreview={
       id:'preview',
       type:fpTool,
@@ -638,7 +673,7 @@ function floorEnd(ev){
     return;
   }
 
-  if((fpTool==='wall' || fpTool==='dimension') && fpStart){
+  if((fpTool==='wall') && fpStart){
     const p=fpPoint(ev);
     const obj={
       id:uidObj(),
@@ -668,8 +703,45 @@ function deleteSelected(){
 }
 
 function selectedObject(){return fpObjects.find(x=>x.id===fpSelectedId)||null}
+
+function objectPositionCm(o){
+  if(!o)return {x:null,y:null};
+  if(o.type==='wall'){
+    return {
+      x:Math.round((Number(o.x1)+Number(o.x2))/2),
+      y:Math.round((Number(o.y1)+Number(o.y2))/2)
+    };
+  }
+  return {
+    x:Math.round(Number(o.x||0)),
+    y:Math.round(Number(o.y||0))
+  };
+}
+
+function setSelectedPosition(){
+  const o=selectedObject();
+  if(!o)return;
+
+  const xInput=$('fpObjectX'),yInput=$('fpObjectY');
+  const x=Number(xInput?.value),y=Number(yInput?.value);
+  if(!Number.isFinite(x)||!Number.isFinite(y))return;
+
+  pushHistory();
+
+  if(o.type==='wall'){
+    const pos=objectPositionCm(o);
+    const dx=x-pos.x,dy=y-pos.y;
+    o.x1+=dx;o.x2+=dx;o.y1+=dy;o.y2+=dy;
+  }else{
+    o.x=x;o.y=y;
+  }
+
+  drawFloorplan();
+  updateSelectedInfo();
+}
+
 function setSelectedRotation(value,withHistory=false){
-  const o=selectedObject();if(!o||o.type==='wall'||o.type==='dimension')return;
+  const o=selectedObject();if(!o||o.type==='wall')return;
   if(withHistory)pushHistory();
   let v=Number(value);if(!Number.isFinite(v))v=0;
   v=((v%360)+360)%360;
@@ -680,7 +752,7 @@ function setSelectedRotation(value,withHistory=false){
   drawFloorplan();updateSelectedInfo();
 }
 function setSelectedScale(value,withHistory=false){
-  const o=selectedObject();if(!o||o.type==='wall'||o.type==='dimension')return;
+  const o=selectedObject();if(!o||o.type==='wall')return;
   if(withHistory)pushHistory();
   let v=Number(value);
   if(!Number.isFinite(v))v=100;
@@ -695,7 +767,7 @@ function setSelectedScale(value,withHistory=false){
 
 function setSelectedDimensions(){
   const o=selectedObject();
-  if(!o||o.type==='wall'||o.type==='dimension'||o.type==='text')return;
+  if(!o||o.type==='wall'||o.type==='text')return;
   const w=Number($('fpObjectWidth').value),d=Number($('fpObjectDepth').value);
   if(!Number.isFinite(w)||!Number.isFinite(d)||w<=0||d<=0)return;
   pushHistory();
@@ -707,8 +779,12 @@ function updateSelectedInfo(){
   const o=fpObjects.find(x=>x.id===fpSelectedId);
   if(!o){el.textContent='Keine Auswahl';return}
   let txt=`Ausgewählt: ${o.type}`;
-  if(o.type==='wall'||o.type==='dimension')txt+=` · Länge ${cmFromPixels(dist({x:o.x1,y:o.y1},{x:o.x2,y:o.y2}))} cm`;
-  else {
+  const pos=objectPositionCm(o);
+  txt+=` · X ${pos.x} cm · Y ${pos.y} cm`;
+  if(o.type==='wall'){
+    txt+=` · Länge ${cmFromPixels(dist({x:o.x1,y:o.y1},{x:o.x2,y:o.y2}))} cm`;
+    txt+=` · Start ${Math.round(o.x1)}/${Math.round(o.y1)} cm · Ende ${Math.round(o.x2)}/${Math.round(o.y2)} cm`;
+  } else {
     txt+=` · Drehung ${Math.round(o.rotation||0)}° · Grösse ${Math.round((o.scale||1)*100)}%`;
     const slider=$('fpRotation'),num=$('fpRotationNumber');
     if(slider)slider.value=String(Math.round(o.rotation||0));
@@ -722,6 +798,10 @@ function updateSelectedInfo(){
     if(d)d.value=o.depthCm||'';
     if(o.type!=='text' && o.widthCm && o.depthCm)txt+=` · ${o.widthCm} × ${o.depthCm} cm`;
   }
+  const posInputs=objectPositionCm(o);
+  const xInput=$('fpObjectX'),yInput=$('fpObjectY');
+  if(xInput)xInput.value=String(posInputs.x);
+  if(yInput)yInput.value=String(posInputs.y);
   el.textContent=txt;
 }
 function applyZoom(){
@@ -760,7 +840,10 @@ function drawFpObject(o,preview=false){
     if(!preview){
       const mx=(o.x1+o.x2)/2,my=(o.y1+o.y2)/2;
       fpCtx.font='18px Arial';fpCtx.textAlign='center';fpCtx.fillStyle='#334155';
-      fpCtx.fillText(`${cmFromPixels(dist({x:o.x1,y:o.y1},{x:o.x2,y:o.y2}))} cm`,mx,my-14);
+      fpCtx.fillText(`${cmFromPixels(dist({x:o.x1,y:o.y1},{x:o.x2,y:o.y2}))} cm`,mx,my-18);
+      fpCtx.font='12px Arial';
+      fpCtx.fillStyle='#64748b';
+      fpCtx.fillText(`X ${Math.round(mx)} · Y ${Math.round(my)} cm`,mx,my+16);
     }
   }else if(o.type==='dimension'){
     fpCtx.lineWidth=2;
@@ -796,18 +879,25 @@ function drawFpObject(o,preview=false){
     fpCtx.lineWidth=3;fpCtx.strokeRect(o.x-18,o.y-18,36,36);fpCtx.beginPath();fpCtx.moveTo(o.x-14,o.y-14);fpCtx.lineTo(o.x+14,o.y+14);fpCtx.moveTo(o.x+14,o.y-14);fpCtx.lineTo(o.x-14,o.y+14);fpCtx.stroke();
   }else if(o.type==='text'){
     fpCtx.font='bold 24px Arial';fpCtx.textAlign='left';fpCtx.fillText(o.text,o.x,o.y);
+    fpCtx.font='12px Arial';fpCtx.fillStyle='#64748b';
+    fpCtx.fillText(`X ${Math.round(o.x||0)} · Y ${Math.round(o.y||0)} cm`,o.x,o.y+18);
   }
   }
-  if(o.type!=='wall'&&o.type!=='dimension'&&o.type!=='text'&&o.widthCm&&o.depthCm){
+  if(o.type!=='wall'&&o.type!=='text'){
     fpCtx.save();
     fpCtx.setTransform(1,0,0,1,0,0);
-    fpCtx.fillStyle='#475569';
-    fpCtx.font='bold 16px Arial';
     fpCtx.textAlign='center';
-    fpCtx.fillText(`${o.widthCm} × ${o.depthCm} cm`,o.x,o.y+85*(o.scale||1));
+    if(o.widthCm&&o.depthCm){
+      fpCtx.fillStyle='#475569';
+      fpCtx.font='bold 16px Arial';
+      fpCtx.fillText(`${o.widthCm} × ${o.depthCm} cm`,o.x,o.y+85*(o.scale||1));
+    }
+    fpCtx.fillStyle='#64748b';
+    fpCtx.font='12px Arial';
+    fpCtx.fillText(`X ${Math.round(o.x||0)} · Y ${Math.round(o.y||0)} cm`,o.x,o.y+104*(o.scale||1));
     fpCtx.restore();
   }
-  if(selected&&o.type!=='wall'&&o.type!=='dimension'){
+  if(selected&&o.type!=='wall'){
     fpCtx.strokeStyle='#2563eb';fpCtx.lineWidth=2;fpCtx.setLineDash([6,4]);const ss=65*(o.scale||1);fpCtx.strokeRect(o.x-ss,o.y-ss,ss*2,ss*2);
   }
   fpCtx.restore();
@@ -842,6 +932,9 @@ function initFloorplanControls(){
   const objW=$('fpObjectWidth'),objD=$('fpObjectDepth');
   if(objW)objW.onchange=setSelectedDimensions;
   if(objD)objD.onchange=setSelectedDimensions;
+  const objX=$('fpObjectX'),objY=$('fpObjectY');
+  if(objX)objX.onchange=setSelectedPosition;
+  if(objY)objY.onchange=setSelectedPosition;
   $('fpDeleteSelected').onclick=deleteSelected;
   $('fpClear').onclick=()=>{if(confirm('Grundriss vollständig löschen?')){pushHistory();fpObjects=[];fpSelectedId=null;drawFloorplan();updateSelectedInfo()}};
   $('fpSave').onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.wallThickness=fpWallThickness;fpRecord.floorAreaM2=calculateFloorAreaM2(fpObjects);save();closeFloorplan()};

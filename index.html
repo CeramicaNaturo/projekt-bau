@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=090">
+<link rel="stylesheet" href="styles.css?v=092">
 </head>
 <body>
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.9</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.9.2</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -116,7 +116,6 @@
     <div class="floorplan-toolbar">
       <button class="secondary fp-tool active" data-tool="select">Auswählen</button>
       <button class="secondary fp-tool" data-tool="wall">Wand</button>
-      <button class="secondary fp-tool" data-tool="dimension">Masslinie</button>
       <button class="secondary fp-tool" data-tool="door">Tür</button>
       <button class="secondary fp-tool" data-tool="window">Fenster</button>
       <button class="secondary fp-tool" data-tool="wc">WC</button>
@@ -144,6 +143,12 @@
       </label>
       <label>Tiefe (cm)
         <input id="fpObjectDepth" type="number" min="1" step="1" placeholder="Tiefe">
+      </label>
+      <label>Position X (cm)
+        <input id="fpObjectX" type="number" step="1" placeholder="X">
+      </label>
+      <label>Position Y (cm)
+        <input id="fpObjectY" type="number" step="1" placeholder="Y">
       </label>
       <button id="fpDeleteSelected" class="danger">Auswahl löschen</button>
       <button id="fpClear" class="danger">Alles löschen</button>
@@ -181,11 +186,11 @@
         <input id="fpRoomHeight" type="number" min="0" max="10" step="0.01" placeholder="z. B. 2.40">
       </label>
     </div>
-    <div class="floorplan-hint">Professioneller Modus: Objekte auswählen, verschieben und löschen. Wände und Masslinien mit dem Finger ziehen. Masse werden in cm angezeigt.</div>
+    <div class="floorplan-hint">Professioneller Modus: Objekte auswählen, verschieben und löschen. Wände mit dem Finger ziehen. Wandlänge und Objektpositionen werden automatisch in cm angezeigt.</div>
     <div class="floorplan-canvas-wrap"><canvas id="floorplanCanvas" width="1600" height="1100"></canvas></div><div id="fpSelectedInfo" class="fp-selected-info">Keine Auswahl</div>
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=090"></script>
+<script src="app.js?v=092"></script>
 </body>
 </html>

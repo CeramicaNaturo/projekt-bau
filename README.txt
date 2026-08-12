@@ -1,18 +1,23 @@
-Projekt Bau v0.9 – PDF + automatische Bodenfläche
-
-PDF:
-- Der PDF-Button enthält keinen Druck-/window.print-Befehl mehr.
-- PDF wird direkt mit jsPDF erzeugt und im PDF-Viewer geöffnet.
-- A4, maximal zwei Fotos pro Seite.
-- Kopfzeile vollständig Deutsch.
+Projekt Bau v0.9.2 – Wand + Positionen in cm
 
 Grundriss:
-- Geschlossener Wandkontur wird automatisch erkannt.
-- Bodenfläche wird automatisch in m² berechnet.
-- Nicht geschlossener Grundriss zeigt «Grundriss nicht geschlossen».
-- Raumhöhe kann pro Grundriss in Metern eingegeben werden.
-- Bodenfläche und Raumhöhe werden beim Grundriss gespeichert und angezeigt.
+- «Masslinie» wurde entfernt und vollständig mit «Wand» zusammengeführt.
+- Wand zeigt automatisch:
+  - Länge in cm
+  - Mittelpunkt X / Y in cm
+  - Startpunkt X / Y
+  - Endpunkt X / Y
+- Wand wird weiterhin für die automatische Bodenflächenberechnung verwendet.
+- Geschlossener Wandkontur berechnet Bodenfläche automatisch in m².
 
-Update:
-- index.html, styles.css und app.js verwenden v0.9 Cache-Busting.
-- reset.html ist im ZIP enthalten und lädt garantiert die neue Version.
+Objekte:
+- Alle platzierten Objekte zeigen ihre Position X / Y in cm.
+- Bei Auswahl werden Position X und Position Y in Eingabefeldern angezeigt.
+- X / Y können manuell geändert werden, um ein Objekt exakt zu positionieren.
+- Tür, Fenster, WC, Dusche, Badewanne, Lavabo, Bodenablauf und Text behalten:
+  - freie Position
+  - freie Drehung 0–359°
+  - freie Grösse 25–300 %
+  - Breite / Tiefe in cm
+
+Deutsch / de-CH und Schweizer Formate bleiben erhalten.

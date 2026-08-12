@@ -2135,3 +2135,210 @@ body.pdf-exporting .pdf-footer{
   min-height:0!important;
   overflow:hidden!important;
 }
+
+/* ============================================================
+   v1.7.9 – HARD REBUILD: workspace = full blue-marked area
+   ============================================================ */
+
+/* The modal itself: top appbar / controls / room strip / body */
+.floorplan-modal-card.tablet-hardmode{
+  display:grid!important;
+  grid-template-rows:
+    48px
+    42px
+    40px
+    minmax(0,1fr)!important;
+  height:100dvh!important;
+  max-height:100dvh!important;
+  overflow:hidden!important;
+}
+
+/* NEW explicit CAD body:
+   row 1 = 2D/3D editor area
+   row 2 = object palette
+   row 3 = status bar */
+.floorplan-modal-card.tablet-hardmode .fp-cad-body{
+  min-height:0!important;
+  height:100%!important;
+  display:grid!important;
+  grid-template-rows:
+    minmax(0,1fr)
+    92px
+    24px!important;
+  overflow:hidden!important;
+  position:relative!important;
+}
+
+/* Workspace row gets ALL remaining height */
+.floorplan-modal-card.tablet-hardmode .fp-editor-grid{
+  grid-row:1!important;
+  min-height:0!important;
+  height:100%!important;
+  display:grid!important;
+  grid-template-columns:64px minmax(0,1fr)!important;
+  padding:0!important;
+  margin:0!important;
+  overflow:hidden!important;
+}
+
+.floorplan-modal-card.tablet-hardmode.inspector-open .fp-editor-grid{
+  grid-template-columns:64px minmax(0,1fr) 240px!important;
+}
+
+/* Left toolbar stretches the full blue-marked height */
+.floorplan-modal-card.tablet-hardmode .fp-left-tools{
+  height:100%!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  width:64px!important;
+  padding:6px 4px!important;
+}
+
+/* 2D and 3D workspace fill row 1 exactly */
+.floorplan-modal-card.tablet-hardmode .cad-floorplan-workspace,
+.floorplan-modal-card.tablet-hardmode #fp2DWorkspace,
+.floorplan-modal-card.tablet-hardmode #fp3DWorkspace{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+
+.floorplan-modal-card.tablet-hardmode #fp2DWorkspace{
+  display:grid!important;
+  grid-template-rows:22px minmax(0,1fr) 22px!important;
+}
+
+.floorplan-modal-card.tablet-hardmode #fp3DWorkspace{
+  position:relative!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .cad-canvas-inner{
+  min-height:0!important;
+  height:100%!important;
+  grid-template-columns:24px minmax(0,1fr)!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .floorplan-canvas-wrap{
+  min-width:0!important;
+  min-height:0!important;
+  width:100%!important;
+  height:100%!important;
+  overflow:hidden!important;
+}
+
+.floorplan-modal-card.tablet-hardmode #floorplanCanvas,
+.floorplan-modal-card.tablet-hardmode #fp3DViewport,
+.floorplan-modal-card.tablet-hardmode #fp3DViewport canvas{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+}
+
+/* Inspector is same height as the workspace */
+.floorplan-modal-card.tablet-hardmode .cad-inspector{
+  height:100%!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+}
+
+/* Palette is a REAL second row, not floating and not overlaying workspace */
+.floorplan-modal-card.tablet-hardmode .cad-object-palette{
+  grid-row:2!important;
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:100%!important;
+  margin:0!important;
+  padding:7px 10px 7px 74px!important;
+  height:92px!important;
+  min-height:92px!important;
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  gap:8px!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  box-sizing:border-box!important;
+  background:#fff!important;
+  border-top:1px solid #d9e0e8!important;
+  box-shadow:0 -2px 8px rgba(15,23,42,.06)!important;
+  z-index:20!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .cad-object-palette button{
+  flex:0 0 88px!important;
+  width:88px!important;
+  min-width:88px!important;
+  height:76px!important;
+  min-height:76px!important;
+  padding:5px!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .cad-object-palette button b{
+  font-size:24px!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .cad-object-palette button span{
+  font-size:9px!important;
+  line-height:1.15!important;
+}
+
+/* Status is third row */
+.floorplan-modal-card.tablet-hardmode .fp-statusbar{
+  grid-row:3!important;
+  position:relative!important;
+  height:24px!important;
+  min-height:24px!important;
+  padding:0 8px!important;
+  font-size:8px!important;
+  background:#fff!important;
+}
+
+/* Remove ALL old tablet reservations/offsets that made the work area appear short */
+.floorplan-modal-card.tablet-hardmode .fp-editor-grid,
+.floorplan-modal-card.tablet-hardmode .cad-floorplan-workspace,
+.floorplan-modal-card.tablet-hardmode #fp2DWorkspace,
+.floorplan-modal-card.tablet-hardmode #fp3DWorkspace{
+  padding-bottom:0!important;
+  margin-bottom:0!important;
+}
+
+/* Top area remains compact enough for tablet */
+.floorplan-modal-card.tablet-hardmode .fp-appbar{
+  height:48px!important;
+  min-height:48px!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-top-controls{
+  height:42px!important;
+  min-height:42px!important;
+}
+.floorplan-modal-card.tablet-hardmode .fp-room-strip{
+  height:40px!important;
+  min-height:40px!important;
+}
+
+/* Extra-wide Samsung tablet */
+@media (pointer:coarse) and (orientation:landscape) and (min-width:1200px){
+  .floorplan-modal-card.tablet-hardmode .fp-cad-body{
+    grid-template-rows:minmax(0,1fr) 96px 24px!important;
+  }
+  .floorplan-modal-card.tablet-hardmode .cad-object-palette{
+    height:96px!important;
+    min-height:96px!important;
+  }
+  .floorplan-modal-card.tablet-hardmode .cad-object-palette button{
+    flex-basis:92px!important;
+    width:92px!important;
+    min-width:92px!important;
+    height:80px!important;
+    min-height:80px!important;
+  }
+}

@@ -40,13 +40,11 @@ $('deleteProject').onclick=()=>{let p=cur();if(p&&confirm('Projekt wirklich lös
 $('workerView').onclick=()=>document.body.classList.toggle('worker-mode');
 $('backup').onclick=()=>{let a=document.createElement('a'),b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});a.href=URL.createObjectURL(b);a.download='ProjektBau_Yedek.json';a.click()};
 $('restore').onchange=async e=>{try{let d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d.projects))throw 0;S=d;A=null;save()}catch{alert('Ungültige Sicherungsdatei.')}};
-$('printReport').onclick=async()=>{
-  await generatePDFReport();
-};
+$('printReport').onclick=()=>generateDirectPDFReport();
 
 function render(){
   let b=$('projects');b.innerHTML=S.projects.length?'':'Noch keine Projekte vorhanden.';
-  S.projects.forEach(p=>{let d=document.createElement('div');d.className='project';d.innerHTML=`<div><b>${esc(p.name)}</b><div class=muted>${esc(p.address||'Keine Adresse')} · ${p.areas.length} Bereiche</div></div><button class=secondary>Aç</button>`;d.querySelector('button').onclick=()=>{A=p.id;render()};b.appendChild(d)});
+  S.projects.forEach(p=>{let d=document.createElement('div');d.className='project';d.innerHTML=`<div><b>${esc(p.name)}</b><div class=muted>${esc(p.address||'Keine Adresse')} · ${p.areas.length} Bereiche</div></div><button class=secondary>Öffnen</button>`;d.querySelector('button').onclick=()=>{A=p.id;render()};b.appendChild(d)});
   renderP()
 }
 function renderP(){
@@ -182,92 +180,142 @@ function img(f){
   return new Promise(ok=>{let r=new FileReader(),i=new Image();r.onload=()=>i.src=r.result;i.onload=()=>{let w=Math.min(1400,i.width),h=Math.round(i.height*w/i.width),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(i,0,0,w,h);ok(c.toDataURL('image/jpeg',.8))};r.readAsDataURL(f)})
 }
 
-async function waitForReportImages(root){
-  const imgs=[...root.querySelectorAll('img')];
-  await Promise.all(imgs.map(img=>{
-    if(img.complete)return Promise.resolve();
-    return new Promise(resolve=>{
-      img.onload=resolve;
-      img.onerror=resolve;
-    });
-  }));
+
+function pdfImageFormat(data){
+  if(/^data:image\/png/i.test(data))return 'PNG';
+  if(/^data:image\/webp/i.test(data))return 'WEBP';
+  return 'JPEG';
 }
 
-function safePdfFilename(name){
-  return (name||'Projekt_Bau')
-    .replace(/[\\/:*?"<>|]+/g,'_')
-    .replace(/\s+/g,'_')
-    .slice(0,80);
+function addImageContain(doc,data,x,y,w,h){
+  try{
+    const props=doc.getImageProperties(data);
+    const ratio=Math.min(w/props.width,h/props.height);
+    const iw=props.width*ratio,ih=props.height*ratio;
+    doc.addImage(data,pdfImageFormat(data),x+(w-iw)/2,y+(h-ih)/2,iw,ih,undefined,'FAST');
+  }catch(e){console.error(e)}
 }
 
-async function generatePDFReport(){
+function generateDirectPDFReport(){
   const p=cur();
   if(!p)return;
 
-  const photoCount=(p.areas||[]).reduce((n,a)=>n+(a.photos||[]).length,0);
-  if(!photoCount){
+  const items=[];
+  (p.areas||[]).forEach(area=>(area.photos||[]).forEach(photo=>items.push({area,photo})));
+
+  if(!items.length){
     alert('Für den PDF-Bericht muss mindestens ein Foto vorhanden sein.');
     return;
   }
-
-  if(!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF){
-    alert('Das PDF-Modul konnte nicht geladen werden. Bitte Internetverbindung prüfen und die Seite neu laden.');
+  if(!window.jspdf || !window.jspdf.jsPDF){
+    alert('Das PDF-Modul konnte nicht geladen werden. Bitte Seite neu laden.');
     return;
   }
 
-  // Open immediately so Edge does not treat the final PDF tab as a popup.
-  const pdfWindow=window.open('about:blank','_blank');
+  const pdfTab=window.open('about:blank','_blank');
 
   try{
-    buildPrintReport();
-    const root=$('printReportRoot');
-    document.body.classList.add('pdf-exporting');
-
-    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    await waitForReportImages(root);
-
-    const pages=[...root.querySelectorAll('.pdf-page')];
-    if(!pages.length)throw new Error('Keine PDF-Seiten vorhanden.');
-
     const {jsPDF}=window.jspdf;
-    const pdf=new jsPDF({
-      orientation:'portrait',
-      unit:'mm',
-      format:'a4',
-      compress:true
-    });
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+    const totalPages=Math.ceil(items.length/2);
+    const reportDate=new Date().toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'});
 
-    for(let i=0;i<pages.length;i++){
-      const canvas=await html2canvas(pages[i],{
-        scale:2,
-        backgroundColor:'#ffffff',
-        useCORS:true,
-        logging:false,
-        width:pages[i].scrollWidth,
-        height:pages[i].scrollHeight
+    for(let pageIndex=0;pageIndex<totalPages;pageIndex++){
+      if(pageIndex>0)doc.addPage('a4','portrait');
+
+      doc.setTextColor(90);doc.setFont('helvetica','bold');doc.setFontSize(8);
+      doc.text('PROJEKT BAU · BAUDOKUMENTATION',12,12);
+
+      doc.setTextColor(20);doc.setFontSize(19);
+      doc.text(String(p.name||'Projekt'),12,20);
+
+      let hy=27;
+      const rows=[
+        ['Adresse',p.address],['Kunde / Firma',p.customer],['Verantwortlich',p.owner],
+        ['Telefon',p.phone],['Startdatum',fmtDate(p.startDate)]
+      ].filter(r=>r[1]);
+
+      doc.setFontSize(9);
+      rows.forEach(([label,value])=>{
+        doc.setFont('helvetica','bold');doc.text(`${label}:`,12,hy);
+        doc.setFont('helvetica','normal');doc.text(String(value),39,hy);
+        hy+=5;
       });
 
-      const img=canvas.toDataURL('image/jpeg',0.93);
-      if(i>0)pdf.addPage('a4','portrait');
-      pdf.addImage(img,'JPEG',0,0,210,297,undefined,'FAST');
+      doc.setFont('helvetica','normal');doc.setFontSize(9);
+      doc.text(`Seite ${pageIndex+1} / ${totalPages}`,198,12,{align:'right'});
+      doc.text(`Berichtsdatum: ${reportDate}`,198,17,{align:'right'});
+      doc.setLineWidth(.5);doc.line(12,48,198,48);
+
+      for(let slot=0;slot<2;slot++){
+        const item=items[pageIndex*2+slot];
+        if(!item)continue;
+
+        const y=55+slot*116,h=108;
+        doc.setDrawColor(170);doc.setLineWidth(.25);
+        doc.roundedRect(12,y,186,h,2,2,'S');
+        doc.line(98,y,98,y+h);
+
+        addImageContain(doc,item.photo.data,13,y+1,84,106);
+
+        const tx=102,tw=92;
+        let ty=y+8;
+
+        doc.setTextColor(100);doc.setFont('helvetica','bold');doc.setFontSize(7.5);
+        doc.text('BEREICH / POSITION',tx,ty);ty+=6;
+
+        doc.setTextColor(20);doc.setFontSize(13);
+        const titleLines=doc.splitTextToSize(String(item.photo.title||item.area.name||'-'),tw);
+        doc.text(titleLines,tx,ty);ty+=titleLines.length*5.4+3;
+
+        const status=`${item.photo.kind||'Detail'} · ${item.area.status||'Offen'}`;
+        doc.setFontSize(8.5);doc.setFont('helvetica','bold');
+        const badgeW=Math.min(50,doc.getTextWidth(status)+6);
+        doc.roundedRect(tx,ty-4,badgeW,7,3,3,'S');
+        doc.text(status,tx+3,ty+.5);ty+=10;
+
+        const tasks=(item.area.tasks||[]).map(x=>x.text).filter(Boolean).join(' • ');
+        const materials=(item.area.materials||[]).map(x=>x.text).filter(Boolean).join(' • ');
+        const sections=[
+          ['BESCHREIBUNG / AUSZUFÜHRENDE ARBEITEN',item.photo.note||tasks||'-'],
+          ...(materials?[['MATERIAL / MENGE',materials]]:[]),
+          ...(item.area.worker?[['MITARBEITER / TEAM',item.area.worker]]:[]),
+          ...(item.area.priority?[['PRIORITÄT',item.area.priority]]:[])
+        ];
+
+        for(const [label,value] of sections){
+          if(ty>y+h-9)break;
+          doc.setTextColor(100);doc.setFont('helvetica','bold');doc.setFontSize(7.1);
+          doc.text(label,tx,ty);ty+=4;
+          doc.setTextColor(20);doc.setFont('helvetica','normal');doc.setFontSize(9);
+          let lines=doc.splitTextToSize(String(value||'-'),tw);
+          const maxLines=Math.max(1,Math.floor((y+h-ty-3)/4.1));
+          lines=lines.slice(0,maxLines);
+          doc.text(lines,tx,ty);
+          ty+=lines.length*4.1+4;
+        }
+      }
+
+      doc.setDrawColor(200);doc.line(12,289,198,289);
+      doc.setTextColor(100);doc.setFontSize(7.5);
+      doc.text('Projekt Bau',12,294);
+      doc.text(`${String(p.name||'Projekt')} · ${pageIndex+1}/${totalPages}`,198,294,{align:'right'});
     }
 
-    const blob=pdf.output('blob');
+    const blob=doc.output('blob');
     const url=URL.createObjectURL(blob);
 
-    if(pdfWindow){
-      pdfWindow.location.replace(url);
-      setTimeout(()=>URL.revokeObjectURL(url),120000);
-    }else{
-      pdf.save(`${safePdfFilename(p.name)}_Baudokumentation.pdf`);
-      URL.revokeObjectURL(url);
+    if(pdfTab)pdfTab.location.replace(url);
+    else{
+      const link=document.createElement('a');
+      link.href=url;link.target='_blank';link.click();
     }
+
+    setTimeout(()=>URL.revokeObjectURL(url),180000);
   }catch(err){
-    if(pdfWindow)pdfWindow.close();
+    if(pdfTab)pdfTab.close();
     console.error(err);
-    alert('Der PDF-Bericht konnte nicht erstellt werden. Bitte Seite neu laden und erneut versuchen.');
-  }finally{
-    document.body.classList.remove('pdf-exporting');
+    alert('Der PDF-Bericht konnte nicht erstellt werden.');
   }
 }
 
@@ -346,7 +394,9 @@ function renderFloorplans(project){
   if(!project.floorplans.length){list.innerHTML='<div class="muted">Noch keine Grundrisse vorhanden.</div>';return}
   project.floorplans.forEach(fp=>{
     const card=document.createElement('div');card.className='floorplan-card';
-    card.innerHTML=`<div class="floorplan-card-title">${esc(fp.name||'Grundriss')}</div>${fp.image?`<img src="${fp.image}" alt="${esc(fp.name||'Grundriss')}">`:''}<div class="floorplan-card-actions"><button class="secondary editFp">Bearbeiten</button><button class="danger delFp">Löschen</button></div>`;
+    card.innerHTML=`<div class="floorplan-card-title">${esc(fp.name||'Grundriss')}</div>
+      <div class="muted" style="margin-bottom:8px">${fp.floorAreaM2!=null?`Bodenfläche: ${formatCHNumber(fp.floorAreaM2,2)} m²`:''}${fp.roomHeightM?`${fp.floorAreaM2!=null?' · ':''}Raumhöhe: ${formatCHNumber(fp.roomHeightM,2)} m`:''}</div>
+      ${fp.image?`<img src="${fp.image}" alt="${esc(fp.name||'Grundriss')}">`:''}<div class="floorplan-card-actions"><button class="secondary editFp">Bearbeiten</button><button class="danger delFp">Löschen</button></div>`;
     card.querySelector('.editFp').onclick=()=>openFloorplan(project,fp);
     card.querySelector('.delFp').onclick=()=>{if(confirm('Grundriss wirklich löschen?')){project.floorplans=project.floorplans.filter(x=>x.id!==fp.id);save()}};
     list.appendChild(card);
@@ -371,11 +421,70 @@ function confirmNewFloorplan(){
   render();cancelNewFloorplan();openFloorplan(p,fp);
 }
 
+
+function floorPointKey(x,y){return `${Math.round(x)}:${Math.round(y)}`}
+
+function calculateFloorAreaM2(objects){
+  const walls=(objects||[]).filter(o=>o.type==='wall');
+  if(walls.length<3)return null;
+
+  const map=new Map();
+  function getPoint(x,y){
+    const key=floorPointKey(x,y);
+    if(!map.has(key))map.set(key,{key,x:Math.round(x),y:Math.round(y),neighbors:[]});
+    return map.get(key);
+  }
+
+  walls.forEach(w=>{
+    const a=getPoint(w.x1,w.y1),b=getPoint(w.x2,w.y2);
+    a.neighbors.push(b.key);b.neighbors.push(a.key);
+  });
+
+  const pts=[...map.values()];
+  if(pts.length<3 || pts.some(p=>p.neighbors.length!==2))return null;
+
+  const start=pts[0];
+  const polygon=[];
+  const visited=new Set();
+  let current=start.key,previous=null;
+
+  for(let guard=0;guard<pts.length+2;guard++){
+    const p=map.get(current);
+    if(!p)return null;
+    polygon.push({x:p.x,y:p.y});
+    visited.add(current);
+    const next=p.neighbors.find(k=>k!==previous);
+    if(!next)return null;
+    previous=current;current=next;
+    if(current===start.key)break;
+  }
+
+  if(current!==start.key || visited.size!==pts.length)return null;
+
+  let sum=0;
+  for(let i=0;i<polygon.length;i++){
+    const a=polygon[i],b=polygon[(i+1)%polygon.length];
+    sum+=a.x*b.y-b.x*a.y;
+  }
+  return (Math.abs(sum)/2)/10000;
+}
+
+function updateFloorRoomInfo(){
+  const area=calculateFloorAreaM2(fpObjects);
+  const areaEl=$('fpFloorArea');
+  if(areaEl)areaEl.textContent=area===null?'Grundriss nicht geschlossen':`${formatCHNumber(area,2)} m²`;
+  if(fpRecord)fpRecord.floorAreaM2=area;
+
+  const h=$('fpRoomHeight');
+  if(h && fpRecord && document.activeElement!==h)h.value=fpRecord.roomHeightM??'';
+}
+
 function openFloorplan(project,record){
   fpProject=project;fpRecord=record;
   fpObjects=Array.isArray(record.objects)?JSON.parse(JSON.stringify(record.objects)):[];
   fpGrid=record.grid||20;fpWallThickness=record.wallThickness||15;
   fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpZoom=1;
+  const roomHeight=$('fpRoomHeight');if(roomHeight)roomHeight.value=record.roomHeightM??'';
   $('fpGridSize').value=String(fpGrid);
   $('fpWallThickness').value=String(fpWallThickness);
   $('fpSnap').checked=true;fpSnapEnabled=true;
@@ -622,6 +731,7 @@ function applyZoom(){
   $('fpZoomReset').textContent=`${Math.round(fpZoom*100)}%`;
 }
 function drawFloorplan(preview=null){
+  if(!preview)updateFloorRoomInfo();
   fpCtx.clearRect(0,0,fpCanvas.width,fpCanvas.height);
   fpCtx.fillStyle='#fff';fpCtx.fillRect(0,0,fpCanvas.width,fpCanvas.height);
 
@@ -734,7 +844,15 @@ function initFloorplanControls(){
   if(objD)objD.onchange=setSelectedDimensions;
   $('fpDeleteSelected').onclick=deleteSelected;
   $('fpClear').onclick=()=>{if(confirm('Grundriss vollständig löschen?')){pushHistory();fpObjects=[];fpSelectedId=null;drawFloorplan();updateSelectedInfo()}};
-  $('fpSave').onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.wallThickness=fpWallThickness;save();closeFloorplan()};
+  $('fpSave').onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.wallThickness=fpWallThickness;fpRecord.floorAreaM2=calculateFloorAreaM2(fpObjects);save();closeFloorplan()};
+  const roomHeightInput=$('fpRoomHeight');
+  if(roomHeightInput)roomHeightInput.onchange=e=>{
+    if(!fpRecord)return;
+    const v=Number(e.target.value);
+    fpRecord.roomHeightM=Number.isFinite(v)&&v>0?v:null;
+    localStorage.setItem(K3,JSON.stringify(S));
+    updateFloorRoomInfo();
+  };
   $('fpGridSize').onchange=e=>{fpGrid=Number(e.target.value)||20;drawFloorplan()};
   $('fpWallThickness').onchange=e=>{fpWallThickness=Number(e.target.value)||15};
   $('fpSnap').onchange=e=>{fpSnapEnabled=e.target.checked};

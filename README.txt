@@ -1,14 +1,18 @@
-Projekt Bau v0.8.7 – Echter PDF-Bericht
+Projekt Bau v0.9 – PDF + automatische Bodenfläche
 
-Korrektur:
-- «PDF-Bericht erstellen» öffnet nicht mehr den Drucker-/Druckdialog.
-- Der Bericht wird direkt im Browser als echte PDF-Datei erzeugt.
-- PDF öffnet sich in einem neuen Tab im PDF-Viewer von Edge/Chrome.
-- Falls ein Browser das neue Fenster blockiert, wird die PDF-Datei stattdessen gespeichert.
-- A4 Hochformat, maximal zwei Fotos pro Seite.
-- Bestehendes professionelles Berichts-Layout bleibt erhalten.
-- Deutsch / de-CH und Schweizer Formate bleiben erhalten.
+PDF:
+- Der PDF-Button enthält keinen Druck-/window.print-Befehl mehr.
+- PDF wird direkt mit jsPDF erzeugt und im PDF-Viewer geöffnet.
+- A4, maximal zwei Fotos pro Seite.
+- Kopfzeile vollständig Deutsch.
 
-Technik:
-- jsPDF 4.0.0
-- html2canvas 1.4.1
+Grundriss:
+- Geschlossener Wandkontur wird automatisch erkannt.
+- Bodenfläche wird automatisch in m² berechnet.
+- Nicht geschlossener Grundriss zeigt «Grundriss nicht geschlossen».
+- Raumhöhe kann pro Grundriss in Metern eingegeben werden.
+- Bodenfläche und Raumhöhe werden beim Grundriss gespeichert und angezeigt.
+
+Update:
+- index.html, styles.css und app.js verwenden v0.9 Cache-Busting.
+- reset.html ist im ZIP enthalten und lädt garantiert die neue Version.

@@ -1,39 +1,21 @@
 <!doctype html>
-<html lang="de-CH">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Projekt Bau – Aktualisierung</title>
-</head>
-<body>
-  <h2>Projekt Bau wird aktualisiert…</h2>
-  <p id="msg">Cache wird gelöscht.</p>
-
-  <script>
-    (async () => {
-      try {
-        if ("serviceWorker" in navigator) {
-          const regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(reg => reg.unregister()));
-        }
-
-        if ("caches" in window) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map(key => caches.delete(key)));
-        }
-
-        document.getElementById("msg").textContent =
-          "Aktualisierung abgeschlossen. Die neue Version wird geladen…";
-
-        setTimeout(() => {
-          location.replace("./index.html?v=5");
-        }, 1500);
-
-      } catch (e) {
-        document.getElementById("msg").textContent =
-          "Bitte Microsoft Edge vollständig schliessen und erneut versuchen.";
-      }
-    })();
-  </script>
-</body>
-</html>
+<html lang="de-CH"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Projekt Bau – Update</title></head>
+<body style="font-family:Segoe UI,Arial;padding:32px"><h2>Projekt Bau wird auf v0.9 aktualisiert…</h2><p id="m">Bitte einen Moment warten.</p>
+<script>
+(async()=>{
+ try{
+  if('serviceWorker' in navigator){
+   const regs=await navigator.serviceWorker.getRegistrations();
+   await Promise.all(regs.map(r=>r.unregister()));
+  }
+  if('caches' in window){
+   const keys=await caches.keys();
+   await Promise.all(keys.map(k=>caches.delete(k)));
+  }
+  document.getElementById('m').textContent='Cache gelöscht. v0.9 wird geöffnet…';
+  setTimeout(()=>location.replace('./index.html?v=090&t='+Date.now()),700);
+ }catch(e){
+  document.getElementById('m').textContent='Bitte Edge vollständig schliessen und erneut öffnen.';
+ }
+})();
+</script></body></html>

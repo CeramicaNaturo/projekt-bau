@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=090">
 </head>
 <body>
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.8.7</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v0.9</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -172,12 +172,20 @@
       <button id="fpZoomReset" class="secondary">100%</button>
       <button id="fpZoomIn" class="secondary">+ Zoom</button>
     </div>
+    <div class="floorplan-room-info">
+      <div class="room-area-box">
+        <span class="room-label">Bodenfläche</span>
+        <strong id="fpFloorArea">Grundriss nicht geschlossen</strong>
+      </div>
+      <label>Raumhöhe (m)
+        <input id="fpRoomHeight" type="number" min="0" max="10" step="0.01" placeholder="z. B. 2.40">
+      </label>
+    </div>
     <div class="floorplan-hint">Professioneller Modus: Objekte auswählen, verschieben und löschen. Wände und Masslinien mit dem Finger ziehen. Masse werden in cm angezeigt.</div>
     <div class="floorplan-canvas-wrap"><canvas id="floorplanCanvas" width="1600" height="1100"></canvas></div><div id="fpSelectedInfo" class="fp-selected-info">Keine Auswahl</div>
   </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@4.0.0/dist/jspdf.umd.min.js"></script>
-<script src="app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
+<script src="app.js?v=090"></script>
 </body>
 </html>

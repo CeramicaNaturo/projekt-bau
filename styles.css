@@ -271,3 +271,34 @@ body.pdf-exporting .pdf-footer{
   font-size:7.5pt!important;
   color:#666!important;
 }
+
+.floorplan-room-info{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) minmax(180px,260px);
+  gap:12px;
+  align-items:end;
+  padding:12px;
+  margin:10px 0;
+  background:#f8fafc;
+  border:1px solid #dbe3ec;
+  border-radius:12px;
+}
+.room-area-box{
+  min-height:62px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:10px 12px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+}
+.room-label{
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#64748b;
+}
+#fpFloorArea{margin-top:4px;font-size:18px}
+@media(max-width:700px){.floorplan-room-info{grid-template-columns:1fr}}

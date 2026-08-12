@@ -1122,3 +1122,19 @@ body.pdf-exporting .pdf-footer{
   overflow:auto!important;
   overscroll-behavior:contain;
 }
+
+/* v1.6.2 — echter 2D-CAD-Kameramodus */
+.floorplan-canvas-wrap{
+  overflow:hidden!important;
+  position:relative!important;
+}
+#floorplanCanvas{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  transform:none!important;
+  display:block!important;
+}

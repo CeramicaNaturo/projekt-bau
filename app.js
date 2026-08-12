@@ -540,7 +540,7 @@ function initTileTools(){
 let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
 let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null;
-let fpZoom=1,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
+let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
 const fpCanvas=$('floorplanCanvas'),fpCtx=fpCanvas.getContext('2d');
 
@@ -835,9 +835,11 @@ function setFloorTool(tool){
 function snap(v){return fpSnapEnabled?Math.round(v/fpFineStep)*fpFineStep:v}
 function fpPoint(ev){
   const r=fpCanvas.getBoundingClientRect();
+  const canvasX=(ev.clientX-r.left)*(fpCanvas.width/r.width);
+  const canvasY=(ev.clientY-r.top)*(fpCanvas.height/r.height);
   return {
-    x:(ev.clientX-r.left)*(fpCanvas.width/r.width),
-    y:(ev.clientY-r.top)*(fpCanvas.height/r.height)
+    x:(canvasX-fpViewOffsetX)/fpZoom,
+    y:(canvasY-fpViewOffsetY)/fpZoom
   };
 }
 function uidObj(){return 'fp_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
@@ -866,8 +868,7 @@ function floorStart(ev){
   updateCadMousePosition(p);
 
   if(fpTool==='pan'){
-    const wrap=fpCanvas.parentElement;
-    fpPanStart={x:ev.clientX,y:ev.clientY,scrollLeft:wrap.scrollLeft,scrollTop:wrap.scrollTop};
+    fpPanStart={x:ev.clientX,y:ev.clientY,offsetX:fpViewOffsetX,offsetY:fpViewOffsetY};
     fpDrawing=true;
     return;
   }
@@ -951,9 +952,12 @@ function floorMove(ev){
   const p=fpPoint(ev);
 
   if(fpTool==='pan' && fpPanStart){
-    const wrap=fpCanvas.parentElement;
-    wrap.scrollLeft=fpPanStart.scrollLeft-(ev.clientX-fpPanStart.x);
-    wrap.scrollTop=fpPanStart.scrollTop-(ev.clientY-fpPanStart.y);
+    const r=fpCanvas.getBoundingClientRect();
+    const sx=fpCanvas.width/r.width;
+    const sy=fpCanvas.height/r.height;
+    fpViewOffsetX=fpPanStart.offsetX+(ev.clientX-fpPanStart.x)*sx;
+    fpViewOffsetY=fpPanStart.offsetY+(ev.clientY-fpPanStart.y)*sy;
+    drawFloorplan();
     return;
   }
 
@@ -1152,13 +1156,10 @@ function updateSelectedInfo(){
   updateWallEndpointFields();
 }
 function applyZoom(){
-  if(!fpCanvas)return;
-  fpCanvas.style.transform='none';
-  fpCanvas.style.width=`${Math.max(1,Math.round(fpCanvas.width*fpZoom))}px`;
-  fpCanvas.style.height=`${Math.max(1,Math.round(fpCanvas.height*fpZoom))}px`;
   const reset=$('fpZoomReset');
   if(reset)reset.textContent=`${Math.round(fpZoom*100)}%`;
   drawCadRulers();
+  drawFloorplan();
 }
 
 function getFloorplanBounds(objects){
@@ -1178,61 +1179,99 @@ function getFloorplanBounds(objects){
   return {minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
 }
 
-function centerFloorplan2D(){
-  if(fp3DMode)return;
+function resize2DCanvas(){
   const wrap=fpCanvas?.parentElement;
+  if(!wrap)return;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const cssW=Math.max(320,Math.round(wrap.clientWidth));
+  const cssH=Math.max(300,Math.round(wrap.clientHeight));
+  const pxW=Math.max(1,Math.round(cssW*dpr));
+  const pxH=Math.max(1,Math.round(cssH*dpr));
+  if(fpCanvas.width!==pxW || fpCanvas.height!==pxH){
+    fpCanvas.width=pxW;
+    fpCanvas.height=pxH;
+  }
+}
+
+function centerFloorplan2D(){
+  if(fp3DMode||!fpCanvas)return;
+  resize2DCanvas();
   const b=getFloorplanBounds(fpObjects);
-  if(!wrap||!b)return;
-  const cx=((b.minX+b.maxX)/2)*fpZoom;
-  const cy=((b.minY+b.maxY)/2)*fpZoom;
-  wrap.scrollLeft=Math.max(0,cx-wrap.clientWidth/2);
-  wrap.scrollTop=Math.max(0,cy-wrap.clientHeight/2);
+  if(!b)return;
+  const cx=(b.minX+b.maxX)/2;
+  const cy=(b.minY+b.maxY)/2;
+  fpViewOffsetX=fpCanvas.width/2-cx*fpZoom;
+  fpViewOffsetY=fpCanvas.height/2-cy*fpZoom;
+  const reset=$('fpZoomReset');
+  if(reset)reset.textContent=`${Math.round(fpZoom*100)}%`;
+  drawFloorplan();
 }
 
 function fitFloorplan2D(){
   if(fp3DMode||!fpCanvas)return;
-  const wrap=fpCanvas.parentElement;
+  resize2DCanvas();
   const b=getFloorplanBounds(fpObjects);
-  if(!wrap)return;
-
   if(!b){
     fpZoom=1;
-    applyZoom();
-    wrap.scrollLeft=0;wrap.scrollTop=0;
+    fpViewOffsetX=0;
+    fpViewOffsetY=0;
+    drawFloorplan();
     return;
   }
-
-  const margin=80;
-  const vw=Math.max(240,wrap.clientWidth);
-  const vh=Math.max(240,wrap.clientHeight);
-  const bw=Math.max(80,b.maxX-b.minX);
-  const bh=Math.max(80,b.maxY-b.minY);
-
-  fpZoom=Math.max(.25,Math.min(1.6,(vw-margin*2)/bw,(vh-margin*2)/bh));
-  applyZoom();
-  requestAnimationFrame(centerFloorplan2D);
+  const margin=Math.max(80,Math.min(fpCanvas.width,fpCanvas.height)*0.08);
+  const bw=Math.max(1,b.maxX-b.minX);
+  const bh=Math.max(1,b.maxY-b.minY);
+  fpZoom=Math.max(.05,Math.min(5,(fpCanvas.width-margin*2)/bw,(fpCanvas.height-margin*2)/bh));
+  const cx=(b.minX+b.maxX)/2;
+  const cy=(b.minY+b.maxY)/2;
+  fpViewOffsetX=fpCanvas.width/2-cx*fpZoom;
+  fpViewOffsetY=fpCanvas.height/2-cy*fpZoom;
+  const reset=$('fpZoomReset');
+  if(reset)reset.textContent=`${Math.round(fpZoom*100)}%`;
+  drawFloorplan();
 }
 
 function drawFloorplan(preview=null){
-  if(!preview){updateFloorRoomInfo();updateCadInspector();drawCadRulers();refresh3D();}
+  if(!preview){
+    updateFloorRoomInfo();
+    updateCadInspector();
+    drawCadRulers();
+    refresh3D();
+  }
 
+  resize2DCanvas();
+
+  fpCtx.setTransform(1,0,0,1,0,0);
   fpCtx.clearRect(0,0,fpCanvas.width,fpCanvas.height);
   fpCtx.fillStyle='#ffffff';
   fpCtx.fillRect(0,0,fpCanvas.width,fpCanvas.height);
 
+  fpCtx.save();
+  fpCtx.setTransform(fpZoom,0,0,fpZoom,fpViewOffsetX,fpViewOffsetY);
+
+  const worldLeft=(-fpViewOffsetX)/fpZoom;
+  const worldTop=(-fpViewOffsetY)/fpZoom;
+  const worldRight=(fpCanvas.width-fpViewOffsetX)/fpZoom;
+  const worldBottom=(fpCanvas.height-fpViewOffsetY)/fpZoom;
+
   if(fpShowGrid){
-    // feines 10-cm Raster + stärkeres Hauptraster
-    for(let x=0;x<=fpCanvas.width;x+=10){
+    const step=10;
+    const sx=Math.floor(worldLeft/step)*step;
+    const ex=Math.ceil(worldRight/step)*step;
+    const sy=Math.floor(worldTop/step)*step;
+    const ey=Math.ceil(worldBottom/step)*step;
+
+    for(let x=sx;x<=ex;x+=step){
       fpCtx.beginPath();
-      fpCtx.strokeStyle=(x%100===0)?'#cbd5e1':'#eef2f7';
-      fpCtx.lineWidth=(x%100===0)?1.2:.6;
-      fpCtx.moveTo(x,0);fpCtx.lineTo(x,fpCanvas.height);fpCtx.stroke();
+      fpCtx.strokeStyle=(Math.round(x)%100===0)?'#cbd5e1':'#eef2f7';
+      fpCtx.lineWidth=(Math.round(x)%100===0)?1.2/fpZoom:.6/fpZoom;
+      fpCtx.moveTo(x,worldTop);fpCtx.lineTo(x,worldBottom);fpCtx.stroke();
     }
-    for(let y=0;y<=fpCanvas.height;y+=10){
+    for(let y=sy;y<=ey;y+=step){
       fpCtx.beginPath();
-      fpCtx.strokeStyle=(y%100===0)?'#cbd5e1':'#eef2f7';
-      fpCtx.lineWidth=(y%100===0)?1.2:.6;
-      fpCtx.moveTo(0,y);fpCtx.lineTo(fpCanvas.width,y);fpCtx.stroke();
+      fpCtx.strokeStyle=(Math.round(y)%100===0)?'#cbd5e1':'#eef2f7';
+      fpCtx.lineWidth=(Math.round(y)%100===0)?1.2/fpZoom:.6/fpZoom;
+      fpCtx.moveTo(worldLeft,y);fpCtx.lineTo(worldRight,y);fpCtx.stroke();
     }
   }
 
@@ -1245,54 +1284,53 @@ function drawFloorplan(preview=null){
     fpCtx.restore();
   }
 
-  // Fliesenstartpunkt im 2D-Plan
   if(Number.isFinite(Number(fp3DOptions.tileOriginX)) && Number.isFinite(Number(fp3DOptions.tileOriginY))){
     const tx=Number(fp3DOptions.tileOriginX),ty=Number(fp3DOptions.tileOriginY);
     fpCtx.save();
     fpCtx.strokeStyle='#2563eb';
     fpCtx.fillStyle='#2563eb';
-    fpCtx.lineWidth=2;
-    fpCtx.beginPath();fpCtx.arc(tx,ty,9,0,Math.PI*2);fpCtx.stroke();
+    fpCtx.lineWidth=2/fpZoom;
+    fpCtx.beginPath();fpCtx.arc(tx,ty,9/fpZoom,0,Math.PI*2);fpCtx.stroke();
     fpCtx.beginPath();
-    fpCtx.moveTo(tx-16,ty);fpCtx.lineTo(tx+16,ty);
-    fpCtx.moveTo(tx,ty-16);fpCtx.lineTo(tx,ty+16);
+    fpCtx.moveTo(tx-16/fpZoom,ty);fpCtx.lineTo(tx+16/fpZoom,ty);
+    fpCtx.moveTo(tx,ty-16/fpZoom);fpCtx.lineTo(tx,ty+16/fpZoom);
     fpCtx.stroke();
-    fpCtx.font='bold 12px Arial';
+    fpCtx.font=`bold ${12/fpZoom}px Arial`;
     fpCtx.textAlign='left';
-    fpCtx.fillText(`Fliesenstart X ${Math.round(tx)} · Y ${Math.round(ty)} cm`,tx+14,ty-12);
+    fpCtx.fillText(`Fliesenstart X ${Math.round(tx)} · Y ${Math.round(ty)} cm`,tx+14/fpZoom,ty-12/fpZoom);
     fpCtx.restore();
   }
 
-  // Raum-Informationsblock mittig im geschlossenen Bereich
   if(fpRecord){
     const area=calculateFloorAreaM2(fpObjects);
     const bounds=getFloorplanBounds(fpObjects);
-    const cx=bounds?(bounds.minX+bounds.maxX)/2:fpCanvas.width/2;
-    const cy=bounds?(bounds.minY+bounds.maxY)/2:fpCanvas.height/2;
-    const boxW=250,boxH=112;
+    const cx=bounds?(bounds.minX+bounds.maxX)/2:(worldLeft+worldRight)/2;
+    const cy=bounds?(bounds.minY+bounds.maxY)/2:(worldTop+worldBottom)/2;
+    const boxW=250/fpZoom,boxH=112/fpZoom;
 
     fpCtx.save();
     fpCtx.fillStyle='rgba(255,255,255,.96)';
     fpCtx.strokeStyle='#94a3b8';
-    fpCtx.lineWidth=1.5;
-    fpCtx.roundRect(cx-boxW/2,cy-boxH/2,boxW,boxH,8);
+    fpCtx.lineWidth=1.5/fpZoom;
+    if(fpCtx.roundRect)fpCtx.roundRect(cx-boxW/2,cy-boxH/2,boxW,boxH,8/fpZoom);
+    else fpCtx.rect(cx-boxW/2,cy-boxH/2,boxW,boxH);
     fpCtx.fill();fpCtx.stroke();
 
     fpCtx.fillStyle='#0f172a';
-    fpCtx.font='bold 22px Arial';
     fpCtx.textAlign='center';
-    fpCtx.fillText((fpRecord.name||'Grundriss').toUpperCase(),cx,cy-27);
-
-    fpCtx.font='13px Arial';
-    fpCtx.fillText('Bodenfläche',cx,cy-5);
-    fpCtx.font='bold 24px Arial';
-    fpCtx.fillText(area===null?'—':`${formatCHNumber(area,2)} m²`,cx,cy+22);
-
-    fpCtx.font='13px Arial';
+    fpCtx.font=`bold ${22/fpZoom}px Arial`;
+    fpCtx.fillText((fpRecord.name||'Grundriss').toUpperCase(),cx,cy-27/fpZoom);
+    fpCtx.font=`${13/fpZoom}px Arial`;
+    fpCtx.fillText('Bodenfläche',cx,cy-5/fpZoom);
+    fpCtx.font=`bold ${24/fpZoom}px Arial`;
+    fpCtx.fillText(area===null?'—':`${formatCHNumber(area,2)} m²`,cx,cy+22/fpZoom);
+    fpCtx.font=`${13/fpZoom}px Arial`;
     fpCtx.fillStyle='#475569';
-    fpCtx.fillText(fpRecord.roomHeightM?`Raumhöhe: ${formatCHNumber(fpRecord.roomHeightM,2)} m`:'Raumhöhe: —',cx,cy+45);
+    fpCtx.fillText(fpRecord.roomHeightM?`Raumhöhe: ${formatCHNumber(fpRecord.roomHeightM,2)} m`:'Raumhöhe: —',cx,cy+45/fpZoom);
     fpCtx.restore();
   }
+
+  fpCtx.restore();
 }
 
 function drawMeasureText(text,x,y,angle=0){
@@ -1632,9 +1670,9 @@ function initFloorplanControls(){
   if(showGrid)showGrid.onchange=e=>{fpShowGrid=e.target.checked;drawFloorplan()};
   if(showPos)showPos.onchange=e=>{fpShowPositions=e.target.checked;drawFloorplan()};
   if(showMeasures)showMeasures.onchange=e=>{fpShowMeasures=e.target.checked;drawFloorplan()};
-  $('fpZoomOut').onclick=()=>{fpZoom=Math.max(.25,fpZoom-.1);applyZoom();requestAnimationFrame(centerFloorplan2D)};
-  $('fpZoomIn').onclick=()=>{fpZoom=Math.min(3,fpZoom+.1);applyZoom();requestAnimationFrame(centerFloorplan2D)};
-  $('fpZoomReset').onclick=()=>{fpZoom=1;applyZoom();requestAnimationFrame(centerFloorplan2D)};
+  $('fpZoomOut').onclick=()=>{fpZoom=Math.max(.05,fpZoom*0.9);centerFloorplan2D()};
+  $('fpZoomIn').onclick=()=>{fpZoom=Math.min(8,fpZoom*1.1);centerFloorplan2D()};
+  $('fpZoomReset').onclick=()=>fitFloorplan2D();
   const view2=$('fpView2D'),view3=$('fpView3D');
   if(view2)view2.onclick=()=>setFloorplanView('2d');
   if(view3)view3.onclick=()=>setFloorplanView('3d');
@@ -1701,6 +1739,12 @@ function initCadShell(){
   });
 }
 
+
+window.addEventListener('resize',()=>{
+  if($('floorplanModal') && !$('floorplanModal').classList.contains('hidden') && !fp3DMode){
+    requestAnimationFrame(fitFloorplan2D);
+  }
+});
 
 function initCadKeyboard(){
   document.addEventListener('keydown',e=>{

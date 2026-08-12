@@ -540,7 +540,7 @@ function initTileTools(){
 let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
 let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null;
-let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
+let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpLastRenderError='',fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
 const fpCanvas=$('floorplanCanvas'),fpCtx=fpCanvas.getContext('2d');
 
@@ -821,7 +821,7 @@ function openFloorplan(project,record){
   fpShowGrid=true;fpShowPositions=true;fpShowMeasures=true;
   $('floorplanEditorTitle').textContent=`Grundriss · ${record.name}`;
   $('floorplanModal').classList.remove('hidden');
-  setFloorTool('select');setFloorplanView('2d');drawFloorplan();updateSelectedInfo();requestAnimationFrame(()=>requestAnimationFrame(fitFloorplan2D));
+  setFloorTool('select');setFloorplanView('2d');drawFloorplan();updateSelectedInfo();requestAnimationFrame(()=>requestAnimationFrame(()=>{fitFloorplan2D();setTimeout(fitFloorplan2D,120)}));
 }
 function closeFloorplan(){$('floorplanModal').classList.add('hidden');fpProject=null;fpRecord=null}
 function setFloorTool(tool){
@@ -1180,17 +1180,20 @@ function getFloorplanBounds(objects){
 }
 
 function resize2DCanvas(){
-  const wrap=fpCanvas?.parentElement;
+  if(!fpCanvas)return;
+  const wrap=fpCanvas.parentElement;
   if(!wrap)return;
-  const dpr=Math.min(window.devicePixelRatio||1,2);
-  const cssW=Math.max(320,Math.round(wrap.clientWidth));
-  const cssH=Math.max(300,Math.round(wrap.clientHeight));
-  const pxW=Math.max(1,Math.round(cssW*dpr));
-  const pxH=Math.max(1,Math.round(cssH*dpr));
-  if(fpCanvas.width!==pxW || fpCanvas.height!==pxH){
-    fpCanvas.width=pxW;
-    fpCanvas.height=pxH;
-  }
+
+  const rect=wrap.getBoundingClientRect();
+  const cssW=Math.max(700,Math.round(rect.width||wrap.clientWidth||1200));
+  const cssH=Math.max(420,Math.round(rect.height||wrap.clientHeight||650));
+  const dpr=Math.min(window.devicePixelRatio||1,1.5);
+
+  const pxW=Math.round(cssW*dpr);
+  const pxH=Math.round(cssH*dpr);
+
+  if(fpCanvas.width!==pxW)fpCanvas.width=pxW;
+  if(fpCanvas.height!==pxH)fpCanvas.height=pxH;
 }
 
 function centerFloorplan2D(){
@@ -1210,127 +1213,192 @@ function centerFloorplan2D(){
 function fitFloorplan2D(){
   if(fp3DMode||!fpCanvas)return;
   resize2DCanvas();
-  const b=getFloorplanBounds(fpObjects);
-  if(!b){
-    fpZoom=1;
-    fpViewOffsetX=0;
-    fpViewOffsetY=0;
+
+  const xs=[],ys=[];
+  (fpObjects||[]).forEach(o=>{
+    if(o.type==='wall'){
+      if(Number.isFinite(Number(o.x1))&&Number.isFinite(Number(o.x2))){
+        xs.push(Number(o.x1),Number(o.x2));
+        ys.push(Number(o.y1),Number(o.y2));
+      }
+    }else if(Number.isFinite(Number(o.x))&&Number.isFinite(Number(o.y))){
+      const hw=Math.max(40,Number(o.widthCm||80)/2);
+      const hd=Math.max(40,Number(o.depthCm||80)/2);
+      xs.push(Number(o.x)-hw,Number(o.x)+hw);
+      ys.push(Number(o.y)-hd,Number(o.y)+hd);
+    }
+  });
+
+  if(!xs.length){
+    fpZoom=1;fpViewOffsetX=80;fpViewOffsetY=80;
     drawFloorplan();
     return;
   }
-  const margin=Math.max(80,Math.min(fpCanvas.width,fpCanvas.height)*0.08);
-  const bw=Math.max(1,b.maxX-b.minX);
-  const bh=Math.max(1,b.maxY-b.minY);
-  fpZoom=Math.max(.05,Math.min(5,(fpCanvas.width-margin*2)/bw,(fpCanvas.height-margin*2)/bh));
-  const cx=(b.minX+b.maxX)/2;
-  const cy=(b.minY+b.maxY)/2;
+
+  const minX=Math.min(...xs),maxX=Math.max(...xs);
+  const minY=Math.min(...ys),maxY=Math.max(...ys);
+  const bw=Math.max(100,maxX-minX);
+  const bh=Math.max(100,maxY-minY);
+
+  const marginX=Math.max(90,fpCanvas.width*.08);
+  const marginY=Math.max(90,fpCanvas.height*.10);
+
+  fpZoom=Math.max(.08,Math.min(4,
+    (fpCanvas.width-marginX*2)/bw,
+    (fpCanvas.height-marginY*2)/bh
+  ));
+
+  const cx=(minX+maxX)/2,cy=(minY+maxY)/2;
   fpViewOffsetX=fpCanvas.width/2-cx*fpZoom;
   fpViewOffsetY=fpCanvas.height/2-cy*fpZoom;
-  const reset=$('fpZoomReset');
-  if(reset)reset.textContent=`${Math.round(fpZoom*100)}%`;
+
+  const z=$('fpZoomReset');
+  if(z)z.textContent=`${Math.round(fpZoom*100)}%`;
+
   drawFloorplan();
 }
 
 function drawFloorplan(preview=null){
+  if(!fpCanvas||!fpCtx)return;
+
+  try{
+    resize2DCanvas();
+
+    fpCtx.setTransform(1,0,0,1,0,0);
+    fpCtx.clearRect(0,0,fpCanvas.width,fpCanvas.height);
+    fpCtx.fillStyle='#ffffff';
+    fpCtx.fillRect(0,0,fpCanvas.width,fpCanvas.height);
+
+    const zoom=Number.isFinite(fpZoom)&&fpZoom>0?fpZoom:1;
+    const ox=Number.isFinite(fpViewOffsetX)?fpViewOffsetX:0;
+    const oy=Number.isFinite(fpViewOffsetY)?fpViewOffsetY:0;
+
+    fpCtx.save();
+    fpCtx.setTransform(zoom,0,0,zoom,ox,oy);
+
+    const left=(-ox)/zoom;
+    const top=(-oy)/zoom;
+    const right=(fpCanvas.width-ox)/zoom;
+    const bottom=(fpCanvas.height-oy)/zoom;
+
+    if(fpShowGrid!==false){
+      const step=20;
+      const sx=Math.floor(left/step)*step;
+      const ex=Math.ceil(right/step)*step;
+      const sy=Math.floor(top/step)*step;
+      const ey=Math.ceil(bottom/step)*step;
+
+      for(let x=sx;x<=ex;x+=step){
+        fpCtx.beginPath();
+        fpCtx.strokeStyle=(Math.round(x)%100===0)?'#cbd5e1':'#eef2f7';
+        fpCtx.lineWidth=((Math.round(x)%100===0)?1.1:.55)/zoom;
+        fpCtx.moveTo(x,top);fpCtx.lineTo(x,bottom);fpCtx.stroke();
+      }
+      for(let y=sy;y<=ey;y+=step){
+        fpCtx.beginPath();
+        fpCtx.strokeStyle=(Math.round(y)%100===0)?'#cbd5e1':'#eef2f7';
+        fpCtx.lineWidth=((Math.round(y)%100===0)?1.1:.55)/zoom;
+        fpCtx.moveTo(left,y);fpCtx.lineTo(right,y);fpCtx.stroke();
+      }
+    }
+
+    // IMPORTANT: draw each object independently, so one malformed object cannot hide the whole plan.
+    (fpObjects||[]).forEach(o=>{
+      try{
+        if(typeof isLayerVisible==='function' && !isLayerVisible(o))return;
+        drawFpObject(o,false);
+      }catch(objectError){
+        console.error('2D Objekt konnte nicht gezeichnet werden',o,objectError);
+      }
+    });
+
+    if(preview){
+      try{
+        fpCtx.save();fpCtx.globalAlpha=.65;drawFpObject(preview,true);fpCtx.restore();
+      }catch(e){console.error(e)}
+    }
+
+    // Tile origin
+    const tx=Number(fp3DOptions?.tileOriginX),ty=Number(fp3DOptions?.tileOriginY);
+    if(Number.isFinite(tx)&&Number.isFinite(ty)){
+      fpCtx.save();
+      fpCtx.strokeStyle='#2563eb';
+      fpCtx.lineWidth=2/zoom;
+      fpCtx.beginPath();fpCtx.arc(tx,ty,8/zoom,0,Math.PI*2);fpCtx.stroke();
+      fpCtx.beginPath();
+      fpCtx.moveTo(tx-14/zoom,ty);fpCtx.lineTo(tx+14/zoom,ty);
+      fpCtx.moveTo(tx,ty-14/zoom);fpCtx.lineTo(tx,ty+14/zoom);fpCtx.stroke();
+      fpCtx.restore();
+    }
+
+    // Room label only if bounds exist; failure never blocks plan.
+    try{
+      const b=getFloorplanBounds(fpObjects);
+      if(fpRecord&&b){
+        const area=calculateFloorAreaM2(fpObjects);
+        const cx=(b.minX+b.maxX)/2,cy=(b.minY+b.maxY)/2;
+        const w=235/zoom,h=100/zoom;
+
+        fpCtx.save();
+        fpCtx.fillStyle='rgba(255,255,255,.95)';
+        fpCtx.strokeStyle='#94a3b8';
+        fpCtx.lineWidth=1/zoom;
+        if(fpCtx.roundRect)fpCtx.roundRect(cx-w/2,cy-h/2,w,h,7/zoom);
+        else fpCtx.rect(cx-w/2,cy-h/2,w,h);
+        fpCtx.fill();fpCtx.stroke();
+
+        fpCtx.textAlign='center';fpCtx.fillStyle='#0f172a';
+        fpCtx.font=`bold ${20/zoom}px Arial`;
+        fpCtx.fillText((fpRecord.name||'Grundriss').toUpperCase(),cx,cy-22/zoom);
+        fpCtx.font=`bold ${22/zoom}px Arial`;
+        fpCtx.fillText(area==null?'—':`${formatCHNumber(area,2)} m²`,cx,cy+10/zoom);
+        fpCtx.font=`${12/zoom}px Arial`;
+        fpCtx.fillText(fpRecord.roomHeightM?`Raumhöhe: ${formatCHNumber(fpRecord.roomHeightM,2)} m`:'',cx,cy+34/zoom);
+        fpCtx.restore();
+      }
+    }catch(e){console.error('Rauminfo',e)}
+
+    fpCtx.restore();
+    fpLastRenderError='';
+
+  }catch(renderError){
+    fpLastRenderError=String(renderError?.message||renderError);
+    console.error('2D Renderfehler',renderError);
+
+    // Absolute fallback: draw walls directly in screen coordinates.
+    try{
+      fpCtx.setTransform(1,0,0,1,0,0);
+      fpCtx.clearRect(0,0,fpCanvas.width,fpCanvas.height);
+      fpCtx.fillStyle='#fff';fpCtx.fillRect(0,0,fpCanvas.width,fpCanvas.height);
+
+      const walls=(fpObjects||[]).filter(o=>o.type==='wall');
+      if(walls.length){
+        const xs=walls.flatMap(w=>[Number(w.x1),Number(w.x2)]);
+        const ys=walls.flatMap(w=>[Number(w.y1),Number(w.y2)]);
+        const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+        const scale=Math.min((fpCanvas.width-160)/Math.max(1,maxX-minX),(fpCanvas.height-160)/Math.max(1,maxY-minY));
+        const offX=fpCanvas.width/2-((minX+maxX)/2)*scale;
+        const offY=fpCanvas.height/2-((minY+maxY)/2)*scale;
+
+        fpCtx.setTransform(scale,0,0,scale,offX,offY);
+        fpCtx.strokeStyle='#111827';
+        walls.forEach(w=>{
+          fpCtx.lineWidth=Math.max(6,Number(w.thickness||15)/2);
+          fpCtx.beginPath();fpCtx.moveTo(w.x1,w.y1);fpCtx.lineTo(w.x2,w.y2);fpCtx.stroke();
+        });
+      }
+    }catch(fallbackError){
+      console.error('2D Fallbackfehler',fallbackError);
+    }
+  }
+
+  // Auxiliary UI updates AFTER drawing and protected independently.
   if(!preview){
-    updateFloorRoomInfo();
-    updateCadInspector();
-    drawCadRulers();
-    refresh3D();
+    try{updateFloorRoomInfo()}catch(e){console.error(e)}
+    try{updateCadInspector()}catch(e){console.error(e)}
+    try{drawCadRulers()}catch(e){console.error(e)}
+    try{refresh3D()}catch(e){console.error(e)}
   }
-
-  resize2DCanvas();
-
-  fpCtx.setTransform(1,0,0,1,0,0);
-  fpCtx.clearRect(0,0,fpCanvas.width,fpCanvas.height);
-  fpCtx.fillStyle='#ffffff';
-  fpCtx.fillRect(0,0,fpCanvas.width,fpCanvas.height);
-
-  fpCtx.save();
-  fpCtx.setTransform(fpZoom,0,0,fpZoom,fpViewOffsetX,fpViewOffsetY);
-
-  const worldLeft=(-fpViewOffsetX)/fpZoom;
-  const worldTop=(-fpViewOffsetY)/fpZoom;
-  const worldRight=(fpCanvas.width-fpViewOffsetX)/fpZoom;
-  const worldBottom=(fpCanvas.height-fpViewOffsetY)/fpZoom;
-
-  if(fpShowGrid){
-    const step=10;
-    const sx=Math.floor(worldLeft/step)*step;
-    const ex=Math.ceil(worldRight/step)*step;
-    const sy=Math.floor(worldTop/step)*step;
-    const ey=Math.ceil(worldBottom/step)*step;
-
-    for(let x=sx;x<=ex;x+=step){
-      fpCtx.beginPath();
-      fpCtx.strokeStyle=(Math.round(x)%100===0)?'#cbd5e1':'#eef2f7';
-      fpCtx.lineWidth=(Math.round(x)%100===0)?1.2/fpZoom:.6/fpZoom;
-      fpCtx.moveTo(x,worldTop);fpCtx.lineTo(x,worldBottom);fpCtx.stroke();
-    }
-    for(let y=sy;y<=ey;y+=step){
-      fpCtx.beginPath();
-      fpCtx.strokeStyle=(Math.round(y)%100===0)?'#cbd5e1':'#eef2f7';
-      fpCtx.lineWidth=(Math.round(y)%100===0)?1.2/fpZoom:.6/fpZoom;
-      fpCtx.moveTo(worldLeft,y);fpCtx.lineTo(worldRight,y);fpCtx.stroke();
-    }
-  }
-
-  fpObjects.filter(isLayerVisible).forEach(drawFpObject);
-
-  if(preview){
-    fpCtx.save();
-    fpCtx.globalAlpha=.65;
-    drawFpObject(preview,true);
-    fpCtx.restore();
-  }
-
-  if(Number.isFinite(Number(fp3DOptions.tileOriginX)) && Number.isFinite(Number(fp3DOptions.tileOriginY))){
-    const tx=Number(fp3DOptions.tileOriginX),ty=Number(fp3DOptions.tileOriginY);
-    fpCtx.save();
-    fpCtx.strokeStyle='#2563eb';
-    fpCtx.fillStyle='#2563eb';
-    fpCtx.lineWidth=2/fpZoom;
-    fpCtx.beginPath();fpCtx.arc(tx,ty,9/fpZoom,0,Math.PI*2);fpCtx.stroke();
-    fpCtx.beginPath();
-    fpCtx.moveTo(tx-16/fpZoom,ty);fpCtx.lineTo(tx+16/fpZoom,ty);
-    fpCtx.moveTo(tx,ty-16/fpZoom);fpCtx.lineTo(tx,ty+16/fpZoom);
-    fpCtx.stroke();
-    fpCtx.font=`bold ${12/fpZoom}px Arial`;
-    fpCtx.textAlign='left';
-    fpCtx.fillText(`Fliesenstart X ${Math.round(tx)} · Y ${Math.round(ty)} cm`,tx+14/fpZoom,ty-12/fpZoom);
-    fpCtx.restore();
-  }
-
-  if(fpRecord){
-    const area=calculateFloorAreaM2(fpObjects);
-    const bounds=getFloorplanBounds(fpObjects);
-    const cx=bounds?(bounds.minX+bounds.maxX)/2:(worldLeft+worldRight)/2;
-    const cy=bounds?(bounds.minY+bounds.maxY)/2:(worldTop+worldBottom)/2;
-    const boxW=250/fpZoom,boxH=112/fpZoom;
-
-    fpCtx.save();
-    fpCtx.fillStyle='rgba(255,255,255,.96)';
-    fpCtx.strokeStyle='#94a3b8';
-    fpCtx.lineWidth=1.5/fpZoom;
-    if(fpCtx.roundRect)fpCtx.roundRect(cx-boxW/2,cy-boxH/2,boxW,boxH,8/fpZoom);
-    else fpCtx.rect(cx-boxW/2,cy-boxH/2,boxW,boxH);
-    fpCtx.fill();fpCtx.stroke();
-
-    fpCtx.fillStyle='#0f172a';
-    fpCtx.textAlign='center';
-    fpCtx.font=`bold ${22/fpZoom}px Arial`;
-    fpCtx.fillText((fpRecord.name||'Grundriss').toUpperCase(),cx,cy-27/fpZoom);
-    fpCtx.font=`${13/fpZoom}px Arial`;
-    fpCtx.fillText('Bodenfläche',cx,cy-5/fpZoom);
-    fpCtx.font=`bold ${24/fpZoom}px Arial`;
-    fpCtx.fillText(area===null?'—':`${formatCHNumber(area,2)} m²`,cx,cy+22/fpZoom);
-    fpCtx.font=`${13/fpZoom}px Arial`;
-    fpCtx.fillStyle='#475569';
-    fpCtx.fillText(fpRecord.roomHeightM?`Raumhöhe: ${formatCHNumber(fpRecord.roomHeightM,2)} m`:'Raumhöhe: —',cx,cy+45/fpZoom);
-    fpCtx.restore();
-  }
-
-  fpCtx.restore();
 }
 
 function drawMeasureText(text,x,y,angle=0){
@@ -1695,6 +1763,12 @@ function initFloorplanControls(){
   if(tileY)tileY.onchange=applyTileOrigin;
   if(tileRot)tileRot.onchange=applyTileOrigin;
   const reset3d=$('fp3DResetCamera');if(reset3d)reset3d.onclick=()=>window.ProjectBau3D?.resetCamera();
+
+  const reset2d=$('fp2DReset');
+  if(reset2d)reset2d.onclick=()=>{
+    fpViewOffsetX=0;fpViewOffsetY=0;fpZoom=1;
+    resize2DCanvas();fitFloorplan2D();
+  };
 
   const fitBtn=$('fpFitView');
   if(fitBtn)fitBtn.onclick=()=>{

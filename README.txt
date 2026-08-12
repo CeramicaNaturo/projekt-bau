@@ -1,19 +1,17 @@
-Projekt Bau v1.6.2 – 2D CAD Kamera
+Projekt Bau v1.6.3 – 2D CAD Render-Sicherheitsfix
 
-Kritischer Fix:
-- 2D-Zeichnung wird nicht mehr durch den festen Canvas-Ausschnitt abgeschnitten.
-- Gespeicherte Objekte dürfen beliebige X/Y-Koordinaten haben.
-- Beim Öffnen wird die komplette Zeichnung sicher sichtbar gemacht.
-
-Neue 2D-Kamera:
-- Fit to View
-- automatische Zentrierung
-- Zoom
-- Pan
-- Bildschirm-/Tablet-Anpassung
-- inverse Koordinatenberechnung für korrektes Zeichnen und Verschieben
+Der 2D-Renderer wurde vom restlichen Interface entkoppelt.
 
 Wichtig:
-- Objektkoordinaten selbst werden nicht verschoben oder verändert.
-- Nur die Kamera bewegt sich.
-- 3D und Fliesenstart bleiben erhalten.
+- Fehler im Eigenschaften-Panel, Lineal oder 3D-Modul können den 2D-Grundriss nicht mehr unsichtbar machen.
+- Jedes Objekt wird einzeln gezeichnet. Ein beschädigtes Objekt stoppt nicht mehr den ganzen Plan.
+- Beim Öffnen wird Fit-to-View mehrfach nach dem tatsächlichen Layout ausgeführt.
+- Canvas erhält garantiert eine Mindestgrösse.
+- Zeichnung wird über Objektkoordinaten gemessen und in der sichtbaren Fläche zentriert.
+- Zusätzlicher Button «2D↺» baut die komplette 2D-Anzeige neu auf.
+
+Fallback:
+- Falls der normale CAD-Renderer trotzdem einen Fehler hat, werden mindestens alle Wände über einen unabhängigen Notfall-Renderer sichtbar dargestellt.
+
+Bestehende Daten werden nicht verändert.
+3D, Fliesenstart und Projektfunktionen bleiben erhalten.

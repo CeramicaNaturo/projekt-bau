@@ -1138,3 +1138,31 @@ body.pdf-exporting .pdf-footer{
   transform:none!important;
   display:block!important;
 }
+
+/* v1.6.3 – stabiler 2D Renderbereich */
+#fp2DWorkspace{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+}
+#fp2DWorkspace .cad-canvas-inner{
+  min-height:300px!important;
+}
+#fp2DWorkspace .floorplan-canvas-wrap{
+  width:100%!important;
+  height:100%!important;
+  min-height:300px!important;
+  overflow:hidden!important;
+  background:#fff!important;
+}
+#floorplanCanvas{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:300px!important;
+  max-width:none!important;
+  max-height:none!important;
+  border:0!important;
+  background:#fff!important;
+}

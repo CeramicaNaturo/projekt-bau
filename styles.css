@@ -2075,3 +2075,63 @@ body.pdf-exporting .pdf-footer{
     --tablet-roomstrip:40px;
   }
 }
+
+/* v1.7.8 – CAD area exactly to the bottom object palette */
+.floorplan-modal-card.tablet-hardmode .fp-editor-grid{
+  position:relative!important;
+  height:100%!important;
+  min-height:0!important;
+  padding-bottom:0!important;
+  overflow:hidden!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .cad-floorplan-workspace,
+.floorplan-modal-card.tablet-hardmode #fp2DWorkspace,
+.floorplan-modal-card.tablet-hardmode #fp3DWorkspace{
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important;
+}
+
+/* Canvas extends through the complete blue-marked area.
+   Object palette sits AFTER it, not over it. */
+.floorplan-modal-card.tablet-hardmode{
+  grid-template-rows:
+    var(--tablet-topbar)
+    var(--tablet-controls)
+    var(--tablet-roomstrip)
+    minmax(0,1fr)
+    var(--tablet-object-height)
+    var(--tablet-status)!important;
+}
+
+.floorplan-modal-card.tablet-hardmode .cad-object-palette{
+  position:relative!important;
+  grid-row:5!important;
+  left:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:calc(100% - var(--tablet-left-toolbar))!important;
+  margin-left:var(--tablet-left-toolbar)!important;
+  height:var(--tablet-object-height)!important;
+  min-height:var(--tablet-object-height)!important;
+  z-index:20!important;
+  box-sizing:border-box!important;
+}
+
+/* editor remains grid row 4 */
+.floorplan-modal-card.tablet-hardmode .fp-editor-grid{
+  grid-row:4!important;
+}
+
+/* status bar at the very bottom */
+.floorplan-modal-card.tablet-hardmode .fp-statusbar{
+  grid-row:6!important;
+}
+
+/* Do not reserve phantom space below the canvas */
+.floorplan-modal-card.tablet-hardmode .floorplan-canvas-wrap{
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}

@@ -1,25 +1,12 @@
-Projekt Bau v1.7.7 – Tablet Focus
+Projekt Bau v1.7.8 – Full CAD Area
 
-Problem behoben:
-- CAD-Arbeitsfläche war gross genug, aber der Grundriss wurde zu klein dargestellt.
-- Dadurch entstand sehr viel leerer weisser Raum.
-
-Neu:
-- Fit-to-View nutzt die tatsächlich sichtbare Tablet-CAD-Fläche.
-- Grundriss füllt im Querformat automatisch ca. 75–80 % der verfügbaren Breite/Höhe.
-- Grundriss wird horizontal und vertikal zentriert.
-- Wegen der unteren Objektpalette wird der Plan leicht nach oben optimiert.
-- Automatischer Zoom darf auf Tablets deutlich stärker vergrössern.
-- Nach Öffnen, Rotation und Viewport-Änderung wird mehrfach stabil neu eingepasst.
-- Oberleisten wurden nochmals leicht reduziert.
-
-Alle Funktionen aus v1.7.6 bleiben erhalten:
-- Pinch Zoom
-- Tablet Hard Mode
-- 360° Drehgriff
-- Wandfang
-- Objektbegrenzung
-- 2D / 3D
-- Fliesenfunktionen
+Tablet düzeltmesi:
+- 2D/3D çalışma alanı üst cetvelden alt nesne paletinin üst kenarına kadar tam yüksekliği kullanır.
+- Önceki sürümlerdeki görünmez/ayrılmış alt boşluk kaldırıldı.
+- Nesne paleti artık CAD alanının üzerine binmez; ayrı sabit satırdır.
+- CAD canvas kalan bütün orta alanı doldurur.
+- Tablet layout oturduktan sonra canvas yeniden ölçülür ve Grundriss yeniden ortalanır.
+- Sol araç çubuğu CAD alanıyla aynı yüksekliği kullanır.
+- Pinch zoom ve önceki CAD özellikleri korunur.
 
 Deutsch / de-CH.

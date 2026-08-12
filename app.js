@@ -2443,6 +2443,16 @@ function drawCadRulers(){
 
 
 
+
+function refitTabletCadArea(){
+  if(!document.querySelector('.floorplan-modal-card.tablet-hardmode'))return;
+  requestAnimationFrame(()=>{
+    resize2DCanvas?.();
+    if(fp3DMode)window.ProjectBau3D?.fitView?.();
+    else fitFloorplan2D?.();
+  });
+}
+
 function updateTabletViewportMetrics(){
   const root=document.documentElement;
   const visualH=window.visualViewport?.height||window.innerHeight;
@@ -2531,6 +2541,8 @@ function initTabletCadUi(){
   window.addEventListener('orientationchange',()=>setTimeout(refresh,250));
   applyMode();
   updateTabletViewportMetrics();
+  setTimeout(refitTabletCadArea,80);
+  setTimeout(refitTabletCadArea,300);
 }
 
 function initFloorplanControls(){

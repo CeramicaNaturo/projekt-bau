@@ -881,6 +881,91 @@ function setSelectedWallGeometry(){
   updateSelectedInfo();
 }
 
+
+function updateWallQuickPanel(){
+  const panel=$('fpWallQuickPanel');
+  const o=selectedObject();
+  if(!panel)return;
+
+  if(!o || o.type!=='wall'){
+    panel.classList.add('hidden');
+    return;
+  }
+
+  panel.classList.remove('hidden');
+
+  const length=dist({x:o.x1,y:o.y1},{x:o.x2,y:o.y2});
+  const current=wallAngleDeg(o);
+  const snapped=nearestCadAngle(current);
+  const diff=Math.min(Math.abs(current-snapped),360-Math.abs(current-snapped));
+
+  const setValue=(id,val)=>{
+    const el=$(id);
+    if(el)el.value=String(val);
+  };
+
+  setValue('fpQuickWallLength',Math.round(length));
+  setValue('fpQuickWallThickness',Math.round(Number(o.thickness||15)));
+  setValue('fpQuickWallX1',Math.round(Number(o.x1)));
+  setValue('fpQuickWallY1',Math.round(Number(o.y1)));
+  setValue('fpQuickWallX2',Math.round(Number(o.x2)));
+  setValue('fpQuickWallY2',Math.round(Number(o.y2)));
+
+  const angle=$('fpQuickWallAngle');
+  if(angle)angle.value=diff<0.5?String(snapped):'auto';
+}
+
+function applyWallQuickPanel(){
+  const o=selectedObject();
+  if(!o || o.type!=='wall')return;
+
+  const length=Number($('fpQuickWallLength')?.value);
+  const angleValue=$('fpQuickWallAngle')?.value;
+  const thickness=Number($('fpQuickWallThickness')?.value);
+  const x1=Number($('fpQuickWallX1')?.value);
+  const y1=Number($('fpQuickWallY1')?.value);
+  const x2=Number($('fpQuickWallX2')?.value);
+  const y2=Number($('fpQuickWallY2')?.value);
+
+  pushHistory();
+
+  if([x1,y1,x2,y2].every(Number.isFinite)){
+    o.x1=x1;o.y1=y1;o.x2=x2;o.y2=y2;
+  }
+
+  if(Number.isFinite(thickness) && thickness>0){
+    o.thickness=thickness;
+    fpWallThickness=thickness;
+    const normalThickness=$('fpWallThickness');
+    if(normalThickness)normalThickness.value=String(thickness);
+  }
+
+  if(Number.isFinite(length) && length>0){
+    let angleDeg=wallAngleDeg(o);
+
+    if(angleValue && angleValue!=='auto'){
+      angleDeg=Number(angleValue);
+    }else if(fpAngleSnap){
+      angleDeg=nearestCadAngle(angleDeg);
+    }
+
+    const rad=angleDeg*Math.PI/180;
+    o.x2=o.x1+Math.cos(rad)*length;
+    o.y2=o.y1+Math.sin(rad)*length;
+
+    if(Math.abs(Math.cos(rad))<1e-10)o.x2=o.x1;
+    if(Math.abs(Math.sin(rad))<1e-10)o.y2=o.y1;
+
+    o.x2=Math.round(o.x2*1000)/1000;
+    o.y2=Math.round(o.y2*1000)/1000;
+  }
+
+  drawFloorplan();
+  updateSelectedInfo();
+  updateWallQuickPanel();
+}
+
+
 function updateWallEndpointFields(){
   const o=selectedObject();
   const ids=['fpWallX1','fpWallY1','fpWallX2','fpWallY2'];
@@ -1806,7 +1891,7 @@ function setSelectedDimensions(){
 function updateSelectedInfo(){
   const el=$('fpSelectedInfo');if(!el)return;
   const o=fpObjects.find(x=>x.id===fpSelectedId);
-  if(!o){el.textContent='Keine Auswahl';refreshOpeningPanel();return}
+  if(!o){el.textContent='Keine Auswahl';refreshOpeningPanel();updateWallQuickPanel();return}
   let txt=`Ausgewählt: ${o.type}`;
   const pos=objectPositionCm(o);
   txt+=` · X ${pos.x} cm · Y ${pos.y} cm`;
@@ -1834,6 +1919,7 @@ function updateSelectedInfo(){
   el.textContent=txt;
   updateCadInspector();
   updateWallEndpointFields();
+  updateWallQuickPanel();
   refreshOpeningPanel();
 }
 function applyZoom(){
@@ -2745,6 +2831,18 @@ function initFloorplanControls(){
 
   const openingDirection=$('fpOpeningDirection');
   if(openingDirection)openingDirection.onchange=changeOpeningDirection;
+
+  const quickApply=$('fpQuickWallApply');
+  if(quickApply)quickApply.onclick=applyWallQuickPanel;
+
+  const quickClose=$('fpWallQuickClose');
+  if(quickClose)quickClose.onclick=()=>$('fpWallQuickPanel')?.classList.add('hidden');
+
+  ['fpQuickWallLength','fpQuickWallAngle','fpQuickWallThickness',
+   'fpQuickWallX1','fpQuickWallY1','fpQuickWallX2','fpQuickWallY2'].forEach(id=>{
+    const el=$(id);
+    if(el)el.onchange=applyWallQuickPanel;
+  });
 
   const wallLength=$('fpWallLength');
   const wallAngle=$('fpWallAngle');

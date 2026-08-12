@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=183">
+<link rel="stylesheet" href="styles.css?v=184">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer"><strong>Version 1.8.3</strong></div>
+  <div class="cad-sidebar-footer"><strong>Version 1.8.4</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.8.3</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.8.4</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -374,6 +374,51 @@
             </div>
           </div>
           <div id="fpSelectedInfo" class="fp-selected-info">Keine Auswahl</div>
+
+          <aside id="fpWallQuickPanel" class="fp-wall-quick-panel hidden">
+            <div class="fp-wall-quick-title">
+              <strong>WANDMASSE</strong>
+              <button id="fpWallQuickClose" type="button" title="Schliessen">×</button>
+            </div>
+
+            <label>Länge (cm)
+              <input id="fpQuickWallLength" type="number" min="1" step="1">
+            </label>
+
+            <label>Winkel
+              <select id="fpQuickWallAngle">
+                <option value="auto">Aktuellen Winkel behalten</option>
+                <option value="0">0° – horizontal rechts</option>
+                <option value="45">45°</option>
+                <option value="90">90° – vertikal unten</option>
+                <option value="135">135°</option>
+                <option value="180">180° – horizontal links</option>
+                <option value="225">225°</option>
+                <option value="270">270° – vertikal oben</option>
+                <option value="315">315°</option>
+              </select>
+            </label>
+
+            <label>Wandstärke (cm)
+              <select id="fpQuickWallThickness">
+                <option value="10">10 cm</option>
+                <option value="12">12 cm</option>
+                <option value="15">15 cm</option>
+                <option value="20">20 cm</option>
+                <option value="25">25 cm</option>
+                <option value="30">30 cm</option>
+              </select>
+            </label>
+
+            <div class="fp-wall-quick-grid">
+              <label>Start X<input id="fpQuickWallX1" type="number" step="1"></label>
+              <label>Start Y<input id="fpQuickWallY1" type="number" step="1"></label>
+              <label>Ende X<input id="fpQuickWallX2" type="number" step="1"></label>
+              <label>Ende Y<input id="fpQuickWallY2" type="number" step="1"></label>
+            </div>
+
+            <button id="fpQuickWallApply" type="button" class="primary">Übernehmen</button>
+          </aside>
         </div>
 
         <div id="fp3DWorkspace" class="fp-3d-workspace hidden">
@@ -565,8 +610,8 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=183"></script>
+<script type="module" src="three_viewer.js?v=184"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=183"></script>
+<script src="app.js?v=184"></script>
 </body>
 </html>

@@ -539,7 +539,7 @@ function initTileTools(){
 
 let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
-let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null,fpObjectRotateDrag=null;
+let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null,fpObjectRotateDrag=null,fpPinchState=null;
 let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpLastRenderError='',fpObjectWallSnap=true,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
 const fpCanvas=$('floorplanCanvas'),fpCtx=fpCanvas.getContext('2d');
@@ -2647,6 +2647,38 @@ window.addEventListener('resize',()=>{
   }
 });
 
+
+function initPinchZoom(){
+  if(!fpCanvas)return;
+
+  fpCanvas.addEventListener('touchstart',ev=>{
+    if(ev.touches.length===2){
+      ev.preventDefault();
+      beginPinchZoom(ev);
+    }
+  },{passive:false});
+
+  fpCanvas.addEventListener('touchmove',ev=>{
+    if(ev.touches.length===2 && fpPinchState){
+      ev.preventDefault();
+      updatePinchZoom(ev);
+    }
+  },{passive:false});
+
+  fpCanvas.addEventListener('touchend',ev=>{
+    if(fpPinchState){
+      ev.preventDefault();
+      endPinchZoom(ev);
+    }
+  },{passive:false});
+
+  fpCanvas.addEventListener('touchcancel',ev=>{
+    if(fpPinchState){
+      fpPinchState=null;
+    }
+  },{passive:false});
+}
+
 function initCadKeyboard(){
   document.addEventListener('keydown',e=>{
     if($('floorplanModal')?.classList.contains('hidden'))return;
@@ -2684,6 +2716,75 @@ function initCadKeyboard(){
   });
 }
 
+
+function touchDistance(t1,t2){
+  return Math.hypot(t2.clientX-t1.clientX,t2.clientY-t1.clientY);
+}
+function touchMidpoint(t1,t2){
+  return {
+    x:(t1.clientX+t2.clientX)/2,
+    y:(t1.clientY+t2.clientY)/2
+  };
+}
+function screenToWorldFromClient(clientX,clientY){
+  const r=fpCanvas.getBoundingClientRect();
+  const canvasX=(clientX-r.left)*(fpCanvas.width/r.width);
+  const canvasY=(clientY-r.top)*(fpCanvas.height/r.height);
+  return {
+    x:(canvasX-fpViewOffsetX)/fpZoom,
+    y:(canvasY-fpViewOffsetY)/fpZoom,
+    canvasX,canvasY
+  };
+}
+function beginPinchZoom(ev){
+  if(ev.touches.length!==2)return false;
+  const t1=ev.touches[0],t2=ev.touches[1];
+  const mid=touchMidpoint(t1,t2);
+  const world=screenToWorldFromClient(mid.x,mid.y);
+
+  fpPinchState={
+    startDistance:touchDistance(t1,t2),
+    startZoom:fpZoom,
+    worldX:world.x,
+    worldY:world.y
+  };
+  fpDrawing=false;
+  fpDragOffset=null;
+  fpObjectRotateDrag=null;
+  return true;
+}
+function updatePinchZoom(ev){
+  if(!fpPinchState || ev.touches.length!==2)return false;
+
+  const t1=ev.touches[0],t2=ev.touches[1];
+  const currentDistance=touchDistance(t1,t2);
+  const ratio=currentDistance/Math.max(1,fpPinchState.startDistance);
+
+  const newZoom=Math.max(.05,Math.min(8,fpPinchState.startZoom*ratio));
+  const mid=touchMidpoint(t1,t2);
+  const r=fpCanvas.getBoundingClientRect();
+  const canvasX=(mid.x-r.left)*(fpCanvas.width/r.width);
+  const canvasY=(mid.y-r.top)*(fpCanvas.height/r.height);
+
+  fpZoom=newZoom;
+
+  // Keep the world point under the midpoint of the two fingers.
+  fpViewOffsetX=canvasX-fpPinchState.worldX*fpZoom;
+  fpViewOffsetY=canvasY-fpPinchState.worldY*fpZoom;
+
+  const z=$('fpZoomReset');
+  if(z)z.textContent=`${Math.round(fpZoom*100)}%`;
+
+  drawFloorplan();
+  return true;
+}
+function endPinchZoom(ev){
+  if(!fpPinchState)return;
+  if(!ev.touches || ev.touches.length<2){
+    fpPinchState=null;
+  }
+}
+
 function initFloorplanCanvas(){
   if(!fpCanvas)return;
 
@@ -2714,6 +2815,6 @@ function initFloorplanCanvas(){
     try{fpCanvas.releasePointerCapture(e.pointerId)}catch(_){}
   };
 }
-initCadShell();initTileTools();initTabletCadUi();initFloorplanControls();initFloorplanCanvas();initCadKeyboard();
+initCadShell();initTileTools();initTabletCadUi();initFloorplanControls();initFloorplanCanvas();initPinchZoom();initCadKeyboard();
 
 render();

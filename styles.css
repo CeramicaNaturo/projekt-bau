@@ -1823,3 +1823,12 @@ body.pdf-exporting .pdf-footer{
 @media (pointer:coarse) and (orientation:landscape){
   .fp-tablet-only{display:inline-flex!important}
 }
+
+/* v1.7.5 – Tablet Pinch Zoom */
+#floorplanCanvas{
+  touch-action:none!important;
+}
+.floorplan-canvas-wrap{
+  touch-action:none!important;
+  overscroll-behavior:none!important;
+}

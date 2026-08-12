@@ -539,7 +539,7 @@ function initTileTools(){
 
 let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
-let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null;
+let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null;
 let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpLastRenderError='',fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
 const fpCanvas=$('floorplanCanvas'),fpCtx=fpCanvas.getContext('2d');
@@ -592,6 +592,186 @@ function snapAnglePoint(start,p){
     x:snap(start.x + Math.sign(dx||1)*length),
     y:snap(start.y + Math.sign(dy||1)*length)
   };
+}
+
+
+function nearestWallEndpoint(p,maxDistance=35){
+  let best=null,bestDist=Infinity;
+  for(const w of fpObjects){
+    if(w.type!=='wall')continue;
+    for(const pt of [{x:Number(w.x1),y:Number(w.y1)},{x:Number(w.x2),y:Number(w.y2)}]){
+      const d=Math.hypot(p.x-pt.x,p.y-pt.y);
+      if(d<=maxDistance && d<bestDist){
+        best={x:pt.x,y:pt.y};
+        bestDist=d;
+      }
+    }
+  }
+  return best;
+}
+
+function rayWallIntersection(start,end){
+  const dx=end.x-start.x;
+  const dy=end.y-start.y;
+  const horizontal=Math.abs(dy)<0.001 && Math.abs(dx)>0.001;
+  const vertical=Math.abs(dx)<0.001 && Math.abs(dy)>0.001;
+  if(!horizontal && !vertical)return null;
+
+  const dir=horizontal?Math.sign(dx):Math.sign(dy);
+  let best=null;
+  let bestForward=Infinity;
+
+  for(const w of fpObjects){
+    if(w.type!=='wall')continue;
+
+    const ax=Number(w.x1),ay=Number(w.y1);
+    const bx=Number(w.x2),by=Number(w.y2);
+
+    // Ignore a wall endpoint that is effectively the current start point.
+    if(Math.min(Math.hypot(ax-start.x,ay-start.y),Math.hypot(bx-start.x,by-start.y))<3)continue;
+
+    let ix,iy;
+
+    if(horizontal){
+      // Segment must cross the horizontal ray Y.
+      const minY=Math.min(ay,by)-0.001;
+      const maxY=Math.max(ay,by)+0.001;
+      if(start.y<minY || start.y>maxY)continue;
+
+      if(Math.abs(by-ay)<0.001){
+        // Collinear horizontal wall: use nearest endpoint in forward direction.
+        const candidates=[ax,bx].filter(x=>(x-start.x)*dir>3);
+        if(!candidates.length)continue;
+        ix=candidates.sort((u,v)=>Math.abs(u-start.x)-Math.abs(v-start.x))[0];
+        iy=start.y;
+      }else{
+        const t=(start.y-ay)/(by-ay);
+        if(t<-0.001||t>1.001)continue;
+        ix=ax+t*(bx-ax);
+        iy=start.y;
+      }
+
+      const forward=(ix-start.x)*dir;
+      if(forward<=3)continue;
+      if(forward<bestForward){
+        bestForward=forward;
+        best={x:ix,y:iy,distance:forward,axis:'horizontal'};
+      }
+    }else{
+      const minX=Math.min(ax,bx)-0.001;
+      const maxX=Math.max(ax,bx)+0.001;
+      if(start.x<minX || start.x>maxX)continue;
+
+      if(Math.abs(bx-ax)<0.001){
+        const candidates=[ay,by].filter(y=>(y-start.y)*dir>3);
+        if(!candidates.length)continue;
+        iy=candidates.sort((u,v)=>Math.abs(u-start.y)-Math.abs(v-start.y))[0];
+        ix=start.x;
+      }else{
+        const t=(start.x-ax)/(bx-ax);
+        if(t<-0.001||t>1.001)continue;
+        iy=ay+t*(by-ay);
+        ix=start.x;
+      }
+
+      const forward=(iy-start.y)*dir;
+      if(forward<=3)continue;
+      if(forward<bestForward){
+        bestForward=forward;
+        best={x:ix,y:iy,distance:forward,axis:'vertical'};
+      }
+    }
+  }
+
+  return best;
+}
+
+function smartWallEndpoint(start,p){
+  const base=snapAnglePoint(start,p);
+  const target=rayWallIntersection(start,base);
+  if(!target)return {point:base,target:null,snapped:false};
+
+  const pointerDistance=Math.hypot(base.x-start.x,base.y-start.y);
+  const targetDistance=Math.hypot(target.x-start.x,target.y-start.y);
+
+  // Snap when close to the opposite wall OR when the pointer passes it.
+  const snapTolerance=Math.max(35,Math.min(80,targetDistance*.10));
+  const close=Math.abs(pointerDistance-targetDistance)<=snapTolerance;
+  const passed=pointerDistance>=targetDistance;
+
+  if(close||passed){
+    return {
+      point:{x:snap(target.x),y:snap(target.y)},
+      target,
+      snapped:true
+    };
+  }
+  return {point:base,target,snapped:false};
+}
+
+function drawLiveWallDimension(preview){
+  if(!preview || preview.type!=='wall')return;
+
+  const x1=Number(preview.x1),y1=Number(preview.y1);
+  const x2=Number(preview.x2),y2=Number(preview.y2);
+  const mx=(x1+x2)/2,my=(y1+y2)/2;
+  const len=Math.round(dist({x:x1,y:y1},{x:x2,y:y2}));
+
+  fpCtx.save();
+
+  // Live dimension bubble.
+  const zoom=(typeof fpZoom==='number'&&fpZoom>0)?fpZoom:1;
+  fpCtx.font=`bold ${16/zoom}px Arial`;
+  fpCtx.textAlign='center';
+  fpCtx.textBaseline='middle';
+
+  const text=`${len} cm`;
+  const pad=7/zoom;
+  const tw=fpCtx.measureText(text).width+pad*2;
+  const th=28/zoom;
+
+  fpCtx.fillStyle='rgba(37,99,235,.96)';
+  fpCtx.strokeStyle='#ffffff';
+  fpCtx.lineWidth=1.5/zoom;
+  fpCtx.fillRect(mx-tw/2,my-th/2-24/zoom,tw,th);
+  fpCtx.strokeRect(mx-tw/2,my-th/2-24/zoom,tw,th);
+  fpCtx.fillStyle='#ffffff';
+  fpCtx.fillText(text,mx,my-24/zoom);
+
+  // Start point marker.
+  fpCtx.fillStyle='#2563eb';
+  fpCtx.beginPath();
+  fpCtx.arc(x1,y1,5/zoom,0,Math.PI*2);
+  fpCtx.fill();
+
+  // Opposite wall target marker / guide.
+  if(preview.snapTarget){
+    const t=preview.snapTarget;
+    fpCtx.strokeStyle=preview.snappedToTarget?'#16a34a':'#2563eb';
+    fpCtx.fillStyle=preview.snappedToTarget?'#16a34a':'#2563eb';
+    fpCtx.lineWidth=2/zoom;
+    fpCtx.setLineDash([7/zoom,5/zoom]);
+
+    fpCtx.beginPath();
+    fpCtx.moveTo(x1,y1);
+    fpCtx.lineTo(t.x,t.y);
+    fpCtx.stroke();
+
+    fpCtx.setLineDash([]);
+    fpCtx.beginPath();
+    fpCtx.arc(t.x,t.y,8/zoom,0,Math.PI*2);
+    fpCtx.stroke();
+
+    fpCtx.font=`bold ${12/zoom}px Arial`;
+    fpCtx.textAlign='left';
+    fpCtx.fillStyle=preview.snappedToTarget?'#15803d':'#1d4ed8';
+    fpCtx.fillText(
+      preview.snappedToTarget ? 'Duvara yakalandı' : `Karşı duvar: ${Math.round(t.distance)} cm`,
+      t.x+12/zoom,t.y-10/zoom
+    );
+  }
+
+  fpCtx.restore();
 }
 
 function duplicateSelected(){
@@ -820,7 +1000,7 @@ function openFloorplan(project,record){
   fpProject=project;fpRecord=record;
   fpObjects=Array.isArray(record.objects)?JSON.parse(JSON.stringify(record.objects)):[];
   fpGrid=record.grid||5;fpFineStep=record.fineStep||1;fpWallThickness=record.wallThickness||15;
-  fp3DMode=false;fp3DOptions=record.threeDOptions||{floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpZoom=1;fpActiveLayer=record.activeLayer||'walls';fpLayerVisibility=record.layerVisibility||{walls:true,openings:true,sanitary:true,furniture:true,notes:true};
+  fp3DMode=false;fp3DOptions=record.threeDOptions||{floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpLastWallEnd=null;fpZoom=1;fpActiveLayer=record.activeLayer||'walls';fpLayerVisibility=record.layerVisibility||{walls:true,openings:true,sanitary:true,furniture:true,notes:true};
   const roomHeight=$('fpRoomHeight');if(roomHeight)roomHeight.value=record.roomHeightM??'';
   const tileX=$('fpTileOriginX'),tileY=$('fpTileOriginY'),tileRot=$('fpTileRotation');
   if(tileX)tileX.value=fp3DOptions.tileOriginX??0;
@@ -841,6 +1021,7 @@ function openFloorplan(project,record){
 }
 function closeFloorplan(){$('floorplanModal').classList.add('hidden');fpProject=null;fpRecord=null}
 function setFloorTool(tool){
+  if(tool!=='wall')fpLastWallEnd=null;
   fpTool=tool;fpSelectedId=null;fpEndpointDrag=null;updateSelectedInfo();
   document.querySelectorAll('.fp-tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
   if(fpCanvas){
@@ -909,7 +1090,20 @@ function floorStart(ev){
 
   if(fpTool==='wall'){
     pushHistory();
-    fpStart={x:snap(p.x),y:snap(p.y)};
+
+    // Priority:
+    // 1) clicked existing endpoint
+    // 2) last wall endpoint (continuous wall chain)
+    // 3) current pointer
+    const endpointHit=nearestWallEndpoint(p,40);
+    if(endpointHit){
+      fpStart={x:snap(endpointHit.x),y:snap(endpointHit.y)};
+    }else if(fpLastWallEnd){
+      fpStart={x:snap(fpLastWallEnd.x),y:snap(fpLastWallEnd.y)};
+    }else{
+      fpStart={x:snap(p.x),y:snap(p.y)};
+    }
+
     fpPreview={
       id:'preview',
       type:fpTool,
@@ -918,7 +1112,9 @@ function floorStart(ev){
       x2:fpStart.x,
       y2:fpStart.y,
       thickness:fpWallThickness,
-      layer:'walls'
+      layer:'walls',
+      snapTarget:null,
+      snappedToTarget:false
     };
     fpDrawing=true;
     drawFloorplan(fpPreview);
@@ -1008,16 +1204,18 @@ function floorMove(ev){
   }
 
   if((fpTool==='wall') && fpStart){
-    const ep=snapAnglePoint(fpStart,p);
+    const smart=smartWallEndpoint(fpStart,p);
     fpPreview={
       id:'preview',
       type:fpTool,
       x1:fpStart.x,
       y1:fpStart.y,
-      x2:ep.x,
-      y2:ep.y,
+      x2:smart.point.x,
+      y2:smart.point.y,
       thickness:fpWallThickness,
-      layer:'walls'
+      layer:'walls',
+      snapTarget:smart.target,
+      snappedToTarget:smart.snapped
     };
     drawFloorplan(fpPreview);
   }
@@ -1040,7 +1238,9 @@ function floorEnd(ev){
 
   if((fpTool==='wall') && fpStart){
     const p=fpPoint(ev);
-    const ep=snapAnglePoint(fpStart,p);
+    const smart=smartWallEndpoint(fpStart,p);
+    const ep=smart.point;
+
     const obj={
       id:uidObj(),
       type:fpTool,
@@ -1055,6 +1255,9 @@ function floorEnd(ev){
     const length=dist({x:obj.x1,y:obj.y1},{x:obj.x2,y:obj.y2});
     if(length>=8){
       fpObjects.push(obj);
+
+      // Next wall starts automatically from this exact end point.
+      fpLastWallEnd={x:obj.x2,y:obj.y2};
     }
 
     fpDrawing=false;
@@ -1332,7 +1535,13 @@ function drawFloorplan(preview=null){
 
     if(preview){
       try{
-        fpCtx.save();fpCtx.globalAlpha=.65;drawFpObject(preview,true);fpCtx.restore();
+        fpCtx.save();
+        fpCtx.globalAlpha=.78;
+        drawFpObject(preview,true);
+        fpCtx.restore();
+
+        // CAD live measurement must remain fully opaque and readable.
+        drawLiveWallDimension(preview);
       }catch(e){console.error(e)}
     }
 

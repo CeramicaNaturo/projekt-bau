@@ -6,18 +6,62 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=100">
+<link rel="stylesheet" href="styles.css?v=110">
 </head>
-<body>
+<body class="cad-app">
+
+<aside class="cad-sidebar">
+  <div class="cad-brand">
+    <div class="cad-brand-mark">PB</div>
+    <div>
+      <strong>Projekt Bau</strong>
+      <small>Baudokumentation</small>
+    </div>
+  </div>
+
+  <nav class="cad-nav">
+    <div class="cad-nav-section">ÜBERSICHT</div>
+    <button class="cad-nav-item" data-scroll="#projects">Dashboard</button>
+
+    <div class="cad-nav-section">PROJEKT</div>
+    <button class="cad-nav-item" data-scroll="#projectForm">Projektdetails</button>
+    <button class="cad-nav-item" data-scroll="#areas">Bereiche</button>
+
+    <div class="cad-nav-section">GRUNDRISS</div>
+    <button class="cad-nav-item active" data-scroll=".project-floorplans">Grundrisse</button>
+    <button class="cad-nav-item" id="cadNewFloorplan">Grundriss erstellen</button>
+
+    <div class="cad-nav-section">FOTOS</div>
+    <button class="cad-nav-item" data-scroll="#areas">Fotos</button>
+    <button class="cad-nav-item" id="cadPdfReport">PDF-Bericht</button>
+
+    <div class="cad-nav-section">EINSTELLUNGEN</div>
+    <button class="cad-nav-item" id="cadResetView">Ansicht zurücksetzen</button>
+  </nav>
+
+  <div class="cad-sidebar-footer">Version 1.1</div>
+</aside>
+
+<header class="cad-topbar">
+  <div class="cad-topbar-title">
+    <span>Projekt Bau</span>
+    <small>Professionelle Baudokumentation</small>
+  </div>
+  <div class="cad-topbar-actions">
+    <button class="secondary" id="cadSaveProject">Speichern</button>
+    <button class="primary" id="cadPdfReportTop">PDF-Bericht erstellen</button>
+  </div>
+</header>
+
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.0</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.1</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
 </header>
 
-<main class="wrap">
+<main class="wrap cad-main">
 <section class="card editor">
   <div class="title"><h2>Neues Projekt</h2><span class="pill">PDF-Bericht · Foto & Galerie</span></div>
   <div class="grid">
@@ -190,10 +234,60 @@
       </label>
     </div>
     <div class="floorplan-hint">Professioneller Modus: Objekte auswählen, verschieben und löschen. Wände mit dem Finger ziehen. Wandlänge und Objektpositionen werden automatisch in cm angezeigt.</div>
-    <div class="floorplan-canvas-wrap"><canvas id="floorplanCanvas" width="1600" height="1100"></canvas></div><div id="fpSelectedInfo" class="fp-selected-info">Keine Auswahl</div>
+    <div class="cad-floorplan-layout">
+      <section class="cad-floorplan-workspace">
+        <div class="cad-canvas-ruler cad-ruler-top" id="fpRulerTop"></div>
+        <div class="cad-canvas-inner">
+          <div class="cad-canvas-ruler cad-ruler-left" id="fpRulerLeft"></div>
+          <div class="floorplan-canvas-wrap">
+            <canvas id="floorplanCanvas" width="1600" height="1100"></canvas>
+          </div>
+        </div>
+        <div id="fpSelectedInfo" class="fp-selected-info">Keine Auswahl</div>
+      </section>
+
+      <aside class="cad-inspector">
+        <div class="cad-inspector-title">EIGENSCHAFTEN</div>
+        <div id="cadInspectorSelection" class="cad-inspector-empty">Keine Auswahl</div>
+
+        <div class="cad-inspector-section">
+          <h4>ALLGEMEIN</h4>
+          <div class="cad-property"><span>Typ</span><b id="cadPropType">–</b></div>
+          <div class="cad-property"><span>Position X</span><b id="cadPropX">–</b></div>
+          <div class="cad-property"><span>Position Y</span><b id="cadPropY">–</b></div>
+          <div class="cad-property"><span>Grösse</span><b id="cadPropSize">–</b></div>
+          <div class="cad-property"><span>Drehung</span><b id="cadPropRotation">–</b></div>
+        </div>
+
+        <div class="cad-inspector-section">
+          <h4>BEREICH-INFORMATION</h4>
+          <div class="cad-property"><span>Name</span><b id="cadRoomName">–</b></div>
+          <div class="cad-property"><span>Bodenfläche</span><b id="cadRoomArea">–</b></div>
+          <div class="cad-property"><span>Raumhöhe</span><b id="cadRoomHeight">–</b></div>
+          <div class="cad-property"><span>Umfang</span><b id="cadRoomPerimeter">–</b></div>
+        </div>
+
+        <div class="cad-inspector-section">
+          <h4>MAUSPOSITION</h4>
+          <div class="cad-property"><span>X</span><b id="cadMouseX">–</b></div>
+          <div class="cad-property"><span>Y</span><b id="cadMouseY">–</b></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="cad-object-palette">
+      <button data-add-object="sink">Lavabo</button>
+      <button data-add-object="wc">WC</button>
+      <button data-add-object="shower">Dusche</button>
+      <button data-add-object="bathtub">Badewanne</button>
+      <button data-add-object="door">Tür</button>
+      <button data-add-object="window">Fenster</button>
+      <button data-add-object="drain">Bodenablauf</button>
+      <button data-add-object="text">Text</button>
+    </div>
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=100"></script>
+<script src="app.js?v=110"></script>
 </body>
 </html>

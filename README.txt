@@ -1,30 +1,17 @@
-Projekt Bau v1.0 – Professioneller Grundriss
+Projekt Bau v1.1 – CAD Layout
 
-Grundriss:
-- Deutlich professionelleres Planbild.
-- Feines 10-cm Raster und stärkeres 100-cm Hauptraster.
-- Raster kann ein-/ausgeblendet werden.
-- Masse können ein-/ausgeblendet werden.
-- Objektpositionen können ein-/ausgeblendet werden.
-
-Wände:
-- Wandlänge wird direkt auf der Wand angezeigt.
-- Länge mit weissem Massfeld für bessere Lesbarkeit.
-- Mittelpunkt X / Y wird angezeigt.
-- Ausgewählte Wand zeigt professionelle Endpunkt-Griffe.
-- Wandstärke bleibt einstellbar.
-- Geschlossene Wände berechnen automatisch die Bodenfläche.
-
-Objekte:
-- Tür, Fenster, WC, Dusche, Badewanne, Lavabo und Bodenablauf.
-- Breite × Tiefe wird DIREKT IM OBJEKT dargestellt.
-- X/Y-Position zusätzlich sichtbar.
-- Freies Verschieben, Drehen 0–359°, Skalieren 25–300 %.
-- Manuelle Eingabe von Breite, Tiefe und X/Y-Position.
-
-Raum:
-- Grundrissname, Bodenfläche und Raumhöhe werden direkt im Plan angezeigt.
-- Bodenfläche automatisch in m².
-- Raumhöhe manuell in m.
-
-Deutsch / de-CH und Schweizer Formate bleiben erhalten.
+- Gesamtes Programm im neuen CAD-/Projektmanagement-Stil.
+- Feste linke Navigation.
+- Feste obere Aktionsleiste.
+- Grundriss-Editor mit grossem zentralem Arbeitsbereich.
+- Rechte Eigenschaften-Seitenleiste.
+- Untere Objektpalette.
+- Lineale am oberen und linken Rand.
+- Objekt- und Raumdaten live im Inspector.
+- Maus-/Touch-Position in cm.
+- Raumumfang wird automatisch aus Wandlängen berechnet.
+- Bestehende Grundriss-Funktionen bleiben erhalten:
+  Wand, Tür, Fenster, WC, Dusche, Badewanne, Lavabo, Bodenablauf, Text.
+- Bodenfläche, Raumhöhe, Objektpositionen, Wandlängen und Objektmasse bleiben erhalten.
+- PDF-Bericht-Funktion bleibt integriert.
+- Deutsch / de-CH.

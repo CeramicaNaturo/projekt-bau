@@ -568,6 +568,7 @@ function floorStart(ev){
   ev.preventDefault();
 
   const p=fpPoint(ev);
+  updateCadMousePosition(p);
 
   if(fpTool==='select'){
     const hit=hitTest(p);
@@ -808,6 +809,7 @@ function updateSelectedInfo(){
   if(xInput)xInput.value=String(posInputs.x);
   if(yInput)yInput.value=String(posInputs.y);
   el.textContent=txt;
+  updateCadInspector();
 }
 function applyZoom(){
   fpCanvas.style.transform=`scale(${fpZoom})`;
@@ -816,7 +818,7 @@ function applyZoom(){
   $('fpZoomReset').textContent=`${Math.round(fpZoom*100)}%`;
 }
 function drawFloorplan(preview=null){
-  if(!preview)updateFloorRoomInfo();
+  if(!preview){updateFloorRoomInfo();updateCadInspector();drawCadRulers();}
 
   fpCtx.clearRect(0,0,fpCanvas.width,fpCanvas.height);
   fpCtx.fillStyle='#ffffff';
@@ -1026,6 +1028,64 @@ function drawFpObject(o,preview=false){
   }
 }
 
+
+function calculateWallPerimeterCm(objects){
+  return (objects||[])
+    .filter(o=>o.type==='wall')
+    .reduce((sum,o)=>sum+dist({x:o.x1,y:o.y1},{x:o.x2,y:o.y2}),0);
+}
+
+function updateCadInspector(){
+  const o=selectedObject ? selectedObject() : null;
+  const set=(id,val)=>{const el=$(id);if(el)el.textContent=val??'–'};
+
+  if(o){
+    set('cadInspectorSelection',o.type==='wall'?'Wand':o.type);
+    set('cadPropType',o.type);
+    const p=objectPositionCm(o);
+    set('cadPropX',`${p.x} cm`);
+    set('cadPropY',`${p.y} cm`);
+    if(o.type==='wall'){
+      set('cadPropSize',`${Math.round(dist({x:o.x1,y:o.y1},{x:o.x2,y:o.y2}))} cm`);
+      set('cadPropRotation','–');
+    }else{
+      set('cadPropSize',o.widthCm&&o.depthCm?`${o.widthCm} × ${o.depthCm} cm`:`${Math.round((o.scale||1)*100)} %`);
+      set('cadPropRotation',`${Math.round(o.rotation||0)}°`);
+    }
+  }else{
+    set('cadInspectorSelection','Keine Auswahl');
+    set('cadPropType','–');set('cadPropX','–');set('cadPropY','–');set('cadPropSize','–');set('cadPropRotation','–');
+  }
+
+  if(fpRecord){
+    set('cadRoomName',fpRecord.name||'–');
+    const area=calculateFloorAreaM2(fpObjects);
+    set('cadRoomArea',area==null?'–':`${formatCHNumber(area,2)} m²`);
+    set('cadRoomHeight',fpRecord.roomHeightM?`${formatCHNumber(fpRecord.roomHeightM,2)} m`:'–');
+    set('cadRoomPerimeter',`${formatCHNumber(calculateWallPerimeterCm(fpObjects),0)} cm`);
+  }
+}
+
+function updateCadMousePosition(p){
+  const x=$('cadMouseX'),y=$('cadMouseY');
+  if(x)x.textContent=`${Math.round(p.x)} cm`;
+  if(y)y.textContent=`${Math.round(p.y)} cm`;
+}
+
+function drawCadRulers(){
+  const top=$('fpRulerTop'),left=$('fpRulerLeft');
+  if(top){
+    let html='';
+    for(let x=0;x<=1600;x+=100)html+=`<span style="display:inline-block;width:${100*fpZoom}px">${x} cm</span>`;
+    top.innerHTML=html;
+  }
+  if(left){
+    let html='';
+    for(let y=0;y<=1100;y+=100)html+=`<div style="height:${100*fpZoom}px;padding-top:2px;text-align:center">${y}</div>`;
+    left.innerHTML=html;
+  }
+}
+
 function initFloorplanControls(){
   const newBtn=$('newFloorplanBtn');if(newBtn)newBtn.onclick=createNewFloorplan;
   const cancelName=$('cancelFloorplanName');if(cancelName)cancelName.onclick=cancelNewFloorplan;
@@ -1081,6 +1141,34 @@ function initFloorplanControls(){
   $('fpZoomIn').onclick=()=>{fpZoom=Math.min(2,fpZoom+.1);applyZoom()};
   $('fpZoomReset').onclick=()=>{fpZoom=1;applyZoom()};
 }
+
+function initCadShell(){
+  document.querySelectorAll('.cad-nav-item[data-scroll]').forEach(btn=>{
+    btn.onclick=()=>{
+      const target=document.querySelector(btn.dataset.scroll);
+      if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
+    };
+  });
+
+  const newFp=$('cadNewFloorplan');
+  if(newFp)newFp.onclick=createNewFloorplan;
+
+  const pdfBtns=[$('cadPdfReport'),$('cadPdfReportTop')].filter(Boolean);
+  pdfBtns.forEach(b=>b.onclick=()=>generateDirectPDFReport());
+
+  const saveBtn=$('cadSaveProject');
+  if(saveBtn)saveBtn.onclick=()=>save();
+
+  const resetBtn=$('cadResetView');
+  if(resetBtn)resetBtn.onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
+
+  document.querySelectorAll('[data-add-object]').forEach(btn=>{
+    btn.onclick=()=>{
+      setFloorTool(btn.dataset.addObject);
+    };
+  });
+}
+
 function initFloorplanCanvas(){
   if(!fpCanvas)return;
 
@@ -1111,6 +1199,6 @@ function initFloorplanCanvas(){
     try{fpCanvas.releasePointerCapture(e.pointerId)}catch(_){}
   };
 }
-initFloorplanControls();initFloorplanCanvas();
+initCadShell();initFloorplanControls();initFloorplanCanvas();
 
 render();

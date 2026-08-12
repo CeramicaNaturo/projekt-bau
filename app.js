@@ -40,7 +40,9 @@ $('deleteProject').onclick=()=>{let p=cur();if(p&&confirm('Projekt wirklich lös
 $('workerView').onclick=()=>document.body.classList.toggle('worker-mode');
 $('backup').onclick=()=>{let a=document.createElement('a'),b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});a.href=URL.createObjectURL(b);a.download='ProjektBau_Yedek.json';a.click()};
 $('restore').onchange=async e=>{try{let d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d.projects))throw 0;S=d;A=null;save()}catch{alert('Ungültige Sicherungsdatei.')}};
-$('printReport').onclick=()=>{buildPrintReport();setTimeout(()=>window.print(),100)};
+$('printReport').onclick=async()=>{
+  await generatePDFReport();
+};
 
 function render(){
   let b=$('projects');b.innerHTML=S.projects.length?'':'Noch keine Projekte vorhanden.';
@@ -179,6 +181,96 @@ function photoCard(a,ph,i){
 function img(f){
   return new Promise(ok=>{let r=new FileReader(),i=new Image();r.onload=()=>i.src=r.result;i.onload=()=>{let w=Math.min(1400,i.width),h=Math.round(i.height*w/i.width),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(i,0,0,w,h);ok(c.toDataURL('image/jpeg',.8))};r.readAsDataURL(f)})
 }
+
+async function waitForReportImages(root){
+  const imgs=[...root.querySelectorAll('img')];
+  await Promise.all(imgs.map(img=>{
+    if(img.complete)return Promise.resolve();
+    return new Promise(resolve=>{
+      img.onload=resolve;
+      img.onerror=resolve;
+    });
+  }));
+}
+
+function safePdfFilename(name){
+  return (name||'Projekt_Bau')
+    .replace(/[\\/:*?"<>|]+/g,'_')
+    .replace(/\s+/g,'_')
+    .slice(0,80);
+}
+
+async function generatePDFReport(){
+  const p=cur();
+  if(!p)return;
+
+  const photoCount=(p.areas||[]).reduce((n,a)=>n+(a.photos||[]).length,0);
+  if(!photoCount){
+    alert('Für den PDF-Bericht muss mindestens ein Foto vorhanden sein.');
+    return;
+  }
+
+  if(!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF){
+    alert('Das PDF-Modul konnte nicht geladen werden. Bitte Internetverbindung prüfen und die Seite neu laden.');
+    return;
+  }
+
+  // Open immediately so Edge does not treat the final PDF tab as a popup.
+  const pdfWindow=window.open('about:blank','_blank');
+
+  try{
+    buildPrintReport();
+    const root=$('printReportRoot');
+    document.body.classList.add('pdf-exporting');
+
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    await waitForReportImages(root);
+
+    const pages=[...root.querySelectorAll('.pdf-page')];
+    if(!pages.length)throw new Error('Keine PDF-Seiten vorhanden.');
+
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({
+      orientation:'portrait',
+      unit:'mm',
+      format:'a4',
+      compress:true
+    });
+
+    for(let i=0;i<pages.length;i++){
+      const canvas=await html2canvas(pages[i],{
+        scale:2,
+        backgroundColor:'#ffffff',
+        useCORS:true,
+        logging:false,
+        width:pages[i].scrollWidth,
+        height:pages[i].scrollHeight
+      });
+
+      const img=canvas.toDataURL('image/jpeg',0.93);
+      if(i>0)pdf.addPage('a4','portrait');
+      pdf.addImage(img,'JPEG',0,0,210,297,undefined,'FAST');
+    }
+
+    const blob=pdf.output('blob');
+    const url=URL.createObjectURL(blob);
+
+    if(pdfWindow){
+      pdfWindow.location.replace(url);
+      setTimeout(()=>URL.revokeObjectURL(url),120000);
+    }else{
+      pdf.save(`${safePdfFilename(p.name)}_Baudokumentation.pdf`);
+      URL.revokeObjectURL(url);
+    }
+  }catch(err){
+    if(pdfWindow)pdfWindow.close();
+    console.error(err);
+    alert('Der PDF-Bericht konnte nicht erstellt werden. Bitte Seite neu laden und erneut versuchen.');
+  }finally{
+    document.body.classList.remove('pdf-exporting');
+  }
+}
+
 function buildPrintReport(){
   const p=cur(); if(!p)return;
   const items=[];

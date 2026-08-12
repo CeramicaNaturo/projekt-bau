@@ -1,11 +1,14 @@
-Projekt Bau v0.8.6 – Wand / Masslinie Zeichnung repariert
+Projekt Bau v0.8.7 – Echter PDF-Bericht
 
-- Zeichnungs-Engine für Wand und Masslinie komplett vereinfacht.
-- Pointer-Koordinaten direkt und stabil berechnet.
-- Live-Vorschau beim Ziehen.
-- Finger, Stift und Maus funktionieren mit demselben Ablauf.
-- Startpunkt antippen, gedrückt halten, Endpunkt ziehen, loslassen.
-- Masslinie wird nach dem Loslassen dauerhaft gespeichert.
-- Wand wird nach dem Loslassen dauerhaft gespeichert.
-- Objektverschiebung im Modus «Auswählen» bleibt erhalten.
-- Deutsch / de-CH.
+Korrektur:
+- «PDF-Bericht erstellen» öffnet nicht mehr den Drucker-/Druckdialog.
+- Der Bericht wird direkt im Browser als echte PDF-Datei erzeugt.
+- PDF öffnet sich in einem neuen Tab im PDF-Viewer von Edge/Chrome.
+- Falls ein Browser das neue Fenster blockiert, wird die PDF-Datei stattdessen gespeichert.
+- A4 Hochformat, maximal zwei Fotos pro Seite.
+- Bestehendes professionelles Berichts-Layout bleibt erhalten.
+- Deutsch / de-CH und Schweizer Formate bleiben erhalten.
+
+Technik:
+- jsPDF 4.0.0
+- html2canvas 1.4.1

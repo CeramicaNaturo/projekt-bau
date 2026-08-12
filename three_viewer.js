@@ -89,18 +89,26 @@ function animate(){
   renderer.render(scene,camera);
 }
 
-function makeTexture(dataUrl, repeatX=1, repeatY=1){
+function makeTexture(dataUrl, repeatX=1, repeatY=1, options={}){
   if(!dataUrl) return null;
   const tex=textureLoader.load(dataUrl);
   tex.colorSpace=THREE.SRGBColorSpace;
   tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
   tex.repeat.set(Math.max(.25,repeatX),Math.max(.25,repeatY));
+
+  const ox=Number(options.originX||0)/100;
+  const oy=Number(options.originY||0)/100;
+  tex.offset.set(-ox*Math.max(.25,repeatX),-oy*Math.max(.25,repeatY));
+
+  tex.center.set(.5,.5);
+  tex.rotation=THREE.MathUtils.degToRad(Number(options.rotation||0));
   tex.anisotropy=8;
+  tex.needsUpdate=true;
   return tex;
 }
 
-function materialForTile(tile, repeatX=1, repeatY=1, fallback=0xd8dee7){
-  const map=tile?.photo ? makeTexture(tile.photo,repeatX,repeatY) : null;
+function materialForTile(tile, repeatX=1, repeatY=1, fallback=0xd8dee7, options={}){
+  const map=tile?.photo ? makeTexture(tile.photo,repeatX,repeatY,options) : null;
   return new THREE.MeshStandardMaterial({
     color: map ? 0xffffff : fallback,
     map,
@@ -255,12 +263,24 @@ function objectMesh(o){
 function centerCamera(group){
   const box=new THREE.Box3().setFromObject(group);
   if(box.isEmpty()) return;
+
   const size=box.getSize(new THREE.Vector3());
   const center=box.getCenter(new THREE.Vector3());
-  const span=Math.max(size.x,size.z,2);
-  camera.position.set(center.x+span*.9,Math.max(4,size.y+span*.65),center.z+span*.9);
-  controls.target.copy(center);
-  controls.target.y=Math.min(1.2,size.y*.35);
+
+  // Exact room centre as orbit target.
+  controls.target.set(center.x, Math.max(.75, Math.min(1.25, center.y)), center.z);
+
+  const aspect=Math.max(.3,camera.aspect||1);
+  const vfov=THREE.MathUtils.degToRad(camera.fov);
+  const fitHeight=Math.max(size.y,size.z,1.5)/(2*Math.tan(vfov/2));
+  const fitWidth=(Math.max(size.x,1.5)/aspect)/(2*Math.tan(vfov/2));
+  const distance=Math.max(fitHeight,fitWidth)*1.7;
+
+  const direction=new THREE.Vector3(1,.78,1).normalize();
+  camera.position.copy(center).add(direction.multiplyScalar(distance));
+  camera.near=Math.max(.01,distance/150);
+  camera.far=Math.max(100,distance*25);
+  camera.updateProjectionMatrix();
   controls.update();
 }
 
@@ -280,7 +300,14 @@ function rebuild(){
   const floorTile=findTile(project,options?.floorMaterialId);
   const wallTile=findTile(project,options?.wallMaterialId);
 
-  const floorMat=materialForTile(floorTile,5,5,0xd8d8d3);
+  const floorMat=materialForTile(
+    floorTile,5,5,0xd8d8d3,
+    {
+      originX:options?.tileOriginX||0,
+      originY:options?.tileOriginY||0,
+      rotation:options?.tileRotation||0
+    }
+  );
   const wallMat=materialForTile(wallTile,4,2,0xf1f3f5);
 
   const floor=floorMesh(objects,floorMat);

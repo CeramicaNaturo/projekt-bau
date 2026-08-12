@@ -1,37 +1,20 @@
-Projekt Bau v1.5 – 2D CAD + 3D
+Projekt Bau v1.6 – 3D Zentrierung + Fliesenstart
 
-Neu:
-- Grundriss kann zwischen «2D CAD» und «3D» umgeschaltet werden.
-- 2D-Wände werden automatisch als 3D-Wände aufgebaut.
-- Raumhöhe bestimmt automatisch die 3D-Wandhöhe.
-- Geschlossener Grundriss erzeugt einen 3D-Boden.
-- Türen, Fenster, WC, Dusche, Badewanne, Waschbecken, Küche, Möbel und weitere Objekte werden als 3D-Körper dargestellt.
-- 3D-Navigation mit OrbitControls:
-  - Drehen
-  - Zoom
-  - Verschieben
-- 3D-Kamera automatisch auf den Raum zentrieren.
-- Optionale Decke.
-- Fliesen-Materialbibliothek kann als Boden- oder Wandmaterial ausgewählt werden.
-- Hochgeladenes Fliesenfoto wird als 3D-Textur verwendet.
-- 3D-Einstellungen werden pro Grundriss gespeichert.
+3D-Zentrierung:
+- Beim Wechsel in die 3D-Ansicht wird der Raum automatisch anhand seiner echten 3D-Abmessungen zentriert.
+- Kamera berücksichtigt Breite, Tiefe, Höhe, Bildschirmformat und Perspektive.
+- Orbit-Mittelpunkt liegt exakt im Raum.
+- «3D-Ansicht zentrieren» bleibt zusätzlich verfügbar.
 
-2D-CAD-Funktionen aus v1.4 bleiben vollständig erhalten:
-- Wand-Endpunkte
-- 45°/90° Fang
-- Layer
-- Feinpositionierung
-- X/Y
-- Duplizieren
-- Rückgängig/Wiederholen
-- Bodenfläche
-- Raumhöhe
-- Wandlängen
-- Objektmasse
+Fliesenstart:
+- Neues Werkzeug «Fliesenstart» in der linken CAD-Leiste.
+- Werkzeug auswählen und im 2D-Grundriss gewünschten Startpunkt anklicken.
+- Startpunkt wird mit blauem Fadenkreuz im Plan angezeigt.
+- Startpunkt X / Y wird in cm gespeichert.
+- X / Y kann auch numerisch eingegeben werden.
+- Fliesenrichtung: 0°, 90°, 180°, 270°.
+- Boden-Textur in 3D orientiert sich am definierten Fliesenstartpunkt.
+- Fliesenfoto aus der Materialbibliothek kann weiterhin als Bodenmaterial verwendet werden.
 
-3D-Technik:
-- Three.js
-- OrbitControls
-- WebGL
-
+Alle Funktionen aus v1.5 bleiben erhalten.
 Deutsch / de-CH.

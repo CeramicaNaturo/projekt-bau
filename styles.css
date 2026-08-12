@@ -1109,3 +1109,5 @@ body.pdf-exporting .pdf-footer{
   .fp-view-switch button{padding:7px 9px!important;font-size:11px}
   .fp-3d-viewport{min-height:380px}
 }
+
+.fp-tool[data-tool="tileOrigin"] b{color:#2563eb}

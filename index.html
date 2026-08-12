@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=150">
+<link rel="stylesheet" href="styles.css?v=160">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer">Version 1.5</div>
+  <div class="cad-sidebar-footer">Version 1.6</div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.5</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.6</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -349,6 +349,7 @@
         <button class="fp-tool" data-tool="window"><b>▤</b><span>Fenster</span></button>
         <button class="fp-tool" data-tool="sink"><b>◇</b><span>Objekte</span></button>
         <button class="fp-tool" data-tool="text"><b>T</b><span>Text</span></button>
+        <button class="fp-tool" data-tool="tileOrigin"><b>✚</b><span>Fliesenstart</span></button>
 
         <div class="fp-tool-separator"></div>
         <button id="fpUndo" class="fp-mini-tool" title="Rückgängig">↶</button>
@@ -462,6 +463,20 @@
               <option value="">Neutral</option>
             </select>
           </label>
+          <label>Fliesenstart X (cm)
+            <input id="fpTileOriginX" type="number" step="1" value="0">
+          </label>
+          <label>Fliesenstart Y (cm)
+            <input id="fpTileOriginY" type="number" step="1" value="0">
+          </label>
+          <label>Fliesenrichtung
+            <select id="fpTileRotation">
+              <option value="0">0°</option>
+              <option value="90">90°</option>
+              <option value="180">180°</option>
+              <option value="270">270°</option>
+            </select>
+          </label>
           <label class="check-inline"><input id="fp3DShowCeiling" type="checkbox"> Decke anzeigen</label>
           <button id="fp3DResetCamera" class="secondary">3D-Ansicht zentrieren</button>
         </div>
@@ -501,7 +516,7 @@
     </div>
 
     <div class="fp-statusbar">
-      <span>TIPP: Ziehen = bewegen · STRG = fein · SHIFT = 45°/90° · Entf = löschen · STRG+D = duplizieren · Feinposition: <b id="fpFineStatus">1 cm</b></span>
+      <span>TIPP: Fliesenstart wählen und im Plan anklicken · Ziehen = bewegen · STRG = fein · SHIFT = 45°/90° · Entf = löschen · STRG+D = duplizieren · Feinposition: <b id="fpFineStatus">1 cm</b></span>
       <span id="fpStatusSelection">Keine Auswahl</span>
     </div>
   </div>
@@ -514,8 +529,8 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=150"></script>
+<script type="module" src="three_viewer.js?v=160"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=150"></script>
+<script src="app.js?v=160"></script>
 </body>
 </html>

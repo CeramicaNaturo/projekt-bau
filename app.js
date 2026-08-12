@@ -537,7 +537,7 @@ function initTileTools(){
     });
 }
 
-let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false};
+let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
 let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null;
 let fpZoom=1,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
@@ -794,8 +794,12 @@ function openFloorplan(project,record){
   fpProject=project;fpRecord=record;
   fpObjects=Array.isArray(record.objects)?JSON.parse(JSON.stringify(record.objects)):[];
   fpGrid=record.grid||5;fpFineStep=record.fineStep||1;fpWallThickness=record.wallThickness||15;
-  fp3DMode=false;fp3DOptions=record.threeDOptions||{floorMaterialId:'',wallMaterialId:'',showCeiling:false};fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpZoom=1;fpActiveLayer=record.activeLayer||'walls';fpLayerVisibility=record.layerVisibility||{walls:true,openings:true,sanitary:true,furniture:true,notes:true};
+  fp3DMode=false;fp3DOptions=record.threeDOptions||{floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpZoom=1;fpActiveLayer=record.activeLayer||'walls';fpLayerVisibility=record.layerVisibility||{walls:true,openings:true,sanitary:true,furniture:true,notes:true};
   const roomHeight=$('fpRoomHeight');if(roomHeight)roomHeight.value=record.roomHeightM??'';
+  const tileX=$('fpTileOriginX'),tileY=$('fpTileOriginY'),tileRot=$('fpTileRotation');
+  if(tileX)tileX.value=fp3DOptions.tileOriginX??0;
+  if(tileY)tileY.value=fp3DOptions.tileOriginY??0;
+  if(tileRot)tileRot.value=String(fp3DOptions.tileRotation??0);
   $('fpGridSize').value=String(fpGrid);
   const fine=$('fpFineStep');if(fine)fine.value=String(fpFineStep);
   $('fpWallThickness').value=String(fpWallThickness);
@@ -891,6 +895,18 @@ function floorStart(ev){
     };
     fpDrawing=true;
     drawFloorplan(fpPreview);
+    return;
+  }
+
+  if(fpTool==='tileOrigin'){
+    fp3DOptions.tileOriginX=Math.round(p.x);
+    fp3DOptions.tileOriginY=Math.round(p.y);
+    const tx=$('fpTileOriginX'),ty=$('fpTileOriginY');
+    if(tx)tx.value=String(fp3DOptions.tileOriginX);
+    if(ty)ty.value=String(fp3DOptions.tileOriginY);
+    if(fpRecord)fpRecord.threeDOptions={...fp3DOptions};
+    drawFloorplan();
+    refresh3D();
     return;
   }
 
@@ -1171,6 +1187,24 @@ function drawFloorplan(preview=null){
     fpCtx.save();
     fpCtx.globalAlpha=.65;
     drawFpObject(preview,true);
+    fpCtx.restore();
+  }
+
+  // Fliesenstartpunkt im 2D-Plan
+  if(Number.isFinite(Number(fp3DOptions.tileOriginX)) && Number.isFinite(Number(fp3DOptions.tileOriginY))){
+    const tx=Number(fp3DOptions.tileOriginX),ty=Number(fp3DOptions.tileOriginY);
+    fpCtx.save();
+    fpCtx.strokeStyle='#2563eb';
+    fpCtx.fillStyle='#2563eb';
+    fpCtx.lineWidth=2;
+    fpCtx.beginPath();fpCtx.arc(tx,ty,9,0,Math.PI*2);fpCtx.stroke();
+    fpCtx.beginPath();
+    fpCtx.moveTo(tx-16,ty);fpCtx.lineTo(tx+16,ty);
+    fpCtx.moveTo(tx,ty-16);fpCtx.lineTo(tx,ty+16);
+    fpCtx.stroke();
+    fpCtx.font='bold 12px Arial';
+    fpCtx.textAlign='left';
+    fpCtx.fillText(`Fliesenstart X ${Math.round(tx)} · Y ${Math.round(ty)} cm`,tx+14,ty-12);
     fpCtx.restore();
   }
 
@@ -1554,6 +1588,19 @@ function initFloorplanControls(){
   if(floorMat)floorMat.onchange=e=>{fp3DOptions.floorMaterialId=e.target.value;refresh3D()};
   if(wallMat)wallMat.onchange=e=>{fp3DOptions.wallMaterialId=e.target.value;refresh3D()};
   if(ceiling)ceiling.onchange=e=>{fp3DOptions.showCeiling=e.target.checked;refresh3D()};
+
+  const tileX=$('fpTileOriginX'),tileY=$('fpTileOriginY'),tileRot=$('fpTileRotation');
+  const applyTileOrigin=()=>{
+    fp3DOptions.tileOriginX=Number(tileX?.value||0);
+    fp3DOptions.tileOriginY=Number(tileY?.value||0);
+    fp3DOptions.tileRotation=Number(tileRot?.value||0);
+    if(fpRecord)fpRecord.threeDOptions={...fp3DOptions};
+    drawFloorplan();
+    refresh3D();
+  };
+  if(tileX)tileX.onchange=applyTileOrigin;
+  if(tileY)tileY.onchange=applyTileOrigin;
+  if(tileRot)tileRot.onchange=applyTileOrigin;
   const reset3d=$('fp3DResetCamera');if(reset3d)reset3d.onclick=()=>window.ProjectBau3D?.resetCamera();
 
   const full=$('fpFullscreen');

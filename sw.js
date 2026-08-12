@@ -1,5 +1,5 @@
-const CACHE='projekt-bau-v130';
-const ASSETS=['./','./index.html?v=130','./styles.css?v=130','./app.js?v=130','./manifest.webmanifest'];
+const CACHE='projekt-bau-v140';
+const ASSETS=['./','./index.html?v=140','./styles.css?v=140','./app.js?v=140','./manifest.webmanifest'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(

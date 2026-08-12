@@ -539,7 +539,7 @@ function initTileTools(){
 
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
 let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null;
-let fpZoom=1,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true;
+let fpZoom=1,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
 const fpCanvas=$('floorplanCanvas'),fpCtx=fpCanvas.getContext('2d');
 
@@ -550,6 +550,75 @@ function pushHistory(){
   fpRedoStack=[];
 }
 function restoreObjects(arr){fpObjects=JSON.parse(JSON.stringify(arr));fpSelectedId=null;drawFloorplan();updateSelectedInfo()}
+
+function layerForType(type){
+  if(type==='wall')return 'walls';
+  if(type==='door'||type==='window')return 'openings';
+  if(['wc','shower','bathtub','sink','drain','kitchenSink'].includes(type))return 'sanitary';
+  if(['stove','fridge','washingMachine','table','chair','sofa','bed','cabinet','plant'].includes(type))return 'furniture';
+  return 'notes';
+}
+
+function isLayerVisible(o){
+  return fpLayerVisibility[layerForType(o.type)]!==false;
+}
+
+function snapAnglePoint(start,p){
+  if(!fpAngleSnap)return {x:snap(p.x),y:snap(p.y)};
+  const dx=p.x-start.x,dy=p.y-start.y;
+  const len=Math.hypot(dx,dy);
+  if(len<1)return {x:start.x,y:start.y};
+  const step=Math.PI/4;
+  const ang=Math.atan2(dy,dx);
+  const snapped=Math.round(ang/step)*step;
+  return {
+    x:snap(start.x+Math.cos(snapped)*len),
+    y:snap(start.y+Math.sin(snapped)*len)
+  };
+}
+
+function duplicateSelected(){
+  const o=selectedObject();
+  if(!o)return;
+  pushHistory();
+  const copy=JSON.parse(JSON.stringify(o));
+  copy.id=uidObj();
+  if(copy.type==='wall'){
+    copy.x1+=20;copy.x2+=20;copy.y1+=20;copy.y2+=20;
+  }else{
+    copy.x=(copy.x||0)+20;copy.y=(copy.y||0)+20;
+  }
+  fpObjects.push(copy);
+  fpSelectedId=copy.id;
+  drawFloorplan();
+  updateSelectedInfo();
+}
+
+function updateWallEndpointFields(){
+  const o=selectedObject();
+  const ids=['fpWallX1','fpWallY1','fpWallX2','fpWallY2'];
+  if(!o||o.type!=='wall'){
+    ids.forEach(id=>{const el=$(id);if(el)el.value='';});
+    return;
+  }
+  const map={fpWallX1:o.x1,fpWallY1:o.y1,fpWallX2:o.x2,fpWallY2:o.y2};
+  Object.entries(map).forEach(([id,val])=>{const el=$(id);if(el)el.value=Math.round(val);});
+}
+
+function setWallEndpointsFromFields(){
+  const o=selectedObject();
+  if(!o||o.type!=='wall')return;
+  const vals={
+    x1:Number($('fpWallX1')?.value),y1:Number($('fpWallY1')?.value),
+    x2:Number($('fpWallX2')?.value),y2:Number($('fpWallY2')?.value)
+  };
+  if(Object.values(vals).some(v=>!Number.isFinite(v)))return;
+  pushHistory();
+  Object.assign(o,vals);
+  drawFloorplan();
+  updateSelectedInfo();
+}
+
 function renderFloorplans(project){
   const list=$('floorplanList'); if(!list)return; list.innerHTML='';
   project.floorplans=project.floorplans||[];
@@ -680,7 +749,7 @@ function openFloorplan(project,record){
   fpProject=project;fpRecord=record;
   fpObjects=Array.isArray(record.objects)?JSON.parse(JSON.stringify(record.objects)):[];
   fpGrid=record.grid||5;fpFineStep=record.fineStep||1;fpWallThickness=record.wallThickness||15;
-  fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpZoom=1;
+  fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpZoom=1;fpActiveLayer=record.activeLayer||'walls';fpLayerVisibility=record.layerVisibility||{walls:true,openings:true,sanitary:true,furniture:true,notes:true};
   const roomHeight=$('fpRoomHeight');if(roomHeight)roomHeight.value=record.roomHeightM??'';
   $('fpGridSize').value=String(fpGrid);
   const fine=$('fpFineStep');if(fine)fine.value=String(fpFineStep);
@@ -697,8 +766,12 @@ function openFloorplan(project,record){
 }
 function closeFloorplan(){$('floorplanModal').classList.add('hidden');fpProject=null;fpRecord=null}
 function setFloorTool(tool){
-  fpTool=tool;fpSelectedId=null;updateSelectedInfo();
+  fpTool=tool;fpSelectedId=null;fpEndpointDrag=null;updateSelectedInfo();
   document.querySelectorAll('.fp-tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
+  if(fpCanvas){
+    fpCanvas.classList.remove('cad-pan-mode','cad-crosshair','cad-select');
+    fpCanvas.classList.add(tool==='pan'?'cad-pan-mode':tool==='select'?'cad-select':'cad-crosshair');
+  }
 }
 function snap(v){return fpSnapEnabled?Math.round(v/fpFineStep)*fpFineStep:v}
 function fpPoint(ev){
@@ -713,7 +786,7 @@ function cmFromPixels(px){return Math.round(px)}
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function hitTest(p){
   for(let i=fpObjects.length-1;i>=0;i--){
-    const o=fpObjects[i];
+    const o=fpObjects[i]; if(!isLayerVisible(o))continue;
     if(o.type==='wall'){
       const A={x:o.x1,y:o.y1},B={x:o.x2,y:o.y2};
       const len=dist(A,B)||1;
@@ -732,6 +805,13 @@ function floorStart(ev){
 
   const p=fpPoint(ev);
   updateCadMousePosition(p);
+
+  if(fpTool==='pan'){
+    const wrap=fpCanvas.parentElement;
+    fpPanStart={x:ev.clientX,y:ev.clientY,scrollLeft:wrap.scrollLeft,scrollTop:wrap.scrollTop};
+    fpDrawing=true;
+    return;
+  }
 
   if(fpTool==='select'){
     const hit=hitTest(p);
@@ -761,7 +841,8 @@ function floorStart(ev){
       y1:fpStart.y,
       x2:fpStart.x,
       y2:fpStart.y,
-      thickness:fpWallThickness
+      thickness:fpWallThickness,
+      layer:'walls'
     };
     fpDrawing=true;
     drawFloorplan(fpPreview);
@@ -774,7 +855,7 @@ function floorStart(ev){
   if(fpTool==='text'){
     const text=prompt('Beschriftung eingeben:','');
     if(text){
-      fpObjects.push({id:uidObj(),type:'text',x,y,text,rotation:0,scale:1});
+      fpObjects.push({id:uidObj(),type:'text',x,y,text,rotation:0,scale:1,layer:'notes'});
     }
   }else{
     const dims={
@@ -786,7 +867,7 @@ function floorStart(ev){
     const d=dims[fpTool]||[60,40];
     fpObjects.push({
       id:uidObj(),type:fpTool,x,y,rotation:0,scale:1,
-      widthCm:d[0],depthCm:d[1]
+      widthCm:d[0],depthCm:d[1],layer:layerForType(fpTool)
     });
   }
   drawFloorplan();
@@ -798,6 +879,13 @@ function floorMove(ev){
 
   const p=fpPoint(ev);
 
+  if(fpTool==='pan' && fpPanStart){
+    const wrap=fpCanvas.parentElement;
+    wrap.scrollLeft=fpPanStart.scrollLeft-(ev.clientX-fpPanStart.x);
+    wrap.scrollTop=fpPanStart.scrollTop-(ev.clientY-fpPanStart.y);
+    return;
+  }
+
   if(fpTool==='select' && fpSelectedId){
     const o=fpObjects.find(x=>x.id===fpSelectedId);
     if(!o || !fpDragOffset)return;
@@ -807,10 +895,18 @@ function floorMove(ev){
     const orig=fpDragOffset.orig;
 
     if(o.type==='wall'){
-      o.x1=snap(orig.x1+dx);
-      o.y1=snap(orig.y1+dy);
-      o.x2=snap(orig.x2+dx);
-      o.y2=snap(orig.y2+dy);
+      if(fpEndpointDrag==='start'){
+        const ep=snapAnglePoint({x:orig.x2,y:orig.y2},{x:orig.x1+dx,y:orig.y1+dy});
+        o.x1=ep.x;o.y1=ep.y;o.x2=orig.x2;o.y2=orig.y2;
+      }else if(fpEndpointDrag==='end'){
+        const ep=snapAnglePoint({x:orig.x1,y:orig.y1},{x:orig.x2+dx,y:orig.y2+dy});
+        o.x1=orig.x1;o.y1=orig.y1;o.x2=ep.x;o.y2=ep.y;
+      }else{
+        o.x1=snap(orig.x1+dx);
+        o.y1=snap(orig.y1+dy);
+        o.x2=snap(orig.x2+dx);
+        o.y2=snap(orig.y2+dy);
+      }
     }else{
       o.x=snap(orig.x+dx);
       o.y=snap(orig.y+dy);
@@ -821,14 +917,16 @@ function floorMove(ev){
   }
 
   if((fpTool==='wall') && fpStart){
+    const ep=snapAnglePoint(fpStart,p);
     fpPreview={
       id:'preview',
       type:fpTool,
       x1:fpStart.x,
       y1:fpStart.y,
-      x2:snap(p.x),
-      y2:snap(p.y),
-      thickness:fpWallThickness
+      x2:ep.x,
+      y2:ep.y,
+      thickness:fpWallThickness,
+      layer:'walls'
     };
     drawFloorplan(fpPreview);
   }
@@ -838,9 +936,14 @@ function floorEnd(ev){
   if(!fpDrawing)return;
   ev.preventDefault();
 
+  if(fpTool==='pan'){
+    fpDrawing=false;fpPanStart=null;return;
+  }
+
   if(fpTool==='select'){
     fpDrawing=false;
     fpDragOffset=null;
+    fpEndpointDrag=null;
     return;
   }
 
@@ -975,6 +1078,7 @@ function updateSelectedInfo(){
   if(yInput)yInput.value=String(posInputs.y);
   el.textContent=txt;
   updateCadInspector();
+  updateWallEndpointFields();
 }
 function applyZoom(){
   fpCanvas.style.transform=`scale(${fpZoom})`;
@@ -1016,7 +1120,7 @@ function drawFloorplan(preview=null){
     }
   }
 
-  fpObjects.forEach(drawFpObject);
+  fpObjects.filter(isLayerVisible).forEach(drawFpObject);
 
   if(preview){
     fpCtx.save();
@@ -1347,6 +1451,24 @@ function initFloorplanControls(){
     scaleNum.onfocus=()=>{if(selectedObject())pushHistory()};
     scaleNum.oninput=e=>setSelectedScale(e.target.value,false);
   }
+  const duplicate=$('fpDuplicate');if(duplicate)duplicate.onclick=duplicateSelected;
+  const angle=$('fpAngleSnap');if(angle)angle.onchange=e=>{fpAngleSnap=e.target.checked};
+  const activeLayer=$('fpActiveLayer');if(activeLayer){
+    activeLayer.value=fpActiveLayer;
+    activeLayer.onchange=e=>{fpActiveLayer=e.target.value;if(fpRecord)fpRecord.activeLayer=fpActiveLayer};
+  }
+  document.querySelectorAll('.fp-layer-toggle').forEach(cb=>{
+    cb.checked=fpLayerVisibility[cb.dataset.layer]!==false;
+    cb.onchange=e=>{
+      fpLayerVisibility[e.target.dataset.layer]=e.target.checked;
+      if(fpRecord)fpRecord.layerVisibility={...fpLayerVisibility};
+      drawFloorplan();
+    };
+  });
+  ['fpWallX1','fpWallY1','fpWallX2','fpWallY2'].forEach(id=>{
+    const el=$(id);if(el)el.onchange=setWallEndpointsFromFields;
+  });
+
   const objW=$('fpObjectWidth'),objD=$('fpObjectDepth');
   if(objW)objW.onchange=setSelectedDimensions;
   if(objD)objD.onchange=setSelectedDimensions;
@@ -1355,7 +1477,7 @@ function initFloorplanControls(){
   if(objY)objY.onchange=setSelectedPosition;
   $('fpDeleteSelected').onclick=deleteSelected;
   $('fpClear').onclick=()=>{if(confirm('Grundriss vollständig löschen?')){pushHistory();fpObjects=[];fpSelectedId=null;drawFloorplan();updateSelectedInfo()}};
-  $('fpSave').onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.fineStep=fpFineStep;fpRecord.wallThickness=fpWallThickness;fpRecord.floorAreaM2=calculateFloorAreaM2(fpObjects);save();closeFloorplan()};
+  $('fpSave').onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.fineStep=fpFineStep;fpRecord.wallThickness=fpWallThickness;fpRecord.activeLayer=fpActiveLayer;fpRecord.layerVisibility={...fpLayerVisibility};fpRecord.floorAreaM2=calculateFloorAreaM2(fpObjects);save();closeFloorplan()};
   const roomHeightInput=$('fpRoomHeight');
   if(roomHeightInput)roomHeightInput.onchange=e=>{
     if(!fpRecord)return;
@@ -1416,6 +1538,43 @@ function initCadShell(){
   });
 }
 
+
+function initCadKeyboard(){
+  document.addEventListener('keydown',e=>{
+    if($('floorplanModal')?.classList.contains('hidden'))return;
+    const tag=(document.activeElement?.tagName||'').toLowerCase();
+    if(['input','textarea','select'].includes(tag))return;
+
+    if(e.key==='Delete'||e.key==='Backspace'){
+      e.preventDefault();deleteSelected();return;
+    }
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='d'){
+      e.preventDefault();duplicateSelected();return;
+    }
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z'){
+      e.preventDefault();$('fpUndo')?.click();return;
+    }
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='y'){
+      e.preventDefault();$('fpRedo')?.click();return;
+    }
+
+    const o=selectedObject();
+    if(o && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){
+      e.preventDefault();
+      const step=e.ctrlKey?1:fpFineStep;
+      pushHistory();
+      const dx=e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0;
+      const dy=e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0;
+      if(o.type==='wall'){
+        o.x1+=dx;o.x2+=dx;o.y1+=dy;o.y2+=dy;
+      }else{
+        o.x=(o.x||0)+dx;o.y=(o.y||0)+dy;
+      }
+      drawFloorplan();updateSelectedInfo();
+    }
+  });
+}
+
 function initFloorplanCanvas(){
   if(!fpCanvas)return;
 
@@ -1446,6 +1605,6 @@ function initFloorplanCanvas(){
     try{fpCanvas.releasePointerCapture(e.pointerId)}catch(_){}
   };
 }
-initCadShell();initTileTools();initFloorplanControls();initFloorplanCanvas();
+initCadShell();initTileTools();initFloorplanControls();initFloorplanCanvas();initCadKeyboard();
 
 render();

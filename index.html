@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=130">
+<link rel="stylesheet" href="styles.css?v=140">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer">Version 1.3</div>
+  <div class="cad-sidebar-footer">Version 1.4</div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.3</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.4</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -306,6 +306,17 @@
       <label class="check-inline"><input id="fpShowGrid" type="checkbox" checked> Raster anzeigen</label>
       <label class="check-inline"><input id="fpShowPositions" type="checkbox" checked> Positionen anzeigen</label>
       <label class="check-inline"><input id="fpShowMeasures" type="checkbox" checked> Masse anzeigen</label>
+      <label class="check-inline"><input id="fpAngleSnap" type="checkbox" checked> 45°/90° Fang</label>
+
+      <label>Aktive Ebene
+        <select id="fpActiveLayer">
+          <option value="walls">Wände</option>
+          <option value="openings">Türen / Fenster</option>
+          <option value="sanitary">Sanitär</option>
+          <option value="furniture">Möbel</option>
+          <option value="notes">Texte</option>
+        </select>
+      </label>
 
       <div class="fp-zoom-controls">
         <button id="fpZoomOut" class="secondary">−</button>
@@ -328,6 +339,7 @@
     <div class="fp-editor-grid">
       <aside class="fp-left-tools">
         <button class="fp-tool active" data-tool="select"><b>⌁</b><span>Auswählen</span></button>
+        <button class="fp-tool" data-tool="pan"><b>✋</b><span>Verschieben</span></button>
         <button class="fp-tool" data-tool="wall"><b>╱</b><span>Wand</span></button>
         <button class="fp-tool" data-tool="door"><b>◧</b><span>Tür</span></button>
         <button class="fp-tool" data-tool="window"><b>▤</b><span>Fenster</span></button>
@@ -337,6 +349,7 @@
         <div class="fp-tool-separator"></div>
         <button id="fpUndo" class="fp-mini-tool" title="Rückgängig">↶</button>
         <button id="fpRedo" class="fp-mini-tool" title="Wiederholen">↷</button>
+        <button id="fpDuplicate" class="fp-mini-tool" title="Duplizieren">⧉</button>
         <button id="fpDeleteSelected" class="fp-mini-tool danger" title="Löschen">⌫</button>
         <button id="fpClear" class="fp-mini-tool danger" title="Alles löschen">🗑</button>
       </aside>
@@ -402,8 +415,24 @@
               <option value="15" selected>15 cm</option>
               <option value="20">20 cm</option>
               <option value="25">25 cm</option>
+              <option value="30">30 cm</option>
             </select>
           </label>
+          <div class="wall-endpoint-grid">
+            <label>Start X<input id="fpWallX1" type="number" step="1"></label>
+            <label>Start Y<input id="fpWallY1" type="number" step="1"></label>
+            <label>Ende X<input id="fpWallX2" type="number" step="1"></label>
+            <label>Ende Y<input id="fpWallY2" type="number" step="1"></label>
+          </div>
+        </div>
+
+        <div class="cad-inspector-section">
+          <h4>EBENEN</h4>
+          <label class="check-inline"><input class="fp-layer-toggle" data-layer="walls" type="checkbox" checked> Wände</label>
+          <label class="check-inline"><input class="fp-layer-toggle" data-layer="openings" type="checkbox" checked> Türen / Fenster</label>
+          <label class="check-inline"><input class="fp-layer-toggle" data-layer="sanitary" type="checkbox" checked> Sanitär</label>
+          <label class="check-inline"><input class="fp-layer-toggle" data-layer="furniture" type="checkbox" checked> Möbel</label>
+          <label class="check-inline"><input class="fp-layer-toggle" data-layer="notes" type="checkbox" checked> Texte</label>
         </div>
 
         <div class="cad-inspector-section">
@@ -441,12 +470,12 @@
     </div>
 
     <div class="fp-statusbar">
-      <span>TIPP: Objekt auswählen und ziehen · Feinposition: <b id="fpFineStatus">1 cm</b></span>
+      <span>TIPP: Ziehen = bewegen · STRG = fein · SHIFT = 45°/90° · Entf = löschen · STRG+D = duplizieren · Feinposition: <b id="fpFineStatus">1 cm</b></span>
       <span id="fpStatusSelection">Keine Auswahl</span>
     </div>
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=130"></script>
+<script src="app.js?v=140"></script>
 </body>
 </html>

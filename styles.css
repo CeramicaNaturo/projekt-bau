@@ -1011,3 +1011,33 @@ body.pdf-exporting .pdf-footer{
   .tile-photo-field{grid-column:auto;grid-template-columns:1fr}
   .tile-notes{grid-column:auto}
 }
+
+/* v1.4 CAD enhancements */
+.wall-endpoint-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:8px;
+}
+.wall-endpoint-grid label{
+  font-size:9px!important;
+}
+.wall-endpoint-grid input{
+  width:100%;
+  min-width:0;
+  height:32px!important;
+  padding:6px!important;
+}
+.fp-layer-toggle{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  gap:7px!important;
+  margin:5px 0!important;
+  font-size:11px!important;
+}
+.fp-layer-toggle input{width:auto!important}
+#floorplanCanvas.cad-pan-mode{cursor:grab}
+#floorplanCanvas.cad-pan-mode:active{cursor:grabbing}
+#floorplanCanvas.cad-crosshair{cursor:crosshair}
+#floorplanCanvas.cad-select{cursor:default}

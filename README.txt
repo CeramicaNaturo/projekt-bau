@@ -1,41 +1,43 @@
-Projekt Bau v1.3 – Fliesenleger Edition
+Projekt Bau v1.4 – CAD Grundriss
 
-Layout:
-- Dashboard ve tüm sol navigasyon tamamen sola hizalı.
-- Sol menü profesyonel ve temiz ikon + metin yapısında.
-- CAD-Grundriss tasarımı korunuyor.
+Grundriss wurde zu einem Mini-CAD-Editor erweitert.
 
-Fliesenleger odaklı yeni modüller:
-- Räume / Bereiche
-- Aufmass
-- Arbeiten
-- Fliesen
-- Fugen / Silikon
-- Verlegeart
-- Materialbedarf
-- Baustellenfotos
-- Foto-Berichte
-- Arbeitsaufwand
+CAD-Funktionen:
+- Auswahlmodus
+- Pan / Zeichenfläche verschieben
+- Wand zeichnen
+- 45° / 90° Winkel-Fang
+- Wand-Endpunkte einzeln greifen und verschieben
+- Wand Start/Ende X/Y numerisch eingeben
+- Objekt X/Y numerisch eingeben
+- 1 cm Feinpositionierung
+- Raster / Snap
+- Zoom
+- Ebenen (Layer):
+  - Wände
+  - Türen / Fenster
+  - Sanitär
+  - Möbel
+  - Texte
+- Layer einzeln ein-/ausblenden
+- Aktive Ebene
+- Duplizieren
+- Löschen
+- Rückgängig / Wiederholen
+- Tastatur:
+  - Entf = Löschen
+  - Ctrl/Cmd + D = Duplizieren
+  - Ctrl/Cmd + Z = Rückgängig
+  - Ctrl/Cmd + Y = Wiederholen
+  - Pfeiltasten = Objekt verschieben
+  - Ctrl + Pfeiltaste = 1 cm Feinbewegung
+- Wandlängen in cm
+- Objektmasse im Objekt
+- Bodenfläche automatisch
+- Raumhöhe
+- Umfang
+- X/Y Positionen
+- Mausposition in cm
 
-Fliesen-Materialbibliothek:
-- Beliebig viele Fliesen pro Projekt.
-- Hersteller / Marke
-- Serie / Modell
-- Format
-- Farbe
-- Oberfläche
-- Artikel-Nr.
-- Menge / Fläche
-- Einkaufspreis CHF
-- Notizen
-- Fliesenfoto vom Gerät hochladen
-- Bestehendes Fliesenmaterial bearbeiten / löschen
-
-Projektweite Flieseneinstellungen:
-- Verlegeart
-- Fugenbreite in mm
-- Fugenfarbe
-- Silikonfarbe
-- Verschnitt in %
-
-Deutsch / de-CH und Schweizer Zahlen-/Währungsformat bleiben erhalten.
+Fliesenleger-spezifische Module aus v1.3 bleiben erhalten.
+Deutsch / de-CH.

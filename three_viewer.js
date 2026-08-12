@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 let scene, camera, renderer, controls, host;
 let rootGroup = null;
+let gridHelper = null;
 let currentData = null;
 let resizeObserver = null;
 
@@ -64,9 +65,9 @@ function ensureScene(container){
   sun.shadow.mapSize.set(2048,2048);
   scene.add(sun);
 
-  const grid = new THREE.GridHelper(20,100,0x9aa9ba,0xd5dee8);
-  grid.position.y = 0.001;
-  scene.add(grid);
+  gridHelper = new THREE.GridHelper(20,100,0x9aa9ba,0xd5dee8);
+  gridHelper.position.y = 0.001;
+  scene.add(gridHelper);
 
   resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(container);
@@ -262,25 +263,32 @@ function objectMesh(o){
 
 function centerCamera(group){
   const box=new THREE.Box3().setFromObject(group);
-  if(box.isEmpty()) return;
+  if(box.isEmpty())return;
 
-  const size=box.getSize(new THREE.Vector3());
   const center=box.getCenter(new THREE.Vector3());
+  const sphere=box.getBoundingSphere(new THREE.Sphere());
+  const radius=Math.max(.8,sphere.radius);
 
-  // Exact room centre as orbit target.
-  controls.target.set(center.x, Math.max(.75, Math.min(1.25, center.y)), center.z);
+  if(gridHelper){
+    gridHelper.position.x=center.x;
+    gridHelper.position.z=center.z;
+  }
 
-  const aspect=Math.max(.3,camera.aspect||1);
   const vfov=THREE.MathUtils.degToRad(camera.fov);
-  const fitHeight=Math.max(size.y,size.z,1.5)/(2*Math.tan(vfov/2));
-  const fitWidth=(Math.max(size.x,1.5)/aspect)/(2*Math.tan(vfov/2));
-  const distance=Math.max(fitHeight,fitWidth)*1.7;
+  const hfov=2*Math.atan(Math.tan(vfov/2)*Math.max(.25,camera.aspect));
+  const fitFov=Math.min(vfov,hfov);
+  const distance=(radius/Math.sin(fitFov/2))*1.18;
 
-  const direction=new THREE.Vector3(1,.78,1).normalize();
-  camera.position.copy(center).add(direction.multiplyScalar(distance));
-  camera.near=Math.max(.01,distance/150);
-  camera.far=Math.max(100,distance*25);
+  controls.target.set(center.x,Math.max(.7,Math.min(center.y,1.25)),center.z);
+
+  const dir=new THREE.Vector3(1,.9,1).normalize();
+  camera.position.copy(center).add(dir.multiplyScalar(distance));
+  camera.near=Math.max(.01,distance/200);
+  camera.far=Math.max(100,distance*30);
   camera.updateProjectionMatrix();
+
+  controls.minDistance=Math.max(.5,radius*.35);
+  controls.maxDistance=Math.max(25,radius*12);
   controls.update();
 }
 
@@ -345,14 +353,23 @@ window.ProjectBau3D={
   open(container,data){
     ensureScene(container);
     currentData=data;
-    rebuild();
     resize();
+    rebuild();
+    requestAnimationFrame(()=>{
+      resize();
+      if(rootGroup)centerCamera(rootGroup);
+    });
   },
   update(data){
     currentData=data;
     rebuild();
   },
   resetCamera(){
+    resize();
+    if(rootGroup)centerCamera(rootGroup);
+  },
+  fitView(){
+    resize();
     if(rootGroup)centerCamera(rootGroup);
   },
   resize

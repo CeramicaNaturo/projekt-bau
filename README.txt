@@ -1,20 +1,25 @@
-Projekt Bau v1.6 – 3D Zentrierung + Fliesenstart
+Projekt Bau v1.6.1 – 2D/3D Sichtbarkeit & Zentrierung
 
-3D-Zentrierung:
-- Beim Wechsel in die 3D-Ansicht wird der Raum automatisch anhand seiner echten 3D-Abmessungen zentriert.
-- Kamera berücksichtigt Breite, Tiefe, Höhe, Bildschirmformat und Perspektive.
-- Orbit-Mittelpunkt liegt exakt im Raum.
-- «3D-Ansicht zentrieren» bleibt zusätzlich verfügbar.
+Behoben:
+- 2D-Grundriss konnte nach dem Wechsel aus 3D unsichtbar sein.
+- 2D-Zeichnung konnte ausserhalb des sichtbaren Arbeitsbereichs liegen.
+- 3D-Raum wirkte durch die Kamera und das Welt-Raster optisch versetzt.
 
-Fliesenstart:
-- Neues Werkzeug «Fliesenstart» in der linken CAD-Leiste.
-- Werkzeug auswählen und im 2D-Grundriss gewünschten Startpunkt anklicken.
-- Startpunkt wird mit blauem Fadenkreuz im Plan angezeigt.
-- Startpunkt X / Y wird in cm gespeichert.
-- X / Y kann auch numerisch eingegeben werden.
-- Fliesenrichtung: 0°, 90°, 180°, 270°.
-- Boden-Textur in 3D orientiert sich am definierten Fliesenstartpunkt.
-- Fliesenfoto aus der Materialbibliothek kann weiterhin als Bodenmaterial verwendet werden.
+2D:
+- Automatische «Ansicht einpassen».
+- Grundriss wird beim Öffnen vollständig in den sichtbaren Bereich skaliert.
+- Grundriss wird horizontal und vertikal zentriert.
+- Beim Wechsel 3D → 2D wird der Plan neu gezeichnet und eingepasst.
+- Zoom benutzt echte Canvas-Breite/Höhe statt CSS transform.
+- Zoom +/- hält die Zeichnung zentriert.
+- Neuer ⌗-Button = Ansicht einpassen.
 
-Alle Funktionen aus v1.5 bleiben erhalten.
+3D:
+- Kamera wird erst nach korrekter Viewport-Grösse berechnet.
+- Zentrierung basiert auf der echten 3D-Bounding-Sphere.
+- Horizontaler und vertikaler Sichtwinkel werden berücksichtigt.
+- Das 3D-Raster wird unter dem Raum zentriert.
+- Neuer Fit-View-Aufruf bei jedem Wechsel in 3D.
+
+Fliesenstartpunkt und alle Funktionen aus v1.6 bleiben erhalten.
 Deutsch / de-CH.

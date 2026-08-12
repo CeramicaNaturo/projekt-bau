@@ -648,6 +648,7 @@ function refresh3D(){
 function setFloorplanView(mode){
   fp3DMode=mode==='3d';
   const w2=$('fp2DWorkspace'),w3=$('fp3DWorkspace'),b2=$('fpView2D'),b3=$('fpView3D');
+
   if(w2)w2.classList.toggle('hidden',fp3DMode);
   if(w3)w3.classList.toggle('hidden',!fp3DMode);
   if(b2)b2.classList.toggle('active',!fp3DMode);
@@ -656,11 +657,20 @@ function setFloorplanView(mode){
   if(fp3DMode){
     populate3DMaterialSelects(fpProject);
     const host=$('fp3DViewport');
-    if(window.ProjectBau3D&&host){
-      window.ProjectBau3D.open(host,current3DData());
-    }else{
-      setTimeout(()=>setFloorplanView('3d'),250);
-    }
+    const open3D=()=>{
+      if(window.ProjectBau3D&&host){
+        window.ProjectBau3D.open(host,current3DData());
+        requestAnimationFrame(()=>window.ProjectBau3D?.fitView?.());
+      }else{
+        setTimeout(open3D,180);
+      }
+    };
+    requestAnimationFrame(open3D);
+  }else{
+    requestAnimationFrame(()=>{
+      drawFloorplan();
+      requestAnimationFrame(fitFloorplan2D);
+    });
   }
 }
 
@@ -811,7 +821,7 @@ function openFloorplan(project,record){
   fpShowGrid=true;fpShowPositions=true;fpShowMeasures=true;
   $('floorplanEditorTitle').textContent=`Grundriss · ${record.name}`;
   $('floorplanModal').classList.remove('hidden');
-  setFloorTool('select');applyZoom();drawFloorplan();updateSelectedInfo();
+  setFloorTool('select');setFloorplanView('2d');drawFloorplan();updateSelectedInfo();requestAnimationFrame(()=>requestAnimationFrame(fitFloorplan2D));
 }
 function closeFloorplan(){$('floorplanModal').classList.add('hidden');fpProject=null;fpRecord=null}
 function setFloorTool(tool){
@@ -1142,22 +1152,67 @@ function updateSelectedInfo(){
   updateWallEndpointFields();
 }
 function applyZoom(){
-  fpCanvas.style.transform=`scale(${fpZoom})`;
-  const wrap=fpCanvas.parentElement;
-  wrap.style.setProperty('--fpzoom',fpZoom);
-  $('fpZoomReset').textContent=`${Math.round(fpZoom*100)}%`;
+  if(!fpCanvas)return;
+  fpCanvas.style.transform='none';
+  fpCanvas.style.width=`${Math.max(1,Math.round(fpCanvas.width*fpZoom))}px`;
+  fpCanvas.style.height=`${Math.max(1,Math.round(fpCanvas.height*fpZoom))}px`;
+  const reset=$('fpZoomReset');
+  if(reset)reset.textContent=`${Math.round(fpZoom*100)}%`;
+  drawCadRulers();
 }
 
 function getFloorplanBounds(objects){
-  const walls=(objects||[]).filter(o=>o.type==='wall');
-  if(!walls.length)return null;
   const xs=[],ys=[];
-  walls.forEach(w=>{xs.push(w.x1,w.x2);ys.push(w.y1,w.y2)});
-  return {
-    minX:Math.min(...xs),maxX:Math.max(...xs),
-    minY:Math.min(...ys),maxY:Math.max(...ys)
-  };
+  (objects||[]).filter(isLayerVisible).forEach(o=>{
+    if(o.type==='wall'){
+      xs.push(Number(o.x1),Number(o.x2));
+      ys.push(Number(o.y1),Number(o.y2));
+    }else{
+      const hw=Math.max(35,Number(o.widthCm||70)*(o.scale||1)/2);
+      const hd=Math.max(35,Number(o.depthCm||70)*(o.scale||1)/2);
+      xs.push(Number(o.x||0)-hw,Number(o.x||0)+hw);
+      ys.push(Number(o.y||0)-hd,Number(o.y||0)+hd);
+    }
+  });
+  if(!xs.length)return null;
+  return {minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
 }
+
+function centerFloorplan2D(){
+  if(fp3DMode)return;
+  const wrap=fpCanvas?.parentElement;
+  const b=getFloorplanBounds(fpObjects);
+  if(!wrap||!b)return;
+  const cx=((b.minX+b.maxX)/2)*fpZoom;
+  const cy=((b.minY+b.maxY)/2)*fpZoom;
+  wrap.scrollLeft=Math.max(0,cx-wrap.clientWidth/2);
+  wrap.scrollTop=Math.max(0,cy-wrap.clientHeight/2);
+}
+
+function fitFloorplan2D(){
+  if(fp3DMode||!fpCanvas)return;
+  const wrap=fpCanvas.parentElement;
+  const b=getFloorplanBounds(fpObjects);
+  if(!wrap)return;
+
+  if(!b){
+    fpZoom=1;
+    applyZoom();
+    wrap.scrollLeft=0;wrap.scrollTop=0;
+    return;
+  }
+
+  const margin=80;
+  const vw=Math.max(240,wrap.clientWidth);
+  const vh=Math.max(240,wrap.clientHeight);
+  const bw=Math.max(80,b.maxX-b.minX);
+  const bh=Math.max(80,b.maxY-b.minY);
+
+  fpZoom=Math.max(.25,Math.min(1.6,(vw-margin*2)/bw,(vh-margin*2)/bh));
+  applyZoom();
+  requestAnimationFrame(centerFloorplan2D);
+}
+
 function drawFloorplan(preview=null){
   if(!preview){updateFloorRoomInfo();updateCadInspector();drawCadRulers();refresh3D();}
 
@@ -1577,9 +1632,9 @@ function initFloorplanControls(){
   if(showGrid)showGrid.onchange=e=>{fpShowGrid=e.target.checked;drawFloorplan()};
   if(showPos)showPos.onchange=e=>{fpShowPositions=e.target.checked;drawFloorplan()};
   if(showMeasures)showMeasures.onchange=e=>{fpShowMeasures=e.target.checked;drawFloorplan()};
-  $('fpZoomOut').onclick=()=>{fpZoom=Math.max(.5,fpZoom-.1);applyZoom()};
-  $('fpZoomIn').onclick=()=>{fpZoom=Math.min(2,fpZoom+.1);applyZoom()};
-  $('fpZoomReset').onclick=()=>{fpZoom=1;applyZoom()};
+  $('fpZoomOut').onclick=()=>{fpZoom=Math.max(.25,fpZoom-.1);applyZoom();requestAnimationFrame(centerFloorplan2D)};
+  $('fpZoomIn').onclick=()=>{fpZoom=Math.min(3,fpZoom+.1);applyZoom();requestAnimationFrame(centerFloorplan2D)};
+  $('fpZoomReset').onclick=()=>{fpZoom=1;applyZoom();requestAnimationFrame(centerFloorplan2D)};
   const view2=$('fpView2D'),view3=$('fpView3D');
   if(view2)view2.onclick=()=>setFloorplanView('2d');
   if(view3)view3.onclick=()=>setFloorplanView('3d');
@@ -1602,6 +1657,12 @@ function initFloorplanControls(){
   if(tileY)tileY.onchange=applyTileOrigin;
   if(tileRot)tileRot.onchange=applyTileOrigin;
   const reset3d=$('fp3DResetCamera');if(reset3d)reset3d.onclick=()=>window.ProjectBau3D?.resetCamera();
+
+  const fitBtn=$('fpFitView');
+  if(fitBtn)fitBtn.onclick=()=>{
+    if(fp3DMode)window.ProjectBau3D?.fitView?.();
+    else fitFloorplan2D();
+  };
 
   const full=$('fpFullscreen');
   if(full)full.onclick=()=>{

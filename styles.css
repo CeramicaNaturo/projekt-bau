@@ -1111,3 +1111,14 @@ body.pdf-exporting .pdf-footer{
 }
 
 .fp-tool[data-tool="tileOrigin"] b{color:#2563eb}
+
+/* v1.6.1 – stabile 2D-Fit-Ansicht */
+#floorplanCanvas{
+  transform:none!important;
+  transform-origin:top left!important;
+  flex:none!important;
+}
+.floorplan-canvas-wrap{
+  overflow:auto!important;
+  overscroll-behavior:contain;
+}

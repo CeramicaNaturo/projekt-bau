@@ -2784,3 +2784,11 @@ label[for="fpShowPositions"]{
   background:rgba(255,255,255,.94)!important;
   font-weight:600!important;
 }
+
+/* v1.9.7 – cleaner dimension system */
+.fp-position-label,
+.fp-coordinate-label,
+.wall-length-badge,
+.fp-wall-length-badge{
+  display:none!important;
+}

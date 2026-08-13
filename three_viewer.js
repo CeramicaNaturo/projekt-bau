@@ -229,9 +229,14 @@ function addWallTileAreaMeshes(group,w,roomHeight,objects){
       opacity:.72
     });
 
-    const globalCuts=floorGridIntersectionsAlongWall(w,currentData?.record?.floorTile,objects);
+    const floorCfg=currentData?.record?.floorTile;
+    const globalCuts=(area.syncToFloor!==false)
+      ? floorGridIntersectionsAlongWall(w,floorCfg,objects)
+      : [];
     const areaStart=offset,areaEnd=offset+width;
-    const cuts=globalCuts.filter(d=>d>areaStart+.001&&d<areaEnd-.001).map(d=>d-(areaStart+width/2));
+    const cuts=globalCuts
+      .filter(d=>d>areaStart+.001&&d<areaEnd-.001)
+      .map(d=>d-(areaStart+width/2));
     if(cuts.length){
       cuts.forEach(xx=>{
         const geo=new THREE.BufferGeometry().setFromPoints([
@@ -250,7 +255,15 @@ function addWallTileAreaMeshes(group,w,roomHeight,objects){
       }
     }
 
-    for(let yy=-height/2+tileH;yy<height/2-.001;yy+=tileH){
+    // Horizontal wall joints start exactly at floor level, so floor/wall
+    // grout creates one continuous technical reference.
+    const floorTileH = floorCfg?.enabled
+      ? Math.max(.05,m(floorCfg.tileH||area.tileH||60))
+      : tileH;
+    const wallBottom = bottom;
+    const firstJointWorld = Math.ceil((wallBottom+.0001)/floorTileH)*floorTileH;
+    for(let worldY=firstJointWorld;worldY<bottom+height-.001;worldY+=floorTileH){
+      const yy=worldY-(bottom+height/2);
       const geo=new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(-width/2,yy,.002),
         new THREE.Vector3(width/2,yy,.002)

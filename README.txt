@@ -1,21 +1,27 @@
-Projekt Bau v1.9.6 – Professionelle Masslinien
+Projekt Bau v1.9.7 – Objektmasse + saubere Wandmasse + Fugen-Sync
 
-Die Wandmasse wurden nach dem vom Benutzer gelieferten Referenzplan überarbeitet.
+Masssystem:
+- Nur die professionellen Aussen-Masslinien der Wände bleiben sichtbar.
+- Alte Wand-Badges wie 402 cm / 495 cm direkt auf der Wand werden entfernt.
+- Wandmasse bleiben in Meter: z.B. 4,02 m / 4,95 m.
+- X/Y-Koordinaten bleiben ausgeblendet.
 
-Neu:
-- Wandmasse liegen ausserhalb des Grundrisses und nicht mehr auf der Wand.
-- An beiden Wandenden erscheinen kurze Hilfs-/Begrenzungslinien.
-- Dünne technische Masslinie zwischen den Endpunkten.
-- Kleine diagonale Markierungen an den Enden.
-- Masswert steht mittig auf der Masslinie.
-- Keine schweren Rahmen/Kästchen um Wandmasse.
-- Darstellung in Metern mit zwei Nachkommastellen:
-  210 cm → 2,10 m
-  300 cm → 3,00 m
-  213 cm → 2,13 m
-- Schräge Wände erhalten eine parallel zur Wand verlaufende Masslinie.
-- Die Masslinie wird automatisch auf der Aussenseite des Raums platziert.
-- Live-Mass beim Zeichnen wird ebenfalls in Meter dargestellt.
-- 2D-PDF übernimmt dieselbe professionelle Massdarstellung.
+Objekte:
+- Jedes Objekt zeigt seine echte Grösse direkt im Objekt:
+  Badewanne 180 × 80 cm
+  Dusche 90 × 90 cm
+  WC 40 × 70 cm
+  Lavabo 60 × 50 cm usw.
+- Wandnahe Objekte erhalten zusätzlich eine Platzierungsmasslinie entlang der Wand.
+- Diese zeigt den Abstand vom Wand-Startpunkt bis zur Objektposition.
+- Die Linie liegt innerhalb des Raums, damit sie nicht mit den äusseren Wandmassen kollidiert.
+- Darstellung in Meter, z.B. 0,40 m / 2,00 m / 3,05 m.
 
+Fliesen / Fugen:
+- Wand-Fliesenflächen werden standardmässig an das Boden-Fliesenraster gekoppelt.
+- Vertikale Wandfugen übernehmen die Boden-Fugenpositionen an derselben Wand.
+- Horizontale Wandfugen beginnen ab Bodenhöhe mit demselben Raster.
+- Boden- und Wandfugen bilden dadurch eine gemeinsame Referenz.
+
+2D-PDF übernimmt dieselbe Darstellung.
 Deutsch / de-CH.

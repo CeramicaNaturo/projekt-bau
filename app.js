@@ -2734,6 +2734,59 @@ function wallVisualWidth(w){
 }
 
 
+
+function wallBodyPolygon(w){
+  const x1=Number(w.x1),y1=Number(w.y1),x2=Number(w.x2),y2=Number(w.y2);
+  const out=wallOutsideNormal(w);
+  const t=wallVisualWidth(w);
+
+  return [
+    {x:x1,y:y1},                    // inner start
+    {x:x2,y:y2},                    // inner end
+    {x:x2+out.nx*t,y:y2+out.ny*t}, // outer end
+    {x:x1+out.nx*t,y:y1+out.ny*t}  // outer start
+  ];
+}
+
+function drawWallBody(w,color='#111827',alpha=1){
+  const p=wallBodyPolygon(w);
+  fpCtx.save();
+  fpCtx.globalAlpha=alpha;
+  fpCtx.fillStyle=color;
+  fpCtx.beginPath();
+  fpCtx.moveTo(p[0].x,p[0].y);
+  for(let i=1;i<p.length;i++)fpCtx.lineTo(p[i].x,p[i].y);
+  fpCtx.closePath();
+  fpCtx.fill();
+  fpCtx.restore();
+}
+
+function lineIntersectionInfinite(a1,a2,b1,b2){
+  const r={x:a2.x-a1.x,y:a2.y-a1.y};
+  const s={x:b2.x-b1.x,y:b2.y-b1.y};
+  const den=r.x*s.y-r.y*s.x;
+  if(Math.abs(den)<1e-9)return null;
+
+  const q={x:b1.x-a1.x,y:b1.y-a1.y};
+  const t=(q.x*s.y-q.y*s.x)/den;
+  return {x:a1.x+t*r.x,y:a1.y+t*r.y};
+}
+
+function wallOuterLine(w){
+  const out=wallOutsideNormal(w);
+  const t=wallVisualWidth(w);
+  return {
+    a:{x:Number(w.x1)+out.nx*t,y:Number(w.y1)+out.ny*t},
+    b:{x:Number(w.x2)+out.nx*t,y:Number(w.y2)+out.ny*t}
+  };
+}
+
+function wallOuterPointAtJoint(w,point){
+  const out=wallOutsideNormal(w);
+  const t=wallVisualWidth(w);
+  return {x:Number(point.x)+out.nx*t,y:Number(point.y)+out.ny*t};
+}
+
 function wallRenderLine(w){
   const x1=Number(w.x1),y1=Number(w.y1),x2=Number(w.x2),y2=Number(w.y2);
   const out=wallOutsideNormal(w);
@@ -2752,16 +2805,43 @@ function wallRenderLine(w){
 function drawWallJointAt(point, walls, color='#111827'){
   if(!point || !walls || walls.length<2)return;
 
-  // Use the largest connected visual width. A centered square makes
-  // two perpendicular butt-ended strokes become one clean L/miter corner.
-  const size=Math.max(...walls.map(wallVisualWidth));
+  // Most CAD room corners connect exactly two wall segments.
+  // For more than two, fill every adjacent pair conservatively.
+  const unique=[...new Map(walls.map(w=>[w.id||`${w.x1}_${w.y1}_${w.x2}_${w.y2}`,w])).values()];
 
   fpCtx.save();
   fpCtx.fillStyle=color;
-  fpCtx.fillRect(point.x-size/2, point.y-size/2, size, size);
+
+  for(let i=0;i<unique.length;i++){
+    for(let j=i+1;j<unique.length;j++){
+      const w1=unique[i],w2=unique[j];
+
+      const l1=wallOuterLine(w1);
+      const l2=wallOuterLine(w2);
+      const o1=wallOuterPointAtJoint(w1,point);
+      const o2=wallOuterPointAtJoint(w2,point);
+      const inter=lineIntersectionInfinite(l1.a,l1.b,l2.a,l2.b);
+
+      if(!inter)continue;
+
+      // Safety against almost-parallel walls producing a remote intersection.
+      const maxT=Math.max(wallVisualWidth(w1),wallVisualWidth(w2));
+      if(Math.hypot(inter.x-point.x,inter.y-point.y)>maxT*4)continue;
+
+      // Exact miter wedge:
+      // INNER joint -> outer edge 1 -> outer-line intersection -> outer edge 2.
+      fpCtx.beginPath();
+      fpCtx.moveTo(point.x,point.y);
+      fpCtx.lineTo(o1.x,o1.y);
+      fpCtx.lineTo(inter.x,inter.y);
+      fpCtx.lineTo(o2.x,o2.y);
+      fpCtx.closePath();
+      fpCtx.fill();
+    }
+  }
+
   fpCtx.restore();
 }
-
 function drawAllWallJoints(){
   const walls=fpObjects.filter(o=>o.type==='wall');
   const seen=[];
@@ -2789,20 +2869,8 @@ function drawAllWallJoints(){
 
 function drawConnectedWallPreview(w){
   if(!w)return;
-  const rl=wallRenderLine(w);
-  fpCtx.save();
-  fpCtx.strokeStyle='#2563eb';
-  fpCtx.globalAlpha=.40;
-  fpCtx.lineWidth=wallVisualWidth(w);
-  fpCtx.lineCap='butt';
-  fpCtx.lineJoin='miter';
-  fpCtx.beginPath();
-  fpCtx.moveTo(rl.x1,rl.y1);
-  fpCtx.lineTo(rl.x2,rl.y2);
-  fpCtx.stroke();
-  fpCtx.restore();
+  drawWallBody(w,'#2563eb',.38);
 }
-
 
 function fpDefaultObjectDimensions(type){
   const dims={
@@ -2990,19 +3058,10 @@ function drawFpObject(o,preview=false){
   fpCtx.lineJoin='miter';
 
   if(o.type==='wall'){
-    const thicknessPx=wallVisualWidth(o);
-    const rl=wallRenderLine(o);
-
-    // v1.9.13:
-    // Die gespeicherte Linie ist die Innenkante.
-    // Wandstärke wächst ausschliesslich nach aussen.
-    fpCtx.lineCap='butt';
-    fpCtx.lineJoin='miter';
-    fpCtx.lineWidth=thicknessPx;
-    fpCtx.beginPath();
-    fpCtx.moveTo(rl.x1,rl.y1);
-    fpCtx.lineTo(rl.x2,rl.y2);
-    fpCtx.stroke();
+    // v1.9.14:
+    // Wand = echtes Polygon. Die gespeicherte Linie ist die Innenkante,
+    // die komplette Wandstärke wächst nur nach aussen.
+    drawWallBody(o,'#111827',1);
 
     if(!preview){
       const mx=(o.x1+o.x2)/2,my=(o.y1+o.y2)/2;

@@ -1,2 +1,2 @@
-Projekt Bau v1.8.6 – Bodenfliesen + Einteilung
-Zemin fayansı, fuga, döşeme deseni, başlangıç noktası, simetrik Einteilung, 45° ve 3D raster desteği.
+Projekt Bau v1.8.7 – Bodenfliesen Sidebar Fix
+Bodenfliesen aracı 2D CAD sol araç çubuğunda kalıcı olarak görünür. Panel buradan açılır.

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=186">
+<link rel="stylesheet" href="styles.css?v=187">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer"><strong>Version 1.8.6</strong></div>
+  <div class="cad-sidebar-footer"><strong>Version 1.8.7</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.8.6</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.8.7</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -329,7 +329,6 @@
         <button id="fpZoomReset" class="secondary">100%</button>
         <button id="fpZoomIn" class="secondary">+</button>
         <button id="fpFitView" class="secondary" title="Grundriss in Ansicht einpassen">⌗</button>
-        <button id="fpFloorTilePanelBtn" class="secondary" title="Bodenfliesen einteilen">Bodenfliesen</button>
         <button id="fpCompactUi" class="secondary fp-tablet-only" title="Kompakte Tablet-Ansicht">↕</button>
         <button id="fp2DReset" class="secondary" title="2D-Anzeige neu aufbauen">2D↺</button>
         <button id="fpFullscreen" class="secondary" title="Vollbild">⛶</button>
@@ -366,7 +365,8 @@
       <div id="fpFloorTileInfo" class="fp-floor-tile-info">Noch keine Bodenfliesen-Einteilung.</div>
     </aside>
 
-    <div class="fp-editor-grid">
+    <button id="fpFloorTilePanelBtn" class="fp-floor-tile-left-fallback" type="button" title="Bodenfliesen einteilen"><span>▦</span><small>Bodenfliesen</small></button>
+<div class="fp-editor-grid">
       <aside class="fp-left-tools">
         <button class="fp-tool active" data-tool="select"><b>⌁</b><span>Auswählen</span></button>
         <button class="fp-tool" data-tool="pan"><b>✋</b><span>Verschieben</span></button>
@@ -684,8 +684,8 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=186"></script>
+<script type="module" src="three_viewer.js?v=187"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=186"></script>
+<script src="app.js?v=187"></script>
 </body>
 </html>

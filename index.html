@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=188">
+<link rel="stylesheet" href="styles.css?v=189">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer"><strong>Version 1.8.8</strong></div>
+  <div class="cad-sidebar-footer"><strong>Version 1.8.9</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.8.8</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.8.9</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -350,6 +350,12 @@
       <div class="fp-floor-tile-grid">
         <label>Fliese Breite (cm)<input id="fpFloorTileW" type="number" min="1" value="60"></label>
         <label>Fliese Höhe (cm)<input id="fpFloorTileH" type="number" min="1" value="60"></label>
+        <label>Fliesenbild / Material
+          <select id="fpFloorTileMaterial"><option value="">Neutral</option></select>
+        </label>
+        <label>Bild hochladen
+          <input id="fpFloorTileUpload" type="file" accept="image/*">
+        </label>
         <label>Fuge (mm)<input id="fpFloorTileJoint" type="number" min="0" step="0.5" value="2"></label>
         <label>Verlegung<select id="fpFloorTilePattern"><option value="straight">Gerade</option><option value="half">Halbverband</option><option value="third">1/3-Verband</option><option value="vertical">90° gedreht</option></select></label>
         <label>Startpunkt<select id="fpFloorTileOriginMode"><option value="manual">Manuell</option><option value="topLeft">Oben links</option><option value="topRight">Oben rechts</option><option value="bottomLeft">Unten links</option><option value="bottomRight">Unten rechts</option><option value="center">Raummitte</option></select></label>
@@ -470,6 +476,12 @@
 
               <label>Fliese Höhe (cm)
                 <input id="fpWallTileSizeH" type="number" min="1" step="1" value="60">
+              </label>
+              <label>Fliesenbild / Material
+                <select id="fpWallTileMaterial"><option value="">Neutral</option></select>
+              </label>
+              <label>Bild hochladen
+                <input id="fpWallTileUpload" type="file" accept="image/*">
               </label>
 
               <label>Fuge (mm)
@@ -684,8 +696,8 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=188"></script>
+<script type="module" src="three_viewer.js?v=189"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=188"></script>
+<script src="app.js?v=189"></script>
 </body>
 </html>

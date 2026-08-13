@@ -152,6 +152,29 @@ function wallInteriorNormal3D(w,objects){
   return {nx,nz};
 }
 
+
+function floorGridIntersectionsAlongWall(w,floorCfg,objects){
+  if(!floorCfg?.enabled)return [];
+  const x1=m(w.x1),z1=m(w.y1),x2=m(w.x2),z2=m(w.y2);
+  const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz)||1;
+  const origin=resolveFloorTileOrigin3D(floorCfg,objects);
+  let tw=Math.max(.01,m(floorCfg.tileW||60)),th=Math.max(.01,m(floorCfg.tileH||60));
+  if(floorCfg.pattern==='vertical')[tw,th]=[th,tw];
+  const ang=floorCfg.align==='45'?Math.PI/4:0,ca=Math.cos(ang),sa=Math.sin(ang);
+  const local=(x,z)=>({x:(x-origin.x)*ca+(z-origin.z)*sa,z:-(x-origin.x)*sa+(z-origin.z)*ca});
+  const a=local(x1,z1),b=local(x2,z2),ddx=b.x-a.x,ddz=b.z-a.z;
+  const ts=[];
+  if(Math.abs(ddx)>1e-9){
+    const lo=Math.min(a.x,b.x),hi=Math.max(a.x,b.x);
+    for(let gx=Math.ceil(lo/tw)*tw;gx<hi-1e-9;gx+=tw){const q=(gx-a.x)/ddx;if(q>1e-6&&q<1-1e-6)ts.push(q);}
+  }
+  if(Math.abs(ddz)>1e-9){
+    const lo=Math.min(a.z,b.z),hi=Math.max(a.z,b.z);
+    for(let gz=Math.ceil(lo/th)*th;gz<hi-1e-9;gz+=th){const q=(gz-a.z)/ddz;if(q>1e-6&&q<1-1e-6)ts.push(q);}
+  }
+  return [...new Set(ts.map(q=>Math.round(q*100000)/100000))].sort((x,y)=>x-y).map(q=>q*len);
+}
+
 function addWallTileAreaMeshes(group,w,roomHeight,objects){
   const areas=Array.isArray(w.tileAreas)?w.tileAreas:[];
   if(!areas.length)return;
@@ -174,12 +197,13 @@ function addWallTileAreaMeshes(group,w,roomHeight,objects){
     const cx=x1+ux*(offset+width/2);
     const cz=z1+uz*(offset+width/2);
 
-    const mat=new THREE.MeshStandardMaterial({
-      color:0xd8f1f4,
-      roughness:.38,
-      metalness:.02,
-      side:THREE.DoubleSide
+    const tile=findTile(currentData?.project,area.materialId||currentData?.options?.wallMaterialId);
+    const repeatX=Math.max(1,width/Math.max(.01,m(area.tileW||60)));
+    const repeatY=Math.max(1,height/Math.max(.01,m(area.tileH||60)));
+    const mat=materialForTile(tile,repeatX,repeatY,0xd8f1f4,{
+      originX:0,originY:0,rotation:0
     });
+    mat.side=THREE.DoubleSide;
 
     const plane=new THREE.Mesh(new THREE.PlaneGeometry(width,height),mat);
     plane.position.set(
@@ -198,12 +222,25 @@ function addWallTileAreaMeshes(group,w,roomHeight,objects){
       opacity:.72
     });
 
-    for(let xx=-width/2+tileW;xx<width/2-.001;xx+=tileW){
-      const geo=new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(xx,-height/2,.002),
-        new THREE.Vector3(xx,height/2,.002)
-      ]);
-      plane.add(new THREE.Line(geo,lineMat));
+    const globalCuts=floorGridIntersectionsAlongWall(w,currentData?.record?.floorTile,objects);
+    const areaStart=offset,areaEnd=offset+width;
+    const cuts=globalCuts.filter(d=>d>areaStart+.001&&d<areaEnd-.001).map(d=>d-(areaStart+width/2));
+    if(cuts.length){
+      cuts.forEach(xx=>{
+        const geo=new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(xx,-height/2,.002),
+          new THREE.Vector3(xx,height/2,.002)
+        ]);
+        plane.add(new THREE.Line(geo,lineMat));
+      });
+    }else{
+      for(let xx=-width/2+tileW;xx<width/2-.001;xx+=tileW){
+        const geo=new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(xx,-height/2,.002),
+          new THREE.Vector3(xx,height/2,.002)
+        ]);
+        plane.add(new THREE.Line(geo,lineMat));
+      }
     }
 
     for(let yy=-height/2+tileH;yy<height/2-.001;yy+=tileH){
@@ -695,6 +732,41 @@ function pointInPolygon3D(x,z,pts){
   }
   return inside;
 }
+
+function segIntersectionT(a,b,c,d){
+  const rx=b.x-a.x, rz=b.z-a.z, sx=d.x-c.x, sz=d.z-c.z;
+  const den=rx*sz-rz*sx;
+  if(Math.abs(den)<1e-9)return null;
+  const qx=c.x-a.x,qz=c.z-a.z;
+  const tt=(qx*sz-qz*sx)/den, u=(qx*rz-qz*rx)/den;
+  if(tt>=-1e-9&&tt<=1+1e-9&&u>=-1e-9&&u<=1+1e-9)return Math.max(0,Math.min(1,tt));
+  return null;
+}
+function clipSegmentToPolygon3D(a,b,pts){
+  const ts=[0,1];
+  for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+    const c={x:pts[j].x,z:pts[j].y},d={x:pts[i].x,z:pts[i].y};
+    const tt=segIntersectionT(a,b,c,d);
+    if(tt!==null)ts.push(tt);
+  }
+  ts.sort((x,y)=>x-y);
+  const uniq=ts.filter((v,i)=>i===0||Math.abs(v-ts[i-1])>1e-7);
+  const out=[];
+  for(let i=0;i<uniq.length-1;i++){
+    const t1=uniq[i],t2=uniq[i+1];
+    if(t2-t1<1e-7)continue;
+    const mid=(t1+t2)/2;
+    const mx=a.x+(b.x-a.x)*mid,mz=a.z+(b.z-a.z)*mid;
+    if(pointInPolygon3D(mx,mz,pts)){
+      out.push([
+        {x:a.x+(b.x-a.x)*t1,z:a.z+(b.z-a.z)*t1},
+        {x:a.x+(b.x-a.x)*t2,z:a.z+(b.z-a.z)*t2}
+      ]);
+    }
+  }
+  return out;
+}
+
 function addFloorTileGrid(group,data){
   const c=data?.record?.floorTile||data?.floorTile;
   if(!c?.enabled)return;
@@ -721,11 +793,11 @@ function addFloorTileGrid(group,data){
   // Draw only tile edges whose midpoint lies inside the room. This prevents the old
   // detached second grid from appearing outside the actual floor polygon.
   const addSeg=(a,b)=>{
-    const mid={x:(a.x+b.x)/2,z:(a.z+b.z)/2};
-    if(!pointInPolygon3D(mid.x,mid.z,pts))return;
-    tileGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(a.x,.014,a.z),new THREE.Vector3(b.x,.014,b.z)
-    ]),matLine));
+    for(const [p1,p2] of clipSegmentToPolygon3D(a,b,pts)){
+      tileGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(p1.x,.014,p1.z),new THREE.Vector3(p2.x,.014,p2.z)
+      ]),matLine));
+    }
   };
   for(let x=sx;x<=ex+1e-9;x+=tw){
     for(let z=sz;z<ez-1e-9;z+=th){
@@ -756,15 +828,22 @@ function rebuild(){
   const {objects,record,project,options}=currentData;
   const roomHeight=Number(record?.roomHeightM)||2.4;
 
-  const floorTile=findTile(project,options?.floorMaterialId);
+  const floorCfg=record?.floorTile||{};
+  const floorTile=findTile(project,floorCfg.materialId||options?.floorMaterialId);
   const wallTile=findTile(project,options?.wallMaterialId);
 
+  const roomPts=buildPolygon(objects)||[];
+  const rw=roomPts.length?Math.max(...roomPts.map(p=>p.x))-Math.min(...roomPts.map(p=>p.x)):5;
+  const rd=roomPts.length?Math.max(...roomPts.map(p=>p.y))-Math.min(...roomPts.map(p=>p.y)):5;
   const floorMat=materialForTile(
-    floorTile,5,5,0xd8d8d3,
+    floorTile,
+    Math.max(1,rw/Math.max(.01,m(floorCfg.tileW||60))),
+    Math.max(1,rd/Math.max(.01,m(floorCfg.tileH||60))),
+    0xd8d8d3,
     {
-      originX:options?.tileOriginX||0,
-      originY:options?.tileOriginY||0,
-      rotation:options?.tileRotation||0
+      originX:floorCfg.originX||options?.tileOriginX||0,
+      originY:floorCfg.originY||options?.tileOriginY||0,
+      rotation:floorCfg.align==='45'?45:(options?.tileRotation||0)
     }
   );
   const wallMat=materialForTile(wallTile,4,2,0xf1f3f5);

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=184">
+<link rel="stylesheet" href="styles.css?v=185">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer"><strong>Version 1.8.4</strong></div>
+  <div class="cad-sidebar-footer"><strong>Version 1.8.5</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.8.4</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.8.5</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -418,6 +418,59 @@
             </div>
 
             <button id="fpQuickWallApply" type="button" class="primary">Übernehmen</button>
+
+            <div class="fp-wall-tile-divider"></div>
+
+            <div class="fp-wall-tile-title">
+              <strong>FLIESENFLÄCHE</strong>
+              <span id="fpWallTileAreaTotal">0.00 m²</span>
+            </div>
+
+            <div class="fp-wall-tile-grid">
+              <label>Abstand links (cm)
+                <input id="fpWallTileOffset" type="number" min="0" step="1" value="0">
+              </label>
+
+              <label>Breite (cm)
+                <input id="fpWallTileWidth" type="number" min="1" step="1" value="100">
+              </label>
+
+              <label>Unterkante (cm)
+                <input id="fpWallTileBottom" type="number" min="0" step="1" value="0">
+              </label>
+
+              <label>Höhe (cm)
+                <input id="fpWallTileHeight" type="number" min="1" step="1" value="120">
+              </label>
+
+              <label>Fliese Breite (cm)
+                <input id="fpWallTileSizeW" type="number" min="1" step="1" value="60">
+              </label>
+
+              <label>Fliese Höhe (cm)
+                <input id="fpWallTileSizeH" type="number" min="1" step="1" value="60">
+              </label>
+
+              <label>Fuge (mm)
+                <input id="fpWallTileJoint" type="number" min="0" step="0.5" value="2">
+              </label>
+
+              <label>Verlegung
+                <select id="fpWallTilePattern">
+                  <option value="straight">Gerade</option>
+                  <option value="half">Halbverband</option>
+                  <option value="vertical">Hochformat</option>
+                </select>
+              </label>
+            </div>
+
+            <div id="fpWallTilePreviewInfo" class="fp-wall-tile-preview-info">
+              Fläche: 1.20 m²
+            </div>
+
+            <button id="fpWallTileAdd" type="button" class="primary">+ Fliesenfläche hinzufügen</button>
+
+            <div id="fpWallTileList" class="fp-wall-tile-list"></div>
           </aside>
         </div>
 
@@ -610,8 +663,8 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=184"></script>
+<script type="module" src="three_viewer.js?v=185"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=184"></script>
+<script src="app.js?v=185"></script>
 </body>
 </html>

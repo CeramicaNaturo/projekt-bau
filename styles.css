@@ -2461,3 +2461,113 @@ body.pdf-exporting .pdf-footer{
   }
   #fpQuickWallApply{height:48px;min-height:48px}
 }
+
+/* ============================================================
+   v1.8.5 – Wand-Fliesenflächen
+   ============================================================ */
+.fp-wall-tile-divider{
+  height:1px;
+  background:#dbe3ec;
+  margin:14px 0 12px;
+}
+
+.fp-wall-tile-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.fp-wall-tile-title strong{
+  font-size:14px;
+  letter-spacing:.04em;
+  color:#0f172a;
+}
+
+#fpWallTileAreaTotal{
+  color:#0e7490;
+  font-size:13px;
+  font-weight:900;
+}
+
+.fp-wall-tile-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.fp-wall-tile-grid label{
+  margin-bottom:0!important;
+}
+
+.fp-wall-tile-preview-info{
+  margin:10px 0;
+  padding:8px 10px;
+  border:1px solid #a5f3fc;
+  border-radius:8px;
+  background:#ecfeff;
+  color:#0e7490;
+  font-size:12px;
+  font-weight:900;
+}
+
+#fpWallTileAdd{
+  width:100%;
+  min-height:42px;
+  margin-bottom:10px;
+}
+
+.fp-wall-tile-list{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.fp-wall-tile-item{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+  align-items:center;
+  padding:8px;
+  border:1px solid #dbe3ec;
+  border-radius:8px;
+  background:#fff;
+}
+
+.fp-wall-tile-item strong{
+  display:block;
+  font-size:11px;
+  color:#0f172a;
+}
+
+.fp-wall-tile-item small{
+  display:block;
+  margin-top:2px;
+  font-size:10px;
+  color:#64748b;
+}
+
+.fp-wall-tile-item button{
+  width:34px;
+  min-width:34px;
+  height:34px;
+  min-height:34px;
+  border:1px solid #fecaca;
+  border-radius:8px;
+  background:#fff1f2;
+  color:#be123c;
+  font-size:17px;
+  font-weight:900;
+}
+
+@media (pointer:coarse) and (orientation:landscape){
+  .fp-wall-tile-preview-info{
+    font-size:13px;
+  }
+
+  #fpWallTileAdd{
+    min-height:46px;
+    font-size:14px;
+  }
+}

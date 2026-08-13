@@ -882,6 +882,191 @@ function setSelectedWallGeometry(){
 }
 
 
+
+function ensureWallTileAreas(wall){
+  if(!wall)return [];
+  if(!Array.isArray(wall.tileAreas))wall.tileAreas=[];
+  return wall.tileAreas;
+}
+
+function wallTileAreaM2(area){
+  return Math.max(0,Number(area?.width||0))*Math.max(0,Number(area?.height||0))/10000;
+}
+
+function wallTileTotalM2(wall){
+  return ensureWallTileAreas(wall).reduce((sum,area)=>sum+wallTileAreaM2(area),0);
+}
+
+function wallLengthCm(wall){
+  return dist({x:Number(wall.x1),y:Number(wall.y1)},{x:Number(wall.x2),y:Number(wall.y2)});
+}
+
+function sanitizeWallTileDraft(wall){
+  const wallLen=wallLengthCm(wall);
+  const roomHeightCm=Math.max(1,Number(fpRecord?.roomHeightM||2.4)*100);
+
+  let offset=Math.max(0,Number($('fpWallTileOffset')?.value||0));
+  let width=Math.max(1,Number($('fpWallTileWidth')?.value||100));
+  let bottom=Math.max(0,Number($('fpWallTileBottom')?.value||0));
+  let height=Math.max(1,Number($('fpWallTileHeight')?.value||120));
+
+  offset=Math.min(offset,wallLen);
+  width=Math.min(width,Math.max(1,wallLen-offset));
+
+  bottom=Math.min(bottom,roomHeightCm);
+  height=Math.min(height,Math.max(1,roomHeightCm-bottom));
+
+  return {
+    id:`tile_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+    offset:Math.round(offset*10)/10,
+    width:Math.round(width*10)/10,
+    bottom:Math.round(bottom*10)/10,
+    height:Math.round(height*10)/10,
+    tileW:Math.max(1,Number($('fpWallTileSizeW')?.value||60)),
+    tileH:Math.max(1,Number($('fpWallTileSizeH')?.value||60)),
+    jointMm:Math.max(0,Number($('fpWallTileJoint')?.value||2)),
+    pattern:$('fpWallTilePattern')?.value||'straight'
+  };
+}
+
+function updateWallTileDraftInfo(){
+  const o=selectedObject();
+  const info=$('fpWallTilePreviewInfo');
+  if(!o || o.type!=='wall' || !info)return;
+
+  const draft=sanitizeWallTileDraft(o);
+  info.textContent=
+    `Fläche: ${formatCHNumber(wallTileAreaM2(draft),2)} m² · `+
+    `${Math.round(draft.width)} × ${Math.round(draft.height)} cm`;
+}
+
+function renderWallTileList(){
+  const wall=selectedObject();
+  const list=$('fpWallTileList');
+  const total=$('fpWallTileAreaTotal');
+
+  if(!list||!total)return;
+
+  if(!wall || wall.type!=='wall'){
+    list.innerHTML='';
+    total.textContent='0.00 m²';
+    return;
+  }
+
+  const areas=ensureWallTileAreas(wall);
+  total.textContent=`${formatCHNumber(wallTileTotalM2(wall),2)} m²`;
+
+  if(!areas.length){
+    list.innerHTML='<div style="font-size:11px;color:#64748b">Noch keine Fliesenfläche.</div>';
+    return;
+  }
+
+  list.innerHTML=areas.map((area,index)=>{
+    const pattern=
+      area.pattern==='half'?'Halbverband':
+      area.pattern==='vertical'?'Hochformat':'Gerade';
+
+    return `
+      <div class="fp-wall-tile-item">
+        <div>
+          <strong>F${index+1} · ${formatCHNumber(wallTileAreaM2(area),2)} m²</strong>
+          <small>${Math.round(area.width)} × ${Math.round(area.height)} cm · ab ${Math.round(area.offset)} cm · UK ${Math.round(area.bottom)} cm</small>
+          <small>Fliese ${Math.round(area.tileW)} × ${Math.round(area.tileH)} cm · ${pattern}</small>
+        </div>
+        <button type="button" data-wall-tile-delete="${area.id}" title="Löschen">×</button>
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-wall-tile-delete]').forEach(btn=>{
+    btn.onclick=()=>{
+      const wallNow=selectedObject();
+      if(!wallNow||wallNow.type!=='wall')return;
+
+      const id=btn.getAttribute('data-wall-tile-delete');
+      pushHistory();
+      wallNow.tileAreas=ensureWallTileAreas(wallNow).filter(a=>a.id!==id);
+
+      drawFloorplan();
+      renderWallTileList();
+      updateWallQuickPanel();
+    };
+  });
+}
+
+function addWallTileArea(){
+  const wall=selectedObject();
+  if(!wall || wall.type!=='wall')return;
+
+  const area=sanitizeWallTileDraft(wall);
+  if(area.width<=0 || area.height<=0)return;
+
+  pushHistory();
+  ensureWallTileAreas(wall).push(area);
+
+  drawFloorplan();
+  renderWallTileList();
+  updateWallQuickPanel();
+}
+
+function wallTileBandPoints(wall,area){
+  const dx=Number(wall.x2)-Number(wall.x1);
+  const dy=Number(wall.y2)-Number(wall.y1);
+  const len=Math.hypot(dx,dy)||1;
+  const ux=dx/len,uy=dy/len;
+
+  const start=Math.max(0,Math.min(len,Number(area.offset||0)));
+  const end=Math.max(start,Math.min(len,start+Number(area.width||0)));
+
+  return {
+    x1:Number(wall.x1)+ux*start,
+    y1:Number(wall.y1)+uy*start,
+    x2:Number(wall.x1)+ux*end,
+    y2:Number(wall.y1)+uy*end,
+    ux,uy
+  };
+}
+
+function drawWallTileAreas2D(wall){
+  const areas=ensureWallTileAreas(wall);
+  if(!areas.length)return;
+
+  const z=Math.max(.2,fpZoom||1);
+  const baseWidth=Math.max(8,(Number(wall.thickness||15))/2);
+
+  areas.forEach((area,index)=>{
+    const p=wallTileBandPoints(wall,area);
+
+    fpCtx.save();
+
+    // Thick cyan overlay on the selected part of the wall.
+    fpCtx.strokeStyle='rgba(8,145,178,.88)';
+    fpCtx.lineWidth=baseWidth+8/z;
+    fpCtx.lineCap='butt';
+    fpCtx.setLineDash([7/z,4/z]);
+    fpCtx.beginPath();
+    fpCtx.moveTo(p.x1,p.y1);
+    fpCtx.lineTo(p.x2,p.y2);
+    fpCtx.stroke();
+    fpCtx.setLineDash([]);
+
+    const mx=(p.x1+p.x2)/2;
+    const my=(p.y1+p.y2)/2;
+    const nx=-p.uy,ny=p.ux;
+
+    fpCtx.fillStyle='#0e7490';
+    fpCtx.font=`bold ${11/z}px Arial`;
+    fpCtx.textAlign='center';
+    fpCtx.textBaseline='middle';
+    fpCtx.fillText(
+      `F${index+1} · ${Math.round(area.width)}×${Math.round(area.height)} cm · ${formatCHNumber(wallTileAreaM2(area),2)} m²`,
+      mx+nx*(24/z),
+      my+ny*(24/z)
+    );
+
+    fpCtx.restore();
+  });
+}
+
 function updateWallQuickPanel(){
   const panel=$('fpWallQuickPanel');
   const o=selectedObject();
@@ -913,6 +1098,9 @@ function updateWallQuickPanel(){
 
   const angle=$('fpQuickWallAngle');
   if(angle)angle.value=diff<0.5?String(snapped):'auto';
+
+  renderWallTileList();
+  updateWallTileDraftInfo();
 }
 
 function applyWallQuickPanel(){
@@ -2376,6 +2564,8 @@ function drawFpObject(o,preview=false){
       }
       drawPositionText(o,mx,my+48);
 
+      drawWallTileAreas2D(o);
+
       if(selected){
         // professionele Endpunktgriffe
         for(const p of [{x:o.x1,y:o.y1},{x:o.x2,y:o.y2}]){
@@ -2831,6 +3021,18 @@ function initFloorplanControls(){
 
   const openingDirection=$('fpOpeningDirection');
   if(openingDirection)openingDirection.onchange=changeOpeningDirection;
+
+  const wallTileAdd=$('fpWallTileAdd');
+  if(wallTileAdd)wallTileAdd.onclick=addWallTileArea;
+
+  ['fpWallTileOffset','fpWallTileWidth','fpWallTileBottom','fpWallTileHeight',
+   'fpWallTileSizeW','fpWallTileSizeH','fpWallTileJoint'].forEach(id=>{
+    const el=$(id);
+    if(el)el.oninput=updateWallTileDraftInfo;
+  });
+
+  const wallTilePattern=$('fpWallTilePattern');
+  if(wallTilePattern)wallTilePattern.onchange=updateWallTileDraftInfo;
 
   const quickApply=$('fpQuickWallApply');
   if(quickApply)quickApply.onclick=applyWallQuickPanel;

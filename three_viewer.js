@@ -122,6 +122,102 @@ function findTile(project,id){
   return (project?.tileMaterials||[]).find(t=>t.id===id) || null;
 }
 
+
+function roomCentroid3D(objects){
+  const pts=buildPolygon(objects);
+  if(!pts||!pts.length)return null;
+  return {
+    x:pts.reduce((s,p)=>s+p.x,0)/pts.length,
+    z:pts.reduce((s,p)=>s+p.y,0)/pts.length
+  };
+}
+
+function wallInteriorNormal3D(w,objects){
+  const x1=m(w.x1),z1=m(w.y1),x2=m(w.x2),z2=m(w.y2);
+  const dx=x2-x1,dz=z2-z1;
+  const len=Math.hypot(dx,dz)||1;
+
+  let nx=-dz/len,nz=dx/len;
+
+  const c=roomCentroid3D(objects);
+  if(c){
+    const mx=(x1+x2)/2,mz=(z1+z2)/2;
+    const vx=c.x-mx,vz=c.z-mz;
+    if(nx*vx+nz*vz<0){
+      nx=-nx;
+      nz=-nz;
+    }
+  }
+
+  return {nx,nz};
+}
+
+function addWallTileAreaMeshes(group,w,roomHeight,objects){
+  const areas=Array.isArray(w.tileAreas)?w.tileAreas:[];
+  if(!areas.length)return;
+
+  const x1=m(w.x1),z1=m(w.y1),x2=m(w.x2),z2=m(w.y2);
+  const dx=x2-x1,dz=z2-z1;
+  const wallLen=Math.hypot(dx,dz)||1;
+  const ux=dx/wallLen,uz=dz/wallLen;
+  const rotationY=-Math.atan2(dz,dx);
+  const thickness=m(w.thickness||15);
+  const interior=wallInteriorNormal3D(w,objects);
+
+  for(const area of areas){
+    const offset=Math.max(0,m(area.offset||0));
+    const width=Math.max(.001,Math.min(m(area.width||0),wallLen-offset));
+    const bottom=Math.max(0,m(area.bottom||0));
+    const height=Math.max(.001,Math.min(m(area.height||0),roomHeight-bottom));
+    if(width<=.001||height<=.001)continue;
+
+    const cx=x1+ux*(offset+width/2);
+    const cz=z1+uz*(offset+width/2);
+
+    const mat=new THREE.MeshStandardMaterial({
+      color:0xd8f1f4,
+      roughness:.38,
+      metalness:.02,
+      side:THREE.DoubleSide
+    });
+
+    const plane=new THREE.Mesh(new THREE.PlaneGeometry(width,height),mat);
+    plane.position.set(
+      cx+interior.nx*(thickness/2+.006),
+      bottom+height/2,
+      cz+interior.nz*(thickness/2+.006)
+    );
+    plane.rotation.y=rotationY;
+    plane.receiveShadow=true;
+
+    const tileW=Math.max(.05,m(area.tileW||60));
+    const tileH=Math.max(.05,m(area.tileH||60));
+    const lineMat=new THREE.LineBasicMaterial({
+      color:0x6b8790,
+      transparent:true,
+      opacity:.72
+    });
+
+    for(let xx=-width/2+tileW;xx<width/2-.001;xx+=tileW){
+      const geo=new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(xx,-height/2,.002),
+        new THREE.Vector3(xx,height/2,.002)
+      ]);
+      plane.add(new THREE.Line(geo,lineMat));
+    }
+
+    for(let yy=-height/2+tileH;yy<height/2-.001;yy+=tileH){
+      const geo=new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-width/2,yy,.002),
+        new THREE.Vector3(width/2,yy,.002)
+      ]);
+      plane.add(new THREE.Line(geo,lineMat));
+    }
+
+    group.add(plane);
+  }
+}
+
 function wallMesh(w,height,material){
   const x1=m(w.x1), z1=m(w.y1), x2=m(w.x2), z2=m(w.y2);
   const dx=x2-x1,dz=z2-z1;
@@ -607,6 +703,7 @@ function rebuild(){
   (objects||[]).filter(o=>o.type==='wall').forEach(w=>{
     const mesh=wallMesh(w,roomHeight,wallMat);
     if(mesh)rootGroup.add(mesh);
+    addWallTileAreaMeshes(rootGroup,w,roomHeight,objects);
   });
 
   (objects||[]).filter(o=>o.type!=='wall'&&o.type!=='text').forEach(o=>{

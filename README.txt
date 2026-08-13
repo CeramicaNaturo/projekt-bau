@@ -1,22 +1,33 @@
-Projekt Bau v1.8.4 – WANDMASSE Panel
+Projekt Bau v1.8.5 – Wand-Fliesenflächen
 
-Neu im 2D-CAD:
-- Wand seçildiğinde çalışma alanının sağında büyük WANDMASSE paneli açılır.
-- Tablet için dokunmatik ve büyük giriş alanları.
+Yeni özellik:
+Seçili duvar üzerinde bir veya birden fazla fayans döşeme alanı tanımlanabilir.
 
-Manuel düzenleme:
-- Länge (cm)
-- Winkel
-- Wandstärke
-- Start X / Start Y
-- Ende X / Ende Y
+WANDMASSE → FLIESENFLÄCHE:
+- Abstand links (cm)
+- Breite (cm)
+- Unterkante (cm)
+- Höhe (cm)
+- Fliese Breite / Höhe
+- Fuge
+- Verlegung: Gerade / Halbverband / Hochformat
 
-Davranış:
-- Değerler seçili duvarla otomatik senkronize olur.
-- Değişiklikler çizime doğrudan uygulanır.
-- Uzunluk/açı değişiminde başlangıç noktası sabit kalır.
-- Tam 0°, 45°, 90°, 135°, 180°, 225°, 270°, 315° desteklenir.
-- Başka nesne seçildiğinde panel otomatik kapanır.
-- Mevcut sağ Eigenschaften paneli de korunur.
+Otomatik kontrol:
+- Fayans alanı duvarın uzunluğunu aşamaz.
+- Fayans yüksekliği Raumhöhe’yi aşamaz.
+- Her alanın m² değeri otomatik hesaplanır.
+- Seçili duvarın toplam fayans m² değeri gösterilir.
+
+2D CAD:
+- Fayans döşenecek duvar bölümü turkuaz kesikli çizgiyle işaretlenir.
+- F1, F2, F3... şeklinde numaralanır.
+- Ölçü ve m² değeri doğrudan planda görünür.
+
+3D:
+- Fayans alanı duvarın oda tarafındaki gerçek yüzeyine yerleşir.
+- Fayans ölçüsüne göre basit derz rasteri gösterilir.
+- Alt kot ve yükseklik gerçek ölçülerle uygulanır.
+
+Aynı duvarda birden fazla fayans alanı eklenebilir ve ayrı ayrı silinebilir.
 
 Deutsch / de-CH.

@@ -2792,3 +2792,16 @@ label[for="fpShowPositions"]{
 .fp-wall-length-badge{
   display:none!important;
 }
+
+/* ============================================================
+   v1.9.8 – clean dimension view
+   ============================================================ */
+.wall-length-badge,
+.fp-wall-length-badge,
+.wall-segment-label,
+.fp-wall-segment-label,
+.internal-dimension-label,
+.object-offset-dimension,
+.fp-object-offset-dimension{
+  display:none!important;
+}

@@ -3000,72 +3000,13 @@ function fpObjectWallDistance(o){
   return {wall,cm:fromStart,fromEnd,hit};
 }
 
-function fpDrawObjectWallOffset(o){
-  if(!fpShowMeasures || !fpIsDimensionedObject(o))return;
-  const ref=fpObjectWallDistance(o);
-  if(!ref)return;
-
-  const w=ref.wall;
-  const x1=Number(w.x1),y1=Number(w.y1),x2=Number(w.x2),y2=Number(w.y2);
-  const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy)||1;
-  const ux=dx/len,uy=dy/len;
-  const {nx,ny}=wallOutsideNormal(w);
-
-  // Draw on room-inside side to avoid colliding with exterior wall dimensions.
-  const inwardX=-nx,inwardY=-ny;
-  const offset=22;
-
-  const ax=x1+inwardX*offset, ay=y1+inwardY*offset;
-  const bx=ref.hit.qx+inwardX*offset, by=ref.hit.qy+inwardY*offset;
-
-  if(Math.hypot(bx-ax,by-ay)<18)return;
-
-  const z=Math.max(.2,fpZoom||1);
-  fpCtx.save();
-  fpCtx.strokeStyle='#475569';
-  fpCtx.fillStyle='#0f172a';
-  fpCtx.lineWidth=Math.max(.7,1/z);
-  fpCtx.lineCap='butt';
-
-  // Main offset line
-  fpCtx.beginPath();
-  fpCtx.moveTo(ax,ay);
-  fpCtx.lineTo(bx,by);
-  fpCtx.stroke();
-
-  // End ticks
-  const tick=6/z;
-  const tx=(-uy+ux)*tick*.55,ty=(ux+uy)*tick*.55;
-  fpCtx.beginPath();
-  fpCtx.moveTo(ax-tx,ay-ty); fpCtx.lineTo(ax+tx,ay+ty);
-  fpCtx.moveTo(bx-tx,by-ty); fpCtx.lineTo(bx+tx,by+ty);
-  fpCtx.stroke();
-
-  const mx=(ax+bx)/2,my=(ay+by)/2;
-  let angle=Math.atan2(dy,dx);
-  if(angle>Math.PI/2 || angle<-Math.PI/2)angle+=Math.PI;
-
-  fpCtx.translate(mx,my);
-  fpCtx.rotate(angle);
-  const text=`${formatDimensionMeters(ref.cm)} m`;
-  fpCtx.font=`600 ${Math.max(10,11/z)}px Arial`;
-  fpCtx.textAlign='center';
-  fpCtx.textBaseline='middle';
-  const tw=fpCtx.measureText(text).width;
-  const pad=4/z,boxH=15/z;
-  fpCtx.fillStyle='rgba(255,255,255,.95)';
-  fpCtx.fillRect(-tw/2-pad,-boxH/2,tw+pad*2,boxH);
-  fpCtx.fillStyle='#0f172a';
-  fpCtx.fillText(text,0,0);
-  fpCtx.restore();
-}
+function fpDrawObjectWallOffset(o){ return; }
 
 function fpDrawAllObjectDimensions(){
   if(!fpShowMeasures)return;
   for(const o of fpObjects||[]){
     if(!fpIsDimensionedObject(o))continue;
     fpDrawObjectOwnDimensions(o);
-    fpDrawObjectWallOffset(o);
   }
 }
 

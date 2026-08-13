@@ -1,11 +1,13 @@
-Projekt Bau v1.9.2
+Projekt Bau v1.9.3 – Objektgrösse folgt den echten Massen
 
 Neu:
-- Türhöhe ist bei ausgewählter Tür direkt in Eigenschaften einstellbar.
-- Auswahl eines Objekts öffnet/zeigt Eigenschaften automatisch.
-- Türöffnungen werden als Abzug für Wand-/Fliesenflächen vorbereitet und mit Breite × Höhe berechnet.
-- Badewannen-Grundfläche wird als Abzug für Boden-/Fliesenflächen berücksichtigt.
-- Änderungen werden gespeichert und 2D/3D aktualisiert.
+- Breite und Tiefe eines Objekts steuern jetzt direkt seine sichtbare Grösse in 2D.
+- Ändert man z.B. Badewanne 180×80 cm auf 200×90 cm, wächst die Zeichnung proportional.
+- Dasselbe gilt für Dusche, WC, Lavabo, Möbel, Küchengeräte, Tür, Fenster usw.
+- Auswahlrahmen und Raumbegrenzungsprüfung verwenden dieselben echten Masse.
+- Änderungen werden gespeichert.
+- In geöffnetem 3D wird nach einer Massänderung sofort aktualisiert.
+- WC und Pflanze, deren ältere 3D-Geometrie feste Grössen hatte, skalieren jetzt ebenfalls nach Breite/Tiefe.
+- Türhöhe steuert jetzt auch die tatsächliche 3D-Türhöhe.
 
-Hinweis:
-Die bestehenden Projekt-/Objektdaten bleiben erhalten; neue Türen erhalten standardmässig 200 cm Höhe, bis sie geändert werden.
+Deutsch / de-CH.

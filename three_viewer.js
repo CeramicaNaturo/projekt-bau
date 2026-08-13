@@ -324,6 +324,17 @@ function floorMesh(objects, material){
   return mesh;
 }
 
+
+function objectDefaultDims3D(type){
+  const dims={
+    door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],
+    bathtub:[180,80],sink:[60,50],drain:[15,15],
+    kitchenSink:[60,60],stove:[60,60],fridge:[60,65],washingMachine:[60,65],
+    table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45]
+  };
+  return dims[type]||[60,40];
+}
+
 function simpleBox(o,height,color=0xcbd5e1){
   const w=m(o.widthCm||60)*(o.scale||1);
   const d=m(o.depthCm||60)*(o.scale||1);
@@ -414,6 +425,9 @@ function realisticSink(o){
 function realisticWC(o){
   const g=new THREE.Group();
   const ceramic=CERAMIC(), chrome=CHROME();
+  const [dw,dd]=objectDefaultDims3D('wc');
+  const sx=Math.max(.05,Number(o.widthCm||dw)/dw);
+  const sz=Math.max(.05,Number(o.depthCm||dd)/dd);
 
   // base
   addBox(g,.34,.18,.48,0,.12,.08,ceramic);
@@ -433,6 +447,7 @@ function realisticWC(o){
   addBox(g,.38,.48,.20,0,.52,-.30,ceramic);
   addCylinder(g,.018,.018,.018,.12,.77,-.405,chrome,16);
 
+  g.scale.x*=sx; g.scale.z*=sz;
   return finishObject(g,o);
 }
 
@@ -610,6 +625,9 @@ function realisticCabinet(o){
 
 function realisticPlant(o){
   const g=new THREE.Group();
+  const [dw,dd]=objectDefaultDims3D('plant');
+  const sx=Math.max(.05,Number(o.widthCm||dw)/dw);
+  const sz=Math.max(.05,Number(o.depthCm||dd)/dd);
   // pot
   const pot=new THREE.Mesh(new THREE.CylinderGeometry(.18,.23,.34,28),mat(0x9a6548,.72,.02));
   pot.position.y=.17;pot.castShadow=true;g.add(pot);
@@ -622,6 +640,7 @@ function realisticPlant(o){
     [0,.90,-.16], [-.13,1.03,.10], [.14,1.08,-.05]
   ];
   leafPos.forEach(([x,y,z])=>addSphere(g,.17,.07,.09,x,y,z,leafMat));
+  g.scale.x*=sx; g.scale.z*=sz;
   return finishObject(g,o);
 }
 
@@ -643,10 +662,11 @@ function objectMesh(o){
   if(type==='door'){
     const g=new THREE.Group();
     const w=m(o.widthCm||90);
+    const h=Math.max(.5,m(o.heightCm||205));
     // door leaf
-    addBox(g,w,2.05,.045,0,1.025,0,WOOD());
+    addBox(g,w,h,.045,0,h/2,0,WOOD());
     // handle
-    addCylinder(g,.018,.018,.11,w*.34,1.05,.04,CHROME(),16,Math.PI/2);
+    addCylinder(g,.018,.018,.11,w*.34,Math.min(h*.52,1.05),.04,CHROME(),16,Math.PI/2);
     if((o.openingDirection||'right')==='left')g.rotation.y=Math.PI;
     return finishObject(g,o);
   }

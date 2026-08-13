@@ -2311,11 +2311,33 @@ function setSelectedScale(value,withHistory=false){
 function setSelectedDimensions(){
   const o=selectedObject();
   if(!o||o.type==='wall'||o.type==='text')return;
-  const w=Number($('fpObjectWidth').value),d=Number($('fpObjectDepth').value);
+
+  const w=Number($('fpObjectWidth').value);
+  const d=Number($('fpObjectDepth').value);
   if(!Number.isFinite(w)||!Number.isFinite(d)||w<=0||d<=0)return;
+
+  const oldW=Number(o.widthCm||w);
+  const oldD=Number(o.depthCm||d);
+
   pushHistory();
-  o.widthCm=w;o.depthCm=d;
-  drawFloorplan();updateSelectedInfo();
+  o.widthCm=w;
+  o.depthCm=d;
+
+  // Real dimensions are authoritative; percentage scale remains an optional
+  // additional visual scale but normally stays at 100%.
+  if(!objectFitsRoom(o,o.x,o.y,o.rotation||0)){
+    o.widthCm=oldW;
+    o.depthCm=oldD;
+    const wi=$('fpObjectWidth'),di=$('fpObjectDepth');
+    if(wi)wi.value=String(oldW);
+    if(di)di.value=String(oldD);
+    return;
+  }
+
+  save();
+  drawFloorplan();
+  updateSelectedInfo();
+  if(fp3DMode)refresh3D();
 }
 function updateSelectedInfo(){
   const el=$('fpSelectedInfo');if(!el)return;
@@ -2761,6 +2783,25 @@ function drawConnectedWallPreview(w){
   fpCtx.restore();
 }
 
+
+function fpDefaultObjectDimensions(type){
+  const dims={
+    door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],
+    bathtub:[180,80],sink:[60,50],drain:[15,15],
+    kitchenSink:[60,60],stove:[60,60],fridge:[60,65],washingMachine:[60,65],
+    table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45]
+  };
+  return dims[type]||[60,40];
+}
+
+function fpObjectDimensionScale(o){
+  const [dw,dd]=fpDefaultObjectDimensions(o?.type);
+  return {
+    x:Math.max(.05,Number(o?.widthCm||dw)/Math.max(1,dw)),
+    y:Math.max(.05,Number(o?.depthCm||dd)/Math.max(1,dd))
+  };
+}
+
 function drawFpObject(o,preview=false){
   fpCtx.save();
 
@@ -2828,7 +2869,14 @@ function drawFpObject(o,preview=false){
   // alle anderen Objekte frei drehen/skaliert zeichnen
   fpCtx.translate(o.x||0,o.y||0);
   fpCtx.rotate((o.rotation||0)*Math.PI/180);
-  fpCtx.scale(o.scale||1,o.scale||1);
+
+  // Visual size follows the real entered dimensions.
+  const dimensionScale=fpObjectDimensionScale(o);
+  fpCtx.scale(
+    (o.scale||1)*dimensionScale.x,
+    (o.scale||1)*dimensionScale.y
+  );
+
   const ox=o.x||0,oy=o.y||0;
   fpCtx.translate(-ox,-oy);
 
@@ -3325,6 +3373,11 @@ function initFloorplanControls(){
     const el=$(id);
     if(el)el.onchange=applyWallQuickPanel;
   });
+
+  const objectWidth=$('fpObjectWidth');
+  const objectDepth=$('fpObjectDepth');
+  if(objectWidth)objectWidth.onchange=setSelectedDimensions;
+  if(objectDepth)objectDepth.onchange=setSelectedDimensions;
 
   const wallLength=$('fpWallLength');
   const wallAngle=$('fpWallAngle');

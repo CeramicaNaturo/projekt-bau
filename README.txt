@@ -1,10 +1,4 @@
-Projekt Bau v1.9.11 – Lichte Innenmasse
-
-- Alle Wandmasse werden jetzt Innenkante → Innenkante berechnet.
-- Wandstärken zählen nicht mehr zum angezeigten Raummaß.
-- Bei verbundenen rechtwinkligen Wänden werden die Anschlussstärken berücksichtigt.
-- Maßhilfslinien starten an den inneren Wandflächen.
-- Die Maßlinie selbst bleibt zur besseren Lesbarkeit ausserhalb des Plans.
-- Bestehende Objektmasse bleiben erhalten.
-
-Deutsch / de-CH.
+Projekt Bau v1.9.12 – Innenmass-Korrektur
+- Lichte Innenmasse: Innenkante zu Innenkante.
+- Wandstärke wird nicht zum Innenmass addiert.
+- Neuer Cache v1.9.12 und Cache-Busting für Tablet/Browser.

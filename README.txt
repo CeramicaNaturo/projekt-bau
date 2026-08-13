@@ -1,28 +1,21 @@
-Projekt Bau v1.9.5 – 2D-Grundriss als PDF
+Projekt Bau v1.9.6 – Professionelle Masslinien
+
+Die Wandmasse wurden nach dem vom Benutzer gelieferten Referenzplan überarbeitet.
 
 Neu:
-- Im Grundriss-Editor gibt es oben einen eigenen Button „2D als PDF“.
-- Dieser PDF-Export ist unabhängig vom Foto-/PDF-Bericht.
-- Es wird KEIN Druckdialog geöffnet.
-- Die PDF-Datei wird direkt erzeugt und in einem neuen Tab geöffnet.
+- Wandmasse liegen ausserhalb des Grundrisses und nicht mehr auf der Wand.
+- An beiden Wandenden erscheinen kurze Hilfs-/Begrenzungslinien.
+- Dünne technische Masslinie zwischen den Endpunkten.
+- Kleine diagonale Markierungen an den Enden.
+- Masswert steht mittig auf der Masslinie.
+- Keine schweren Rahmen/Kästchen um Wandmasse.
+- Darstellung in Metern mit zwei Nachkommastellen:
+  210 cm → 2,10 m
+  300 cm → 3,00 m
+  213 cm → 2,13 m
+- Schräge Wände erhalten eine parallel zur Wand verlaufende Masslinie.
+- Die Masslinie wird automatisch auf der Aussenseite des Raums platziert.
+- Live-Mass beim Zeichnen wird ebenfalls in Meter dargestellt.
+- 2D-PDF übernimmt dieselbe professionelle Massdarstellung.
 
-PDF-Inhalt:
-- Grundrissname
-- Projektname
-- Bodenfläche
-- Raumhöhe
-- kompletter 2D-Grundriss
-- Wand- und Objektmasse
-- Erstellungsdatum
-
-Professioneller Export:
-- Raster wird für die PDF automatisch ausgeblendet.
-- X/Y-Koordinaten werden nicht exportiert.
-- Auswahlrahmen / Auswahlpunkte werden nicht exportiert.
-- Der Grundriss wird für die PDF automatisch in die Seite eingepasst.
-- Danach wird der Editor exakt auf den vorherigen Zoom / Zustand zurückgesetzt.
-
-Format:
-- A4 Querformat
-- Direkter PDF-Export über jsPDF
-- Deutsch / de-CH.
+Deutsch / de-CH.

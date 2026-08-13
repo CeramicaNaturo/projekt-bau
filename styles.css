@@ -2775,3 +2775,12 @@ label[for="fpShowPositions"]{
     padding-right:9px!important;
   }
 }
+
+/* v1.9.6 – professional architectural dimensioning */
+.fp-dimension-label,
+.wall-dimension-label{
+  border:0!important;
+  box-shadow:none!important;
+  background:rgba(255,255,255,.94)!important;
+  font-weight:600!important;
+}

@@ -726,7 +726,7 @@ function drawLiveWallDimension(preview){
   fpCtx.textAlign='center';
   fpCtx.textBaseline='middle';
 
-  const text=`${len} cm`;
+  const text=`${formatDimensionMeters(len)} m`;
   const pad=7/zoom;
   const tw=fpCtx.measureText(text).width+pad*2;
   const th=28/zoom;
@@ -2797,6 +2797,124 @@ function fpObjectDimensionScale(o){
   };
 }
 
+
+function formatDimensionMeters(cm){
+  const m=Number(cm||0)/100;
+  return m.toLocaleString('de-CH',{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  }).replace('.',',');
+}
+
+function fpRoomCenterForDimensions(){
+  const poly=getRoomPolygon?.();
+  if(!poly||poly.length<3)return null;
+  return {
+    x:poly.reduce((s,p)=>s+Number(p.x||0),0)/poly.length,
+    y:poly.reduce((s,p)=>s+Number(p.y||0),0)/poly.length
+  };
+}
+
+function wallOutsideNormal(wall){
+  const x1=Number(wall.x1),y1=Number(wall.y1),x2=Number(wall.x2),y2=Number(wall.y2);
+  const dx=x2-x1,dy=y2-y1;
+  const len=Math.hypot(dx,dy)||1;
+
+  // left and right normals
+  let nx=-dy/len, ny=dx/len;
+  const center=fpRoomCenterForDimensions();
+
+  if(center){
+    const mx=(x1+x2)/2,my=(y1+y2)/2;
+    const toCenterX=center.x-mx,toCenterY=center.y-my;
+    // If chosen normal points inward, flip it.
+    if(nx*toCenterX+ny*toCenterY>0){
+      nx=-nx; ny=-ny;
+    }
+  }
+  return {nx,ny};
+}
+
+function drawProfessionalWallDimension(wall){
+  if(!fpShowMeasures)return;
+
+  const x1=Number(wall.x1),y1=Number(wall.y1),x2=Number(wall.x2),y2=Number(wall.y2);
+  const dx=x2-x1,dy=y2-y1;
+  const len=Math.hypot(dx,dy);
+  if(len<1)return;
+
+  const ux=dx/len,uy=dy/len;
+  const {nx,ny}=wallOutsideNormal(wall);
+
+  // Technical dimension line outside the wall.
+  const offset=Math.max(28,Number(wall.thickness||15)*1.5);
+  const ext=10;
+  const tick=7;
+
+  const ax=x1+nx*offset, ay=y1+ny*offset;
+  const bx=x2+nx*offset, by=y2+ny*offset;
+
+  fpCtx.save();
+
+  // Thin technical lines
+  fpCtx.strokeStyle='#334155';
+  fpCtx.fillStyle='#0f172a';
+  fpCtx.lineWidth=Math.max(.8,1/(fpZoom||1));
+  fpCtx.lineCap='butt';
+
+  // Extension lines at both ends
+  fpCtx.beginPath();
+  fpCtx.moveTo(x1+nx*(offset-ext),y1+ny*(offset-ext));
+  fpCtx.lineTo(x1+nx*(offset+ext),y1+ny*(offset+ext));
+  fpCtx.moveTo(x2+nx*(offset-ext),y2+ny*(offset-ext));
+  fpCtx.lineTo(x2+nx*(offset+ext),y2+ny*(offset+ext));
+  fpCtx.stroke();
+
+  // Main dimension line
+  fpCtx.beginPath();
+  fpCtx.moveTo(ax,ay);
+  fpCtx.lineTo(bx,by);
+  fpCtx.stroke();
+
+  // Small diagonal ticks, similar to hand/architectural dimensioning
+  const tx=(ux+nx)*tick*.55, ty=(uy+ny)*tick*.55;
+  fpCtx.beginPath();
+  fpCtx.moveTo(ax-tx,ay-ty);
+  fpCtx.lineTo(ax+tx,ay+ty);
+  fpCtx.moveTo(bx-tx,by-ty);
+  fpCtx.lineTo(bx+tx,by+ty);
+  fpCtx.stroke();
+
+  // Dimension label
+  const mx=(ax+bx)/2,my=(ay+by)/2;
+  let angle=Math.atan2(dy,dx);
+  // Keep text readable from left to right / bottom to top
+  if(angle>Math.PI/2 || angle<-Math.PI/2) angle+=Math.PI;
+
+  fpCtx.translate(mx,my);
+  fpCtx.rotate(angle);
+
+  const z=Math.max(.2,fpZoom||1);
+  const fontPx=Math.max(12,14/z);
+  fpCtx.font=`600 ${fontPx}px Arial`;
+  fpCtx.textAlign='center';
+  fpCtx.textBaseline='middle';
+
+  const text=`${formatDimensionMeters(len)} m`;
+  const tw=fpCtx.measureText(text).width;
+  const pad=5/z;
+  const boxH=18/z;
+
+  // White knockout behind text, no visible border.
+  fpCtx.fillStyle='rgba(255,255,255,.96)';
+  fpCtx.fillRect(-tw/2-pad,-boxH/2,tw+pad*2,boxH);
+
+  fpCtx.fillStyle='#0f172a';
+  fpCtx.fillText(text,0,0);
+
+  fpCtx.restore();
+}
+
 function drawFpObject(o,preview=false){
   fpCtx.save();
 
@@ -2845,6 +2963,7 @@ function drawFpObject(o,preview=false){
 
       drawWallTileAreas2D(o);
 
+      drawProfessionalWallDimension(o);
       if(selected){
         // professionele Endpunktgriffe
         for(const p of [{x:o.x1,y:o.y1},{x:o.x2,y:o.y2}]){

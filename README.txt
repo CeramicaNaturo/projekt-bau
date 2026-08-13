@@ -1,4 +1,4 @@
-Projekt Bau v1.9.10 – Lichte Innenmasse
+Projekt Bau v1.9.11 – Lichte Innenmasse
 
 - Alle Wandmasse werden jetzt Innenkante → Innenkante berechnet.
 - Wandstärken zählen nicht mehr zum angezeigten Raummaß.

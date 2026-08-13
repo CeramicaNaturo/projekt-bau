@@ -2851,94 +2851,96 @@ function drawProfessionalWallDimension(wall){
   const outside=wallOutsideNormal(wall);
   const onx=outside.nx, ony=outside.ny;
   const inx=-onx, iny=-ony;
+  const wallThickness=Math.max(1,Number(wall.thickness||fpWallThickness||15));
+  const half=wallThickness/2;
 
-  // v1.9.10: alle Wandmasse = lichte Innenmasse.
-  // Die Messpunkte liegen auf der raumseitigen Wandkante.
-  const wallThickness=Number(wall.thickness||fpWallThickness||15);
-  const half=Math.max(0,wallThickness/2);
-
+  // v1.9.11 – lichte Innenmasse wie beim Handaufmass:
+  // 1) Messachse liegt auf der RAUMSEITIGEN Wandkante.
+  // 2) An jeder Ecke wird diese Innenkante mit der raumseitigen
+  //    Innenkante der Anschlusswand geometrisch geschnitten.
+  // 3) Das Mass läuft damit exakt Innen-Ecke -> Innen-Ecke.
+  //    Wandstärke wird NICHT zum lichten Raummaß addiert.
   let sx=x1+inx*half, sy=y1+iny*half;
   let ex=x2+inx*half, ey=y2+iny*half;
 
-  // Bei verbundenen Wänden wird zusätzlich um die halbe Stärke
-  // der Anschlusswand gekürzt. Dadurch endet das Mass exakt
-  // Innenkante -> Innenkante und nicht auf der Wand-Mittellinie.
   const walls=(fpObjects||[]).filter(o=>o&&o.type==='wall'&&o!==wall);
-  const joinTol=Math.max(10,Number(fpGrid||5)*2);
+  const joinTol=Math.max(12,Number(fpGrid||5)*2.5);
 
-  function trimAt(px,py){
-    let trim=0;
-    for(const w of walls){
-      const d1=Math.hypot(Number(w.x1)-px,Number(w.y1)-py);
-      const d2=Math.hypot(Number(w.x2)-px,Number(w.y2)-py);
-      if(Math.min(d1,d2)>joinTol)continue;
-
-      const wx=Number(w.x2)-Number(w.x1), wy=Number(w.y2)-Number(w.y1);
-      const wl=Math.hypot(wx,wy)||1;
-      const cross=Math.abs(ux*(wy/wl)-uy*(wx/wl));
-      if(cross<0.5)continue;
-
-      trim=Math.max(trim,Number(w.thickness||fpWallThickness||15)/2);
-    }
-    return trim;
+  function lineIntersection(p1,p2,p3,p4){
+    const x1=p1.x,y1=p1.y,x2=p2.x,y2=p2.y,x3=p3.x,y3=p3.y,x4=p4.x,y4=p4.y;
+    const den=(x1-x2)*(y3-y4)-(y1-y2)*(x3-x4);
+    if(Math.abs(den)<1e-7)return null;
+    const a=x1*y2-y1*x2,b=x3*y4-y3*x4;
+    return {x:(a*(x3-x4)-(x1-x2)*b)/den,y:(a*(y3-y4)-(y1-y2)*b)/den};
   }
 
-  const trimStart=trimAt(x1,y1);
-  const trimEnd=trimAt(x2,y2);
-  sx+=ux*trimStart; sy+=uy*trimStart;
-  ex-=ux*trimEnd; ey-=uy*trimEnd;
+  function connectedAt(px,py){
+    let best=null,bestD=Infinity;
+    for(const w of walls){
+      const a={x:Number(w.x1),y:Number(w.y1)},b={x:Number(w.x2),y:Number(w.y2)};
+      const d=Math.min(Math.hypot(a.x-px,a.y-py),Math.hypot(b.x-px,b.y-py));
+      if(d>joinTol || d>=bestD)continue;
+      const wx=b.x-a.x,wy=b.y-a.y,wl=Math.hypot(wx,wy)||1;
+      // Paralel/aynı doğrultudaki duvar köşe sınırı değildir.
+      const cross=Math.abs(ux*(wy/wl)-uy*(wx/wl));
+      if(cross<0.20)continue;
+      best=w; bestD=d;
+    }
+    return best;
+  }
+
+  function innerOffsetLine(w){
+    const ax=Number(w.x1),ay=Number(w.y1),bx=Number(w.x2),by=Number(w.y2);
+    const vx=bx-ax,vy=by-ay,vl=Math.hypot(vx,vy)||1;
+    let nx=-vy/vl,ny=vx/vl;
+    const center=fpRoomCenterForDimensions();
+    if(center){
+      const mx=(ax+bx)/2,my=(ay+by)/2;
+      if(nx*(center.x-mx)+ny*(center.y-my)<0){nx=-nx;ny=-ny;}
+    }
+    const h=Math.max(1,Number(w.thickness||fpWallThickness||15))/2;
+    return [{x:ax+nx*h,y:ay+ny*h},{x:bx+nx*h,y:by+ny*h}];
+  }
+
+  const ownLine=[{x:sx,y:sy},{x:ex,y:ey}];
+  const ws=connectedAt(x1,y1), we=connectedAt(x2,y2);
+  if(ws){
+    const l=innerOffsetLine(ws),q=lineIntersection(ownLine[0],ownLine[1],l[0],l[1]);
+    if(q && Math.hypot(q.x-sx,q.y-sy)<Math.max(80,wallThickness*4)){sx=q.x;sy=q.y;}
+  }
+  if(we){
+    const l=innerOffsetLine(we),q=lineIntersection(ownLine[0],ownLine[1],l[0],l[1]);
+    if(q && Math.hypot(q.x-ex,q.y-ey)<Math.max(80,wallThickness*4)){ex=q.x;ey=q.y;}
+  }
 
   const innerLen=Math.max(0,Math.hypot(ex-sx,ey-sy));
-
-  // Maßlinie ausserhalb für gute Lesbarkeit; Hilfslinien beginnen
-  // aber an der tatsächlichen Innenkante.
   const offset=Math.max(28,wallThickness*1.5);
   const ax=sx+onx*offset, ay=sy+ony*offset;
   const bx=ex+onx*offset, by=ey+ony*offset;
   const tick=7;
 
   fpCtx.save();
-  fpCtx.strokeStyle='#334155';
-  fpCtx.fillStyle='#0f172a';
-  fpCtx.lineWidth=Math.max(.8,1/(fpZoom||1));
-  fpCtx.lineCap='butt';
-
+  fpCtx.strokeStyle='#334155'; fpCtx.fillStyle='#0f172a';
+  fpCtx.lineWidth=Math.max(.8,1/(fpZoom||1)); fpCtx.lineCap='butt';
   fpCtx.beginPath();
   fpCtx.moveTo(sx,sy); fpCtx.lineTo(ax,ay);
-  fpCtx.moveTo(ex,ey); fpCtx.lineTo(bx,by);
-  fpCtx.stroke();
-
-  fpCtx.beginPath();
-  fpCtx.moveTo(ax,ay); fpCtx.lineTo(bx,by);
-  fpCtx.stroke();
-
+  fpCtx.moveTo(ex,ey); fpCtx.lineTo(bx,by); fpCtx.stroke();
+  fpCtx.beginPath(); fpCtx.moveTo(ax,ay); fpCtx.lineTo(bx,by); fpCtx.stroke();
   const tx=(ux+onx)*tick*.55, ty=(uy+ony)*tick*.55;
   fpCtx.beginPath();
   fpCtx.moveTo(ax-tx,ay-ty); fpCtx.lineTo(ax+tx,ay+ty);
-  fpCtx.moveTo(bx-tx,by-ty); fpCtx.lineTo(bx+tx,by+ty);
-  fpCtx.stroke();
+  fpCtx.moveTo(bx-tx,by-ty); fpCtx.lineTo(bx+tx,by+ty); fpCtx.stroke();
 
   const mx=(ax+bx)/2,my=(ay+by)/2;
   let angle=Math.atan2(ey-sy,ex-sx);
   if(angle>Math.PI/2 || angle<-Math.PI/2)angle+=Math.PI;
-
-  fpCtx.translate(mx,my);
-  fpCtx.rotate(angle);
-
-  const z=Math.max(.2,fpZoom||1);
-  const fontPx=Math.max(12,14/z);
-  fpCtx.font=`600 ${fontPx}px Arial`;
-  fpCtx.textAlign='center';
-  fpCtx.textBaseline='middle';
-
+  fpCtx.translate(mx,my); fpCtx.rotate(angle);
+  const z=Math.max(.2,fpZoom||1),fontPx=Math.max(12,14/z);
+  fpCtx.font=`600 ${fontPx}px Arial`; fpCtx.textAlign='center'; fpCtx.textBaseline='middle';
   const text=`${formatDimensionMeters(innerLen)} m`;
-  const tw=fpCtx.measureText(text).width;
-  const pad=5/z, boxH=18/z;
-  fpCtx.fillStyle='rgba(255,255,255,.96)';
-  fpCtx.fillRect(-tw/2-pad,-boxH/2,tw+pad*2,boxH);
-  fpCtx.fillStyle='#0f172a';
-  fpCtx.fillText(text,0,0);
-  fpCtx.restore();
+  const tw=fpCtx.measureText(text).width,pad=5/z,boxH=18/z;
+  fpCtx.fillStyle='rgba(255,255,255,.96)'; fpCtx.fillRect(-tw/2-pad,-boxH/2,tw+pad*2,boxH);
+  fpCtx.fillStyle='#0f172a'; fpCtx.fillText(text,0,0); fpCtx.restore();
 }
 
 function fpIsDimensionedObject(o){

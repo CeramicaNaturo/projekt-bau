@@ -672,17 +672,77 @@ function centerCamera(group){
 }
 
 
-function addFloorTileGrid(group,data){
-  const c=data?.record?.floorTile||data?.floorTile;if(!c?.enabled)return;
-  const p=buildPolygon(data.objects||[]);if(!p||p.length<3)return;
-  const xs=p.map(q=>m(q.x)),zs=p.map(q=>m(q.y)),mnx=Math.min(...xs),mxx=Math.max(...xs),mnz=Math.min(...zs),mxz=Math.max(...zs);
-  let tw=Math.max(.01,m(c.tileW||60)),th=Math.max(.01,m(c.tileH||60));if(c.pattern==='vertical')[tw,th]=[th,tw];
-  const o={x:m(c.originX||0),z:m(c.originY||0)},lm=new THREE.LineBasicMaterial({color:0x6b8790,transparent:true,opacity:.7}),g=new THREE.Group(),mg=Math.max(mxx-mnx,mxz-mnz)*1.5+2;g.position.set(o.x,.012,o.z);if(c.align==='45')g.rotation.y=Math.PI/4;
-  for(let x=Math.floor((mnx-o.x-mg)/tw)*tw;x<=mxx-o.x+mg;x+=tw)g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x,0,mnz-o.z-mg),new THREE.Vector3(x,0,mxz-o.z+mg)]),lm));
-  for(let z=Math.floor((mnz-o.z-mg)/th)*th;z<=mxz-o.z+mg;z+=th)g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(mnx-o.x-mg,0,z),new THREE.Vector3(mxx-o.x+mg,0,z)]),lm));
-  group.add(g);
+function resolveFloorTileOrigin3D(c,objects){
+  const pts=buildPolygon(objects||[]);
+  if(!pts||!pts.length)return{x:m(c?.originX||0),z:m(c?.originY||0)};
+  const xs=pts.map(q=>q.x),zs=pts.map(q=>q.y);
+  const b={minX:Math.min(...xs),maxX:Math.max(...xs),minZ:Math.min(...zs),maxZ:Math.max(...zs)};
+  switch(c?.originMode||'manual'){
+    case 'topLeft':return{x:b.minX,z:b.minZ};
+    case 'topRight':return{x:b.maxX,z:b.minZ};
+    case 'bottomLeft':return{x:b.minX,z:b.maxZ};
+    case 'bottomRight':return{x:b.maxX,z:b.maxZ};
+    case 'center':return{x:(b.minX+b.maxX)/2,z:(b.minZ+b.maxZ)/2};
+    default:return{x:m(c?.originX||0),z:m(c?.originY||0)};
+  }
 }
+function pointInPolygon3D(x,z,pts){
+  let inside=false;
+  for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+    const a=pts[i],b=pts[j];
+    const hit=((a.y>z)!==(b.y>z))&&(x<(b.x-a.x)*(z-a.y)/((b.y-a.y)||1e-9)+a.x);
+    if(hit)inside=!inside;
+  }
+  return inside;
+}
+function addFloorTileGrid(group,data){
+  const c=data?.record?.floorTile||data?.floorTile;
+  if(!c?.enabled)return;
+  const pts=buildPolygon(data.objects||[]);
+  if(!pts||pts.length<3)return;
 
+  // buildPolygon() ALREADY returns metres. Do not divide these coordinates by 100 again.
+  const xs=pts.map(q=>q.x),zs=pts.map(q=>q.y);
+  const mnx=Math.min(...xs),mxx=Math.max(...xs),mnz=Math.min(...zs),mxz=Math.max(...zs);
+  let tw=Math.max(.01,m(c.tileW||60)),th=Math.max(.01,m(c.tileH||60));
+  if(c.pattern==='vertical')[tw,th]=[th,tw];
+  const o=resolveFloorTileOrigin3D(c,data.objects||[]);
+  const angle=c.align==='45'?Math.PI/4:0;
+  const ca=Math.cos(angle),sa=Math.sin(angle);
+  const toLocal=(x,z)=>({x:(x-o.x)*ca+(z-o.z)*sa,z:-(x-o.x)*sa+(z-o.z)*ca});
+  const toWorld=(x,z)=>({x:o.x+x*ca-z*sa,z:o.z+x*sa+z*ca});
+  const lp=pts.map(q=>toLocal(q.x,q.y));
+  const lx=lp.map(q=>q.x),lz=lp.map(q=>q.z);
+  const minX=Math.min(...lx)-tw,maxX=Math.max(...lx)+tw,minZ=Math.min(...lz)-th,maxZ=Math.max(...lz)+th;
+  const sx=Math.floor(minX/tw)*tw,ex=Math.ceil(maxX/tw)*tw,sz=Math.floor(minZ/th)*th,ez=Math.ceil(maxZ/th)*th;
+  const matLine=new THREE.LineBasicMaterial({color:0x0e7490,transparent:true,opacity:.72});
+  const tileGroup=new THREE.Group();
+
+  // Draw only tile edges whose midpoint lies inside the room. This prevents the old
+  // detached second grid from appearing outside the actual floor polygon.
+  const addSeg=(a,b)=>{
+    const mid={x:(a.x+b.x)/2,z:(a.z+b.z)/2};
+    if(!pointInPolygon3D(mid.x,mid.z,pts))return;
+    tileGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(a.x,.014,a.z),new THREE.Vector3(b.x,.014,b.z)
+    ]),matLine));
+  };
+  for(let x=sx;x<=ex+1e-9;x+=tw){
+    for(let z=sz;z<ez-1e-9;z+=th){
+      addSeg(toWorld(x,z),toWorld(x,Math.min(z+th,ez)));
+    }
+  }
+  for(let z=sz;z<=ez+1e-9;z+=th){
+    for(let x=sx;x<ex-1e-9;x+=tw){
+      let shift=0;
+      const row=Math.round((z-sz)/th);
+      if(c.pattern==='half'&&row%2)shift=tw/2;
+      if(c.pattern==='third')shift=(row%3)*tw/3;
+      addSeg(toWorld(x+shift,z),toWorld(Math.min(x+tw+shift,ex+tw),z));
+    }
+  }
+  group.add(tileGroup);
+}
 function rebuild(){
   if(!scene || !currentData) return;
 

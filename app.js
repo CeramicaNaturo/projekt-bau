@@ -3264,6 +3264,147 @@ function fpV194CleanUiInit(){
   }
 }
 
+
+function generateFloorplan2DPDF(){
+  if(!fpRecord || !fpCanvas){
+    alert('Kein Grundriss geöffnet.');
+    return;
+  }
+  if(!window.jspdf || !window.jspdf.jsPDF){
+    alert('Das PDF-Modul konnte nicht geladen werden. Bitte Seite neu laden.');
+    return;
+  }
+
+  const pdfTab=window.open('about:blank','_blank');
+
+  // Preserve the exact editor state.
+  const state={
+    zoom:fpZoom,
+    offX:fpViewOffsetX,
+    offY:fpViewOffsetY,
+    grid:fpShowGrid,
+    positions:fpShowPositions,
+    selected:fpSelectedId
+  };
+
+  try{
+    // Clean professional export: no editing grid, coordinates or selection handles.
+    fpShowGrid=false;
+    fpShowPositions=false;
+    fpSelectedId=null;
+
+    resize2DCanvas();
+    fitFloorplan2D();
+    drawFloorplan();
+
+    const image=fpCanvas.toDataURL('image/png',1.0);
+
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({
+      orientation:'landscape',
+      unit:'mm',
+      format:'a4',
+      compress:true
+    });
+
+    const pageW=297;
+    const pageH=210;
+    const margin=12;
+
+    const projectName=fpProject?.name || 'Projekt Bau';
+    const planName=fpRecord?.name || 'Grundriss';
+    const floorArea=calculateFloorAreaM2(fpObjects);
+    const roomHeight=Number(fpRecord?.roomHeightM||0);
+
+    // Header
+    doc.setTextColor(15,23,42);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(8);
+    doc.text('PROJEKT BAU · GRUNDRISS',margin,11);
+
+    doc.setFontSize(17);
+    doc.text(planName,margin,20);
+
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(71,85,105);
+    doc.text(projectName,margin,26);
+
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(15,23,42);
+    doc.setFontSize(9);
+
+    const areaText=floorArea==null?'—':`${formatCHNumber(floorArea,2)} m²`;
+    const heightText=roomHeight>0?`${formatCHNumber(roomHeight,2)} m`:'—';
+
+    doc.text(`Bodenfläche: ${areaText}`,pageW-margin,15,{align:'right'});
+    doc.text(`Raumhöhe: ${heightText}`,pageW-margin,21,{align:'right'});
+
+    doc.setDrawColor(203,213,225);
+    doc.setLineWidth(.3);
+    doc.line(margin,31,pageW-margin,31);
+
+    // Canvas image fitted into the large central PDF area.
+    const imgW=fpCanvas.width;
+    const imgH=fpCanvas.height;
+    const maxW=pageW-margin*2;
+    const maxH=pageH-48;
+    const ratio=Math.min(maxW/imgW,maxH/imgH);
+    const drawW=imgW*ratio;
+    const drawH=imgH*ratio;
+    const x=(pageW-drawW)/2;
+    const y=36+(maxH-drawH)/2;
+
+    doc.addImage(image,'PNG',x,y,drawW,drawH,undefined,'FAST');
+
+    // Footer
+    doc.setDrawColor(226,232,240);
+    doc.line(margin,pageH-10,pageW-margin,pageH-10);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor(100,116,139);
+
+    const now=new Date();
+    const date=now.toLocaleDateString('de-CH',{
+      day:'2-digit',month:'2-digit',year:'numeric'
+    });
+    doc.text(`Erstellt: ${date}`,margin,pageH-5);
+    doc.text('Projekt Bau · Baudokumentation',pageW-margin,pageH-5,{align:'right'});
+
+    const blob=doc.output('blob');
+    const url=URL.createObjectURL(blob);
+
+    if(pdfTab){
+      pdfTab.location.replace(url);
+    }else{
+      window.open(url,'_blank');
+    }
+
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(err){
+    console.error('2D Grundriss PDF',err);
+    if(pdfTab)pdfTab.close();
+    alert('Der 2D-Grundriss konnte nicht als PDF erstellt werden.');
+  }finally{
+    // Restore the editor exactly as it was.
+    fpZoom=state.zoom;
+    fpViewOffsetX=state.offX;
+    fpViewOffsetY=state.offY;
+    fpShowGrid=state.grid;
+    fpShowPositions=state.positions;
+    fpSelectedId=state.selected;
+
+    const gridToggle=$('fpShowGrid');
+    if(gridToggle)gridToggle.checked=fpShowGrid;
+    const posToggle=$('fpShowPositions');
+    if(posToggle)posToggle.checked=fpShowPositions;
+
+    drawFloorplan();
+    updateSelectedInfo();
+  }
+}
+
+
 function initFloorplanControls(){
   fpV194CleanUiInit();
   const newBtn=$('newFloorplanBtn');if(newBtn)newBtn.onclick=createNewFloorplan;
@@ -3462,6 +3603,9 @@ function initFloorplanControls(){
     if(!document.fullscreenElement)el.requestFullscreen?.();
     else document.exitFullscreen?.();
   };
+  const fp2DPdf=$('fp2DPdfButton');
+  if(fp2DPdf)fp2DPdf.onclick=generateFloorplan2DPDF;
+
   const fpPdf=$('fpPdfButton');
   if(fpPdf)fpPdf.onclick=()=>generateDirectPDFReport();
 }

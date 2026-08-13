@@ -2763,3 +2763,15 @@ label[for="fpShowPositions"]{
   font-size:9px!important;
   line-height:1.1!important;
 }
+
+/* v1.9.5 – 2D direct PDF export */
+#fp2DPdfButton{
+  white-space:nowrap;
+}
+@media (pointer:coarse) and (orientation:landscape){
+  #fp2DPdfButton{
+    min-width:78px!important;
+    padding-left:9px!important;
+    padding-right:9px!important;
+  }
+}

@@ -2698,13 +2698,8 @@ function drawMeasureText(text,x,y,angle=0){
 }
 
 function drawPositionText(o,x,y){
-  if(!fpShowPositions)return;
-  fpCtx.save();
-  fpCtx.font='12px Arial';
-  fpCtx.textAlign='center';
-  fpCtx.fillStyle='#64748b';
-  fpCtx.fillText(`X ${Math.round(x)} · Y ${Math.round(y)} cm`,x,y);
-  fpCtx.restore();
+  // v1.9.4: X/Y-Koordinaten werden im professionellen Plan nicht mehr angezeigt.
+  return;
 }
 
 
@@ -3260,7 +3255,17 @@ function initTabletCadUi(){
   setTimeout(refitTabletCadArea,300);
 }
 
+
+function fpV194CleanUiInit(){
+  const pos=$('fpShowPositions');
+  if(pos){
+    pos.checked=false;
+    fpShowPositions=false;
+  }
+}
+
 function initFloorplanControls(){
+  fpV194CleanUiInit();
   const newBtn=$('newFloorplanBtn');if(newBtn)newBtn.onclick=createNewFloorplan;
   const cancelName=$('cancelFloorplanName');if(cancelName)cancelName.onclick=cancelNewFloorplan;
   const confirmName=$('confirmFloorplanName');if(confirmName)confirmName.onclick=confirmNewFloorplan;

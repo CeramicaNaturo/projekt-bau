@@ -2657,3 +2657,109 @@ body.pdf-exporting .pdf-footer{
 .fp-v192-door-fields small{display:block;margin-top:7px;color:#64748b;line-height:1.35}
 
 /* v1.9.3 – object graphics follow entered real dimensions */
+
+/* ============================================================
+   v1.9.4 – Clean Professional CAD UI
+   ============================================================ */
+
+/* Bodenfläche + Raumhöhe: balanced professional summary row */
+.floorplan-modal-card .fp-room-strip{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(180px,260px)!important;
+  gap:8px!important;
+  align-items:stretch!important;
+}
+
+.floorplan-modal-card .fp-room-strip > *{
+  min-width:0!important;
+  height:auto!important;
+  min-height:52px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  padding:8px 14px!important;
+  box-sizing:border-box!important;
+}
+
+.floorplan-modal-card .fp-room-strip > *:last-child{
+  text-align:left!important;
+  align-items:flex-start!important;
+}
+
+.floorplan-modal-card .fp-room-strip label,
+.floorplan-modal-card .fp-room-strip small{
+  font-size:10px!important;
+  line-height:1.2!important;
+  margin-bottom:2px!important;
+  letter-spacing:.04em!important;
+}
+
+.floorplan-modal-card .fp-room-strip strong,
+.floorplan-modal-card .fp-room-strip input{
+  font-size:19px!important;
+  line-height:1.2!important;
+  font-weight:800!important;
+}
+
+.floorplan-modal-card .fp-room-strip input{
+  width:100%!important;
+  max-width:180px!important;
+  border:0!important;
+  background:transparent!important;
+  padding:0!important;
+}
+
+/* Tablet: Raumhöhe should never collapse to a tiny right-top cell */
+@media (pointer:coarse) and (orientation:landscape){
+  .floorplan-modal-card .fp-room-strip{
+    grid-template-columns:minmax(0,1fr) 220px!important;
+  }
+  .floorplan-modal-card .fp-room-strip > *{
+    min-height:48px!important;
+    padding:6px 12px!important;
+  }
+  .floorplan-modal-card .fp-room-strip strong,
+  .floorplan-modal-card .fp-room-strip input{
+    font-size:18px!important;
+  }
+}
+
+/* Hide XY coordinate annotations and reduce visual clutter */
+.fp-position-label,
+.fp-coordinate-label,
+[data-position-label],
+.cad-position-label{
+  display:none!important;
+}
+
+/* Cleaner dimension labels */
+.floorplan-modal-card canvas{
+  image-rendering:auto;
+}
+
+/* Top controls: Position anzeigen stays available but visually secondary */
+#fpShowPositions + label,
+label[for="fpShowPositions"]{
+  opacity:.65;
+}
+
+/* Keep plan measurements compact */
+.fp-selected-info{
+  font-size:9px!important;
+  color:#64748b!important;
+  padding:3px 8px!important;
+}
+
+/* Compact room summary card in center */
+.fp-room-label,
+.room-info-card,
+.cad-room-label{
+  font-size:11px!important;
+  line-height:1.25!important;
+}
+
+/* Make object palette cleaner */
+.cad-object-palette button span{
+  font-size:9px!important;
+  line-height:1.1!important;
+}

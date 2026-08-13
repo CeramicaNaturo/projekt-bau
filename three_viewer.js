@@ -671,6 +671,18 @@ function centerCamera(group){
   controls.update();
 }
 
+
+function addFloorTileGrid(group,data){
+  const c=data?.record?.floorTile||data?.floorTile;if(!c?.enabled)return;
+  const p=buildPolygon(data.objects||[]);if(!p||p.length<3)return;
+  const xs=p.map(q=>m(q.x)),zs=p.map(q=>m(q.y)),mnx=Math.min(...xs),mxx=Math.max(...xs),mnz=Math.min(...zs),mxz=Math.max(...zs);
+  let tw=Math.max(.01,m(c.tileW||60)),th=Math.max(.01,m(c.tileH||60));if(c.pattern==='vertical')[tw,th]=[th,tw];
+  const o={x:m(c.originX||0),z:m(c.originY||0)},lm=new THREE.LineBasicMaterial({color:0x6b8790,transparent:true,opacity:.7}),g=new THREE.Group(),mg=Math.max(mxx-mnx,mxz-mnz)*1.5+2;g.position.set(o.x,.012,o.z);if(c.align==='45')g.rotation.y=Math.PI/4;
+  for(let x=Math.floor((mnx-o.x-mg)/tw)*tw;x<=mxx-o.x+mg;x+=tw)g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x,0,mnz-o.z-mg),new THREE.Vector3(x,0,mxz-o.z+mg)]),lm));
+  for(let z=Math.floor((mnz-o.z-mg)/th)*th;z<=mxz-o.z+mg;z+=th)g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(mnx-o.x-mg,0,z),new THREE.Vector3(mxx-o.x+mg,0,z)]),lm));
+  group.add(g);
+}
+
 function rebuild(){
   if(!scene || !currentData) return;
 
@@ -699,6 +711,8 @@ function rebuild(){
 
   const floor=floorMesh(objects,floorMat);
   if(floor) rootGroup.add(floor);
+
+  addFloorTileGrid(rootGroup,currentData);
 
   (objects||[]).filter(o=>o.type==='wall').forEach(w=>{
     const mesh=wallMesh(w,roomHeight,wallMat);

@@ -539,7 +539,7 @@ function initTileTools(){
 
 let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
-let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null,fpObjectRotateDrag=null,fpPinchState=null;
+let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null,fpObjectRotateDrag=null,fpPinchState=null,fpPickingFloorTileOrigin=false;
 let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpLastRenderError='',fpObjectWallSnap=true,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
 const fpCanvas=$('floorplanCanvas'),fpCtx=fpCanvas.getContext('2d');
@@ -1067,6 +1067,17 @@ function drawWallTileAreas2D(wall){
   });
 }
 
+
+function ensureFloorTileConfig(){if(!fpRecord)return null;if(!fpRecord.floorTile)fpRecord.floorTile={enabled:false,tileW:60,tileH:60,jointMm:2,pattern:'straight',originMode:'manual',originX:0,originY:0,align:'room'};return fpRecord.floorTile}
+function roomBoundsCm(){const w=(fpObjects||[]).filter(o=>o.type==='wall');if(!w.length)return null;const xs=[],ys=[];w.forEach(v=>{xs.push(+v.x1,+v.x2);ys.push(+v.y1,+v.y2)});return{minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)}}
+function resolveFloorTileOrigin(c){const b=roomBoundsCm();if(!b)return{x:+c.originX||0,y:+c.originY||0};const m=c.originMode||'manual';if(m==='topLeft')return{x:b.minX,y:b.minY};if(m==='topRight')return{x:b.maxX,y:b.minY};if(m==='bottomLeft')return{x:b.minX,y:b.maxY};if(m==='bottomRight')return{x:b.maxX,y:b.maxY};if(m==='center')return{x:(b.minX+b.maxX)/2,y:(b.minY+b.maxY)/2};return{x:+c.originX||0,y:+c.originY||0}}
+function readFloorTileControls(c){c.tileW=Math.max(1,+$('fpFloorTileW')?.value||60);c.tileH=Math.max(1,+$('fpFloorTileH')?.value||60);c.jointMm=Math.max(0,+$('fpFloorTileJoint')?.value||0);c.pattern=$('fpFloorTilePattern')?.value||'straight';c.originMode=$('fpFloorTileOriginMode')?.value||'manual';c.align=$('fpFloorTileAlign')?.value||'room';c.originX=+$('fpFloorTileOriginX')?.value||0;c.originY=+$('fpFloorTileOriginY')?.value||0}
+function updateFloorTilePanel(){const c=ensureFloorTileConfig();if(!c)return;for(const [id,v] of Object.entries({fpFloorTileW:c.tileW,fpFloorTileH:c.tileH,fpFloorTileJoint:c.jointMm,fpFloorTilePattern:c.pattern,fpFloorTileOriginMode:c.originMode,fpFloorTileAlign:c.align,fpFloorTileOriginX:c.originX,fpFloorTileOriginY:c.originY})){const e=$(id);if(e)e.value=String(v)}updateFloorTileInfo()}
+function updateFloorTileInfo(){const c=ensureFloorTileConfig(),i=$('fpFloorTileInfo');if(!c||!i)return;const ar=calculateFloorAreaM2(fpObjects),o=resolveFloorTileOrigin(c),ta=(+c.tileW||60)*(+c.tileH||60)/10000,n=ar&&ta?Math.ceil(ar/ta):0;i.textContent=`Bodenfläche: ${ar==null?'—':formatCHNumber(ar,2)+' m²'} · Fliese ${Math.round(c.tileW)}×${Math.round(c.tileH)} cm · Start X ${Math.round(o.x)} / Y ${Math.round(o.y)} cm · ca. ${n} Fliesen ohne Verschnitt`}
+function applyFloorTileConfig(){const c=ensureFloorTileConfig();if(!c)return;pushHistory();readFloorTileControls(c);c.enabled=true;updateFloorTilePanel();drawFloorplan()}
+function centerFloorTileLayout(){const c=ensureFloorTileConfig(),b=roomBoundsCm();if(!c||!b)return;readFloorTileControls(c);const rx=((b.maxX-b.minX)%c.tileW+c.tileW)%c.tileW,ry=((b.maxY-b.minY)%c.tileH+c.tileH)%c.tileH;c.originMode='manual';c.originX=b.minX+rx/2;c.originY=b.minY+ry/2;c.enabled=true;updateFloorTilePanel();drawFloorplan()}
+function drawFloorTiles2D(){const c=ensureFloorTileConfig();if(!c?.enabled)return;const p=getRoomPolygon(),b=roomBoundsCm();if(!p||!b)return;let tw=+c.tileW||60,th=+c.tileH||60;if(c.pattern==='vertical')[tw,th]=[th,tw];const o=resolveFloorTileOrigin(c),z=Math.max(.2,fpZoom||1);fpCtx.save();fpCtx.strokeStyle='rgba(14,116,144,.55)';fpCtx.lineWidth=.8/z;fpCtx.beginPath();p.forEach((q,k)=>k?fpCtx.lineTo(q.x,q.y):fpCtx.moveTo(q.x,q.y));fpCtx.closePath();fpCtx.clip();fpCtx.translate(o.x,o.y);fpCtx.rotate(c.align==='45'?Math.PI/4:0);fpCtx.translate(-o.x,-o.y);const mg=Math.max(b.maxX-b.minX,b.maxY-b.minY)*1.5+500,sx=Math.floor((b.minX-mg-o.x)/tw)*tw+o.x,ex=Math.ceil((b.maxX+mg-o.x)/tw)*tw+o.x,sy=Math.floor((b.minY-mg-o.y)/th)*th+o.y,ey=Math.ceil((b.maxY+mg-o.y)/th)*th+o.y;for(let x=sx;x<=ex;x+=tw){fpCtx.beginPath();fpCtx.moveTo(x,sy);fpCtx.lineTo(x,ey);fpCtx.stroke()}for(let y=sy,row=0;y<=ey;y+=th,row++){fpCtx.beginPath();fpCtx.moveTo(sx,y);fpCtx.lineTo(ex,y);fpCtx.stroke();let sh=0;if(c.pattern==='half'&&row%2)sh=tw/2;if(c.pattern==='third')sh=(row%3)*tw/3;if(sh)for(let x=sx+sh;x<=ex;x+=tw){fpCtx.beginPath();fpCtx.moveTo(x,y);fpCtx.lineTo(x,y+th);fpCtx.stroke()}}fpCtx.restore();fpCtx.save();fpCtx.strokeStyle='#0e7490';fpCtx.fillStyle='#0e7490';fpCtx.lineWidth=2/z;fpCtx.beginPath();fpCtx.arc(o.x,o.y,7/z,0,Math.PI*2);fpCtx.stroke();fpCtx.font=`bold ${11/z}px Arial`;fpCtx.fillText('Fliesenstart',o.x+10/z,o.y-10/z);fpCtx.restore()}
+
 function updateWallQuickPanel(){
   const panel=$('fpWallQuickPanel');
   const o=selectedObject();
@@ -1531,6 +1542,7 @@ function hitTest(p){
 }
 function floorStart(ev){
   if(!fpCanvas)return;
+  if(fpPickingFloorTileOrigin){ev.preventDefault();const p=fpPoint(ev),c=ensureFloorTileConfig();c.enabled=true;c.originMode='manual';c.originX=snap(p.x);c.originY=snap(p.y);fpPickingFloorTileOrigin=false;updateFloorTilePanel();drawFloorplan();return;}
   ev.preventDefault();
 
   const p=fpPoint(ev);
@@ -2286,6 +2298,8 @@ function drawFloorplan(preview=null){
     }
 
     // IMPORTANT: draw each object independently, so one malformed object cannot hide the whole plan.
+    try{drawFloorTiles2D()}catch(e){console.error('Bodenfliesen 2D',e)}
+
     (fpObjects||[]).forEach(o=>{
       try{
         if(typeof isLayerVisible==='function' && !isLayerVisible(o))return;
@@ -3021,6 +3035,13 @@ function initFloorplanControls(){
 
   const openingDirection=$('fpOpeningDirection');
   if(openingDirection)openingDirection.onchange=changeOpeningDirection;
+
+  const floorTilePanelBtn=$('fpFloorTilePanelBtn');if(floorTilePanelBtn)floorTilePanelBtn.onclick=()=>{const p=$('fpFloorTilePanel');if(p){p.classList.toggle('hidden');if(!p.classList.contains('hidden'))updateFloorTilePanel();}};
+  const floorTileClose=$('fpFloorTileClose');if(floorTileClose)floorTileClose.onclick=()=>$('fpFloorTilePanel')?.classList.add('hidden');
+  const floorTileApply=$('fpFloorTileApply');if(floorTileApply)floorTileApply.onclick=applyFloorTileConfig;
+  const floorTileCenter=$('fpFloorTileCenter');if(floorTileCenter)floorTileCenter.onclick=centerFloorTileLayout;
+  const floorTilePickOrigin=$('fpFloorTilePickOrigin');if(floorTilePickOrigin)floorTilePickOrigin.onclick=()=>{fpPickingFloorTileOrigin=true;$('fpFloorTilePanel')?.classList.add('hidden');};
+  ['fpFloorTileW','fpFloorTileH','fpFloorTileJoint','fpFloorTilePattern','fpFloorTileOriginMode','fpFloorTileAlign','fpFloorTileOriginX','fpFloorTileOriginY'].forEach(id=>{const e=$(id);if(e)e.onchange=()=>{const c=ensureFloorTileConfig();if(c){readFloorTileControls(c);updateFloorTileInfo();}}});
 
   const wallTileAdd=$('fpWallTileAdd');
   if(wallTileAdd)wallTileAdd.onclick=addWallTileArea;

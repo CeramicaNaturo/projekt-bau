@@ -2848,52 +2848,79 @@ function drawProfessionalWallDimension(wall){
   if(len<1)return;
 
   const ux=dx/len,uy=dy/len;
-  const {nx,ny}=wallOutsideNormal(wall);
+  const outside=wallOutsideNormal(wall);
+  const onx=outside.nx, ony=outside.ny;
+  const inx=-onx, iny=-ony;
 
-  // Technical dimension line outside the wall.
-  const offset=Math.max(28,Number(wall.thickness||15)*1.5);
-  const ext=10;
+  // v1.9.10: alle Wandmasse = lichte Innenmasse.
+  // Die Messpunkte liegen auf der raumseitigen Wandkante.
+  const wallThickness=Number(wall.thickness||fpWallThickness||15);
+  const half=Math.max(0,wallThickness/2);
+
+  let sx=x1+inx*half, sy=y1+iny*half;
+  let ex=x2+inx*half, ey=y2+iny*half;
+
+  // Bei verbundenen Wänden wird zusätzlich um die halbe Stärke
+  // der Anschlusswand gekürzt. Dadurch endet das Mass exakt
+  // Innenkante -> Innenkante und nicht auf der Wand-Mittellinie.
+  const walls=(fpObjects||[]).filter(o=>o&&o.type==='wall'&&o!==wall);
+  const joinTol=Math.max(10,Number(fpGrid||5)*2);
+
+  function trimAt(px,py){
+    let trim=0;
+    for(const w of walls){
+      const d1=Math.hypot(Number(w.x1)-px,Number(w.y1)-py);
+      const d2=Math.hypot(Number(w.x2)-px,Number(w.y2)-py);
+      if(Math.min(d1,d2)>joinTol)continue;
+
+      const wx=Number(w.x2)-Number(w.x1), wy=Number(w.y2)-Number(w.y1);
+      const wl=Math.hypot(wx,wy)||1;
+      const cross=Math.abs(ux*(wy/wl)-uy*(wx/wl));
+      if(cross<0.5)continue;
+
+      trim=Math.max(trim,Number(w.thickness||fpWallThickness||15)/2);
+    }
+    return trim;
+  }
+
+  const trimStart=trimAt(x1,y1);
+  const trimEnd=trimAt(x2,y2);
+  sx+=ux*trimStart; sy+=uy*trimStart;
+  ex-=ux*trimEnd; ey-=uy*trimEnd;
+
+  const innerLen=Math.max(0,Math.hypot(ex-sx,ey-sy));
+
+  // Maßlinie ausserhalb für gute Lesbarkeit; Hilfslinien beginnen
+  // aber an der tatsächlichen Innenkante.
+  const offset=Math.max(28,wallThickness*1.5);
+  const ax=sx+onx*offset, ay=sy+ony*offset;
+  const bx=ex+onx*offset, by=ey+ony*offset;
   const tick=7;
 
-  const ax=x1+nx*offset, ay=y1+ny*offset;
-  const bx=x2+nx*offset, by=y2+ny*offset;
-
   fpCtx.save();
-
-  // Thin technical lines
   fpCtx.strokeStyle='#334155';
   fpCtx.fillStyle='#0f172a';
   fpCtx.lineWidth=Math.max(.8,1/(fpZoom||1));
   fpCtx.lineCap='butt';
 
-  // Extension lines at both ends
   fpCtx.beginPath();
-  fpCtx.moveTo(x1+nx*(offset-ext),y1+ny*(offset-ext));
-  fpCtx.lineTo(x1+nx*(offset+ext),y1+ny*(offset+ext));
-  fpCtx.moveTo(x2+nx*(offset-ext),y2+ny*(offset-ext));
-  fpCtx.lineTo(x2+nx*(offset+ext),y2+ny*(offset+ext));
+  fpCtx.moveTo(sx,sy); fpCtx.lineTo(ax,ay);
+  fpCtx.moveTo(ex,ey); fpCtx.lineTo(bx,by);
   fpCtx.stroke();
 
-  // Main dimension line
   fpCtx.beginPath();
-  fpCtx.moveTo(ax,ay);
-  fpCtx.lineTo(bx,by);
+  fpCtx.moveTo(ax,ay); fpCtx.lineTo(bx,by);
   fpCtx.stroke();
 
-  // Small diagonal ticks, similar to hand/architectural dimensioning
-  const tx=(ux+nx)*tick*.55, ty=(uy+ny)*tick*.55;
+  const tx=(ux+onx)*tick*.55, ty=(uy+ony)*tick*.55;
   fpCtx.beginPath();
-  fpCtx.moveTo(ax-tx,ay-ty);
-  fpCtx.lineTo(ax+tx,ay+ty);
-  fpCtx.moveTo(bx-tx,by-ty);
-  fpCtx.lineTo(bx+tx,by+ty);
+  fpCtx.moveTo(ax-tx,ay-ty); fpCtx.lineTo(ax+tx,ay+ty);
+  fpCtx.moveTo(bx-tx,by-ty); fpCtx.lineTo(bx+tx,by+ty);
   fpCtx.stroke();
 
-  // Dimension label
   const mx=(ax+bx)/2,my=(ay+by)/2;
-  let angle=Math.atan2(dy,dx);
-  // Keep text readable from left to right / bottom to top
-  if(angle>Math.PI/2 || angle<-Math.PI/2) angle+=Math.PI;
+  let angle=Math.atan2(ey-sy,ex-sx);
+  if(angle>Math.PI/2 || angle<-Math.PI/2)angle+=Math.PI;
 
   fpCtx.translate(mx,my);
   fpCtx.rotate(angle);
@@ -2904,21 +2931,15 @@ function drawProfessionalWallDimension(wall){
   fpCtx.textAlign='center';
   fpCtx.textBaseline='middle';
 
-  const text=`${formatDimensionMeters(len)} m`;
+  const text=`${formatDimensionMeters(innerLen)} m`;
   const tw=fpCtx.measureText(text).width;
-  const pad=5/z;
-  const boxH=18/z;
-
-  // White knockout behind text, no visible border.
+  const pad=5/z, boxH=18/z;
   fpCtx.fillStyle='rgba(255,255,255,.96)';
   fpCtx.fillRect(-tw/2-pad,-boxH/2,tw+pad*2,boxH);
-
   fpCtx.fillStyle='#0f172a';
   fpCtx.fillText(text,0,0);
-
   fpCtx.restore();
 }
-
 
 function fpIsDimensionedObject(o){
   return !!o && !['wall','text'].includes(o.type);

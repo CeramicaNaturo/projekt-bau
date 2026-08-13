@@ -2582,3 +2582,25 @@ body.pdf-exporting .pdf-footer{
 
 /* v1.8.9 tile material upload fields */
 .fp-floor-tile-grid input[type=file],.fp-wall-tile-grid input[type=file]{padding:6px;font-size:11px}
+
+/* v1.9.0 – one-click tile application */
+.fp-tile-apply-all{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin:10px 0;
+  padding-top:10px;
+  border-top:1px solid #dbe3ec;
+}
+.fp-tile-apply-all button{
+  min-height:42px;
+  padding:6px 8px;
+  font-size:11px;
+  font-weight:800;
+}
+.fp-tile-apply-all .primary{
+  grid-column:1/-1;
+}
+@media (pointer:coarse) and (orientation:landscape){
+  .fp-tile-apply-all button{min-height:46px;font-size:12px}
+}

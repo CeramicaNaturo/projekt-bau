@@ -92,7 +92,12 @@ function animate(){
 
 function makeTexture(dataUrl, repeatX=1, repeatY=1, options={}){
   if(!dataUrl) return null;
-  const tex=textureLoader.load(dataUrl);
+  const tex=textureLoader.load(
+    dataUrl,
+    ()=>{tex.needsUpdate=true;},
+    undefined,
+    err=>console.error('Fliesentextur konnte nicht geladen werden',err)
+  );
   tex.colorSpace=THREE.SRGBColorSpace;
   tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
   tex.repeat.set(Math.max(.25,repeatX),Math.max(.25,repeatY));
@@ -110,12 +115,14 @@ function makeTexture(dataUrl, repeatX=1, repeatY=1, options={}){
 
 function materialForTile(tile, repeatX=1, repeatY=1, fallback=0xd8dee7, options={}){
   const map=tile?.photo ? makeTexture(tile.photo,repeatX,repeatY,options) : null;
-  return new THREE.MeshStandardMaterial({
+  const material=new THREE.MeshStandardMaterial({
     color: map ? 0xffffff : fallback,
     map,
-    roughness:.68,
+    roughness: map ? .48 : .68,
     metalness:.02
   });
+  material.needsUpdate=true;
+  return material;
 }
 
 function findTile(project,id){
@@ -815,6 +822,43 @@ function addFloorTileGrid(group,data){
   }
   group.add(tileGroup);
 }
+
+function texturedFloorSurface(objects,material){
+  const pts=buildPolygon(objects);
+  if(!pts||pts.length<3)return null;
+
+  const shape=new THREE.Shape();
+  shape.moveTo(pts[0].x,pts[0].y);
+  pts.slice(1).forEach(p=>shape.lineTo(p.x,p.y));
+  shape.closePath();
+
+  const geo=new THREE.ShapeGeometry(shape);
+
+  // Explicit UV mapping in room/world coordinates. This avoids relying on
+  // ShapeGeometry's default UVs and makes uploaded tile images reliably visible.
+  geo.computeBoundingBox();
+  const bb=geo.boundingBox;
+  const sizeX=Math.max(.001,bb.max.x-bb.min.x);
+  const sizeY=Math.max(.001,bb.max.y-bb.min.y);
+  const pos=geo.attributes.position;
+  const uvs=[];
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i), y=pos.getY(i);
+    uvs.push((x-bb.min.x)/sizeX,(y-bb.min.y)/sizeY);
+  }
+  geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+  geo.rotateX(Math.PI/2);
+
+  material.side=THREE.DoubleSide;
+  material.needsUpdate=true;
+
+  const mesh=new THREE.Mesh(geo,material);
+  mesh.position.y=.011;
+  mesh.receiveShadow=true;
+  mesh.renderOrder=1;
+  return mesh;
+}
+
 function rebuild(){
   if(!scene || !currentData) return;
 
@@ -848,7 +892,9 @@ function rebuild(){
   );
   const wallMat=materialForTile(wallTile,4,2,0xf1f3f5);
 
-  const floor=floorMesh(objects,floorMat);
+  const floor = floorTile?.photo
+    ? texturedFloorSurface(objects,floorMat)
+    : floorMesh(objects,floorMat);
   if(floor) rootGroup.add(floor);
 
   addFloorTileGrid(rootGroup,currentData);

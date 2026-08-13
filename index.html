@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=189">
+<link rel="stylesheet" href="styles.css?v=190">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer"><strong>Version 1.8.9</strong></div>
+  <div class="cad-sidebar-footer"><strong>Version 1.9.0</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.8.9</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.9.0</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -368,6 +368,11 @@
         <button id="fpFloorTileCenter" class="secondary">Symmetrisch einteilen</button>
         <button id="fpFloorTileApply" class="primary">Übernehmen</button>
       </div>
+      <div class="fp-tile-apply-all">
+        <button id="fpTileApplyFloorAll" type="button" class="secondary">Auf ganzen Boden</button>
+        <button id="fpTileApplyWallsAll" type="button" class="secondary">Auf alle Wände</button>
+        <button id="fpTileApplyRoomAll" type="button" class="primary">Boden + alle Wände</button>
+      </div>
       <div id="fpFloorTileInfo" class="fp-floor-tile-info">Noch keine Bodenfliesen-Einteilung.</div>
     </aside>
 
@@ -502,6 +507,12 @@
             </div>
 
             <button id="fpWallTileAdd" type="button" class="primary">+ Fliesenfläche hinzufügen</button>
+
+            <div class="fp-tile-apply-all">
+              <button id="fpWallTileApplyFloorAll" type="button" class="secondary">Auf ganzen Boden</button>
+              <button id="fpWallTileApplyWallsAll" type="button" class="secondary">Auf alle Wände</button>
+              <button id="fpWallTileApplyRoomAll" type="button" class="primary">Boden + alle Wände</button>
+            </div>
 
             <div id="fpWallTileList" class="fp-wall-tile-list"></div>
           </aside>
@@ -696,8 +707,8 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=189"></script>
+<script type="module" src="three_viewer.js?v=190"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=189"></script>
+<script src="app.js?v=190"></script>
 </body>
 </html>

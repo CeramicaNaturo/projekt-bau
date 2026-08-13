@@ -2604,3 +2604,44 @@ body.pdf-exporting .pdf-footer{
 @media (pointer:coarse) and (orientation:landscape){
   .fp-tile-apply-all button{min-height:46px;font-size:12px}
 }
+
+/* v1.9.1 – saved Fliesenflächen editable */
+.fp-wall-tile-edit-actions{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:7px;
+  margin:10px 0;
+}
+.fp-wall-tile-edit-actions button{
+  width:100%;
+  min-height:42px;
+}
+.fp-wall-tile-item-actions{
+  display:flex;
+  gap:5px;
+  align-items:center;
+}
+.fp-wall-tile-item-actions button{
+  min-width:38px;
+  width:38px;
+  height:34px;
+  min-height:34px;
+}
+.fp-wall-tile-editing{
+  border-color:#2563eb!important;
+  box-shadow:0 0 0 2px rgba(37,99,235,.12);
+}
+.fp-wall-tile-edit-note{
+  margin:7px 0;
+  padding:7px 9px;
+  border-radius:8px;
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+  color:#1d4ed8;
+  font-size:11px;
+  font-weight:800;
+}
+@media (pointer:coarse) and (orientation:landscape){
+  .fp-wall-tile-edit-actions button{min-height:46px;font-size:13px}
+  .fp-wall-tile-item-actions button{width:42px;min-width:42px;height:38px;min-height:38px}
+}

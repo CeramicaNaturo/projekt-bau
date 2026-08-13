@@ -539,7 +539,7 @@ function initTileTools(){
 
 let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
-let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null,fpObjectRotateDrag=null,fpPinchState=null,fpPickingFloorTileOrigin=false;
+let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null,fpObjectRotateDrag=null,fpPinchState=null,fpPickingFloorTileOrigin=false,fpEditingWallTileAreaId=null;
 let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpLastRenderError='',fpObjectWallSnap=true,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
 const fpCanvas=$('floorplanCanvas'),fpCtx=fpCanvas.getContext('2d');
@@ -940,6 +940,97 @@ function updateWallTileDraftInfo(){
     `${Math.round(draft.width)} × ${Math.round(draft.height)} cm`;
 }
 
+
+function setWallTileEditMode(areaId=null){
+  fpEditingWallTileAreaId=areaId||null;
+
+  const add=$('fpWallTileAdd');
+  const update=$('fpWallTileUpdate');
+  const cancel=$('fpWallTileCancelEdit');
+
+  if(add)add.classList.toggle('hidden',!!fpEditingWallTileAreaId);
+  if(update)update.classList.toggle('hidden',!fpEditingWallTileAreaId);
+  if(cancel)cancel.classList.toggle('hidden',!fpEditingWallTileAreaId);
+}
+
+function loadWallTileAreaForEdit(areaId){
+  const wall=selectedObject();
+  if(!wall||wall.type!=='wall')return;
+
+  const area=ensureWallTileAreas(wall).find(a=>a.id===areaId);
+  if(!area)return;
+
+  setWallTileEditMode(areaId);
+
+  const set=(id,value)=>{
+    const el=$(id);
+    if(el)el.value=String(value??'');
+  };
+
+  set('fpWallTileOffset',area.offset??0);
+  set('fpWallTileWidth',area.width??100);
+  set('fpWallTileBottom',area.bottom??0);
+  set('fpWallTileHeight',area.height??120);
+  set('fpWallTileSizeW',area.tileW??60);
+  set('fpWallTileSizeH',area.tileH??60);
+  set('fpWallTileJoint',area.jointMm??2);
+  set('fpWallTilePattern',area.pattern||'straight');
+
+  const mat=$('fpWallTileMaterial');
+  if(mat){
+    refreshCadTileMaterialSelects();
+    mat.value=area.materialId||'';
+  }
+  wall._draftTileMaterialId=area.materialId||'';
+
+  updateWallTileDraftInfo();
+  renderWallTileList();
+}
+
+function cancelWallTileAreaEdit(){
+  setWallTileEditMode(null);
+  const wall=selectedObject();
+  if(wall?.type==='wall')wall._draftTileMaterialId='';
+  updateWallTileDraftInfo();
+  renderWallTileList();
+}
+
+function updateWallTileArea(){
+  const wall=selectedObject();
+  if(!wall||wall.type!=='wall'||!fpEditingWallTileAreaId)return;
+
+  const areas=ensureWallTileAreas(wall);
+  const index=areas.findIndex(a=>a.id===fpEditingWallTileAreaId);
+  if(index<0){
+    cancelWallTileAreaEdit();
+    return;
+  }
+
+  const edited=sanitizeWallTileDraft(wall);
+  edited.id=areas[index].id;
+
+  const materialId=
+    $('fpWallTileMaterial')?.value ||
+    wall._draftTileMaterialId ||
+    areas[index].materialId ||
+    '';
+
+  edited.materialId=materialId;
+
+  pushHistory();
+  areas[index]=edited;
+
+  wall._draftTileMaterialId='';
+  setWallTileEditMode(null);
+
+  save();
+  drawFloorplan();
+  renderWallTileList();
+  updateWallQuickPanel();
+
+  if(fp3DMode)refresh3D();
+}
+
 function renderWallTileList(){
   const wall=selectedObject();
   const list=$('fpWallTileList');
@@ -967,15 +1058,26 @@ function renderWallTileList(){
       area.pattern==='vertical'?'Hochformat':'Gerade';
 
     return `
-      <div class="fp-wall-tile-item">
+      <div class="fp-wall-tile-item ${fpEditingWallTileAreaId===area.id?'fp-wall-tile-editing':''}">
         <div>
           <strong>F${index+1} · ${formatCHNumber(wallTileAreaM2(area),2)} m²</strong>
           <small>${Math.round(area.width)} × ${Math.round(area.height)} cm · ab ${Math.round(area.offset)} cm · UK ${Math.round(area.bottom)} cm</small>
           <small>Fliese ${Math.round(area.tileW)} × ${Math.round(area.tileH)} cm · ${pattern}</small>
+          ${fpEditingWallTileAreaId===area.id?'<div class="fp-wall-tile-edit-note">Diese Fliesenfläche wird bearbeitet.</div>':''}
         </div>
-        <button type="button" data-wall-tile-delete="${area.id}" title="Löschen">×</button>
+        <div class="fp-wall-tile-item-actions">
+          <button type="button" data-wall-tile-edit="${area.id}" title="Bearbeiten">✎</button>
+          <button type="button" data-wall-tile-delete="${area.id}" title="Löschen">×</button>
+        </div>
       </div>`;
   }).join('');
+
+  list.querySelectorAll('[data-wall-tile-edit]').forEach(btn=>{
+    btn.onclick=()=>{
+      const id=btn.getAttribute('data-wall-tile-edit');
+      loadWallTileAreaForEdit(id);
+    };
+  });
 
   list.querySelectorAll('[data-wall-tile-delete]').forEach(btn=>{
     btn.onclick=()=>{
@@ -985,7 +1087,9 @@ function renderWallTileList(){
       const id=btn.getAttribute('data-wall-tile-delete');
       pushHistory();
       wallNow.tileAreas=ensureWallTileAreas(wallNow).filter(a=>a.id!==id);
+      if(fpEditingWallTileAreaId===id)setWallTileEditMode(null);
 
+      save();
       drawFloorplan();
       renderWallTileList();
       updateWallQuickPanel();
@@ -1089,6 +1193,8 @@ function addWallTileArea(){
 
   pushHistory();
   ensureWallTileAreas(wall).push(area);
+  setWallTileEditMode(null);
+  save();
 
   drawFloorplan();
   renderWallTileList();
@@ -1205,6 +1311,7 @@ function updateWallQuickPanel(){
 
   if(!o || o.type!=='wall'){
     panel.classList.add('hidden');
+    setWallTileEditMode(null);
     return;
   }
 
@@ -3187,6 +3294,12 @@ function initFloorplanControls(){
   if(wallTileMaterial)wallTileMaterial.onchange=()=>{const w=selectedObject();if(w?.type==='wall')w._draftTileMaterialId=wallTileMaterial.value;};
   const wallTileUpload=$('fpWallTileUpload');
   if(wallTileUpload)wallTileUpload.onchange=async e=>{const id=await createTileMaterialFromUpload(e.target.files?.[0]);if(id){const w=selectedObject();if(w?.type==='wall')w._draftTileMaterialId=id;refreshCadTileMaterialSelects();}e.target.value='';};
+
+  const wallTileUpdate=$('fpWallTileUpdate');
+  if(wallTileUpdate)wallTileUpdate.onclick=updateWallTileArea;
+
+  const wallTileCancelEdit=$('fpWallTileCancelEdit');
+  if(wallTileCancelEdit)wallTileCancelEdit.onclick=cancelWallTileAreaEdit;
 
   const wallTileAdd=$('fpWallTileAdd');
   if(wallTileAdd)wallTileAdd.onclick=addWallTileArea;

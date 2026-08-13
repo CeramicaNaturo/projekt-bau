@@ -2805,3 +2805,15 @@ label[for="fpShowPositions"]{
 .fp-object-offset-dimension{
   display:none!important;
 }
+
+/* v1.9.9 – definitive clean wall dimensions
+   Only external professional wall dimensions remain. */
+.wall-length-badge,
+.fp-wall-length-badge,
+.wall-segment-label,
+.fp-wall-segment-label,
+.internal-dimension-label,
+.object-offset-dimension,
+.fp-object-offset-dimension{
+  display:none!important;
+}

@@ -2932,33 +2932,7 @@ function fpObjectRealDims(o){
   };
 }
 
-function fpDrawObjectOwnDimensions(o){
-  if(!fpShowMeasures || !fpIsDimensionedObject(o))return;
-
-  const {w,d}=fpObjectRealDims(o);
-  const z=Math.max(.2,fpZoom||1);
-  const angle=(Number(o.rotation||0))*Math.PI/180;
-
-  fpCtx.save();
-  fpCtx.translate(Number(o.x||0),Number(o.y||0));
-  fpCtx.rotate(angle);
-
-  fpCtx.font=`600 ${Math.max(10,12/z)}px Arial`;
-  fpCtx.textAlign='center';
-  fpCtx.textBaseline='middle';
-
-  const text=`${Math.round(w)} × ${Math.round(d)} cm`;
-  const tw=fpCtx.measureText(text).width;
-  const pad=4/z;
-  const boxH=17/z;
-
-  fpCtx.fillStyle='rgba(255,255,255,.94)';
-  fpCtx.fillRect(-tw/2-pad,-boxH/2,tw+pad*2,boxH);
-
-  fpCtx.fillStyle='#0f172a';
-  fpCtx.fillText(text,0,0);
-  fpCtx.restore();
-}
+function fpDrawObjectOwnDimensions(o){ return; }
 
 function fpNearestWallForObject(o){
   if(!o || !fpObjects?.length)return null;
@@ -3002,14 +2976,6 @@ function fpObjectWallDistance(o){
 
 function fpDrawObjectWallOffset(o){ return; }
 
-function fpDrawAllObjectDimensions(){
-  if(!fpShowMeasures)return;
-  for(const o of fpObjects||[]){
-    if(!fpIsDimensionedObject(o))continue;
-    fpDrawObjectOwnDimensions(o);
-  }
-}
-
 function drawFpObject(o,preview=false){
   fpCtx.save();
 
@@ -3038,7 +3004,10 @@ function drawFpObject(o,preview=false){
       const len=cmFromPixels(dist({x:o.x1,y:o.y1},{x:o.x2,y:o.y2}));
       const ang=Math.atan2(o.y2-o.y1,o.x2-o.x1);
 
-      drawMeasureText(`${len} cm`,mx,my-20,0);
+      // v1.9.9:
+      // Keine zweite Wandlänge direkt auf / innerhalb der Wand.
+      // Die Wandlänge wird ausschliesslich über
+      // drawProfessionalWallDimension(o) ausserhalb des Grundrisses angezeigt.
       if(o.wallLabel){
         const z=(typeof fpZoom==='number'&&fpZoom>0)?fpZoom:1;
         fpCtx.save();

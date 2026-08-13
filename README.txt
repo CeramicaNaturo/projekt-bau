@@ -1,21 +1,11 @@
-Projekt Bau v1.9.1 – Gespeicherte Fliesenflächen bearbeiten
+Projekt Bau v1.9.2
 
 Neu:
-- Jede gespeicherte Wand-Fliesenfläche F1, F2, F3 ... hat einen Bearbeiten-Button (✎).
-- Beim Bearbeiten werden alle gespeicherten Werte zurück in das FLIESENFLÄCHE-Panel geladen.
-- Änderbar:
-  - Abstand links
-  - Breite
-  - Unterkante
-  - Höhe
-  - Fliese Breite / Höhe
-  - Fuge
-  - Verlegung
-  - Fliesenbild / Material
-- “Änderungen speichern” überschreibt exakt die gewählte Fliesenfläche.
-- “Bearbeiten abbrechen” verlässt den Bearbeitungsmodus ohne Änderung.
-- Löschen bleibt weiterhin möglich.
-- Die Änderung wird gespeichert und direkt in 2D/3D aktualisiert.
+- Türhöhe ist bei ausgewählter Tür direkt in Eigenschaften einstellbar.
+- Auswahl eines Objekts öffnet/zeigt Eigenschaften automatisch.
+- Türöffnungen werden als Abzug für Wand-/Fliesenflächen vorbereitet und mit Breite × Höhe berechnet.
+- Badewannen-Grundfläche wird als Abzug für Boden-/Fliesenflächen berücksichtigt.
+- Änderungen werden gespeichert und 2D/3D aktualisiert.
 
-Damit können gespeicherte Fliesenflächen jederzeit nachträglich korrigiert werden.
-Deutsch / de-CH.
+Hinweis:
+Die bestehenden Projekt-/Objektdaten bleiben erhalten; neue Türen erhalten standardmässig 200 cm Höhe, bis sie geändert werden.

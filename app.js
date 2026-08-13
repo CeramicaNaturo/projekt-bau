@@ -10,7 +10,8 @@ function loadState(){
   }catch(e){}
   return {projects:[]};
 }
-function save(){localStorage.setItem(K3,JSON.stringify(S));render()}
+function save(){
+  try{ const objs=(typeof fpObjects!=='undefined'&&Array.isArray(fpObjects))?fpObjects:[]; objs.forEach(fpV192EnsureDoorDefaults); }catch(e){}localStorage.setItem(K3,JSON.stringify(S));render()}
 function cur(){return S.projects.find(p=>p.id===A)}
 function formatCHF(value){
   const n=Number(value); if(!Number.isFinite(n)) return '-';
@@ -3612,3 +3613,100 @@ function initFloorplanCanvas(){
 initCadShell();initTileTools();initTabletCadUi();initFloorplanControls();initFloorplanCanvas();initPinchZoom();initCadKeyboard();
 
 render();
+
+
+/* v1.9.2 ---------------------------------------------------------------
+   Türhöhe + automatische Eigenschaften + Flächenabzüge
+------------------------------------------------------------------------ */
+function fpV192EnsureDoorDefaults(o){
+  if(!o || o.type!=='door') return;
+  if(!Number.isFinite(Number(o.heightCm))) o.heightCm=200;
+  if(!Number.isFinite(Number(o.width))) o.width=90;
+}
+
+function fpV192DoorHeightField(o){
+  const host=document.querySelector('#fpPropertiesPanel, .fp-properties, .properties-panel, #propertiesPanel');
+  if(!host) return;
+  let box=document.getElementById('fpDoorProfessionalFields');
+  if(!o || o.type!=='door'){
+    if(box) box.remove();
+    return;
+  }
+  fpV192EnsureDoorDefaults(o);
+  if(!box){
+    box=document.createElement('section');
+    box.id='fpDoorProfessionalFields';
+    box.className='fp-v192-door-fields';
+    box.innerHTML=`
+      <h4>TÜR</h4>
+      <label>Türhöhe (cm)
+        <input id="fpDoorHeightCm" type="number" min="50" max="400" step="1">
+      </label>
+      <small>Die Türhöhe wird in 2D/3D und bei der Wand-Flächenberechnung berücksichtigt.</small>`;
+    host.appendChild(box);
+  }
+  const inp=document.getElementById('fpDoorHeightCm');
+  if(inp){
+    inp.value=Math.round(Number(o.heightCm)||200);
+    inp.onchange=()=>{
+      const cur=selectedObject();
+      if(!cur || cur.type!=='door') return;
+      pushHistory();
+      cur.heightCm=Math.max(50,Math.min(400,Number(inp.value)||200));
+      save();
+      drawFloorplan();
+      updateWallQuickPanel?.();
+      if(fp3DMode) refresh3D();
+    };
+  }
+}
+
+function fpV192AutoShowProperties(o){
+  // Auswahl soll die Eigenschaften ohne zusätzlichen Klick sichtbar machen.
+  const candidates=[
+    document.querySelector('#fpPropertiesPanel'),
+    document.querySelector('.fp-properties'),
+    document.querySelector('.properties-panel'),
+    document.querySelector('#propertiesPanel')
+  ].filter(Boolean);
+  candidates.forEach(el=>{
+    el.classList.remove('hidden','collapsed','is-collapsed');
+    el.style.display='';
+  });
+  fpV192DoorHeightField(o);
+}
+
+function fpV192OpeningAreaM2(o){
+  if(!o) return 0;
+  const w=Math.max(0,Number(o.width)||Number(o.widthCm)||0);
+  const h=Math.max(0,Number(o.heightCm)||Number(o.height)||0);
+  return (w*h)/10000;
+}
+
+function fpV192BathFootprintM2(o){
+  if(!o || !['bathtub','bath','badewanne'].includes(String(o.type||'').toLowerCase())) return 0;
+  const w=Math.max(0,Number(o.width)||Number(o.widthCm)||0);
+  const d=Math.max(0,Number(o.depth)||Number(o.depthCm)||Number(o.height)||0);
+  return (w*d)/10000;
+}
+
+function fpV192CalculatedAreas(){
+  const objects=(typeof fpObjects!=='undefined' && Array.isArray(fpObjects)) ? fpObjects :
+                (typeof currentFloorplan==='function' && currentFloorplan()?.objects)||[];
+  let doorWallDeduction=0, bathFloorDeduction=0;
+  objects.forEach(o=>{
+    if(o?.type==='door') doorWallDeduction += fpV192OpeningAreaM2(o);
+    bathFloorDeduction += fpV192BathFootprintM2(o);
+  });
+  return {doorWallDeduction,bathFloorDeduction};
+}
+
+document.addEventListener('click',(ev)=>{
+  const workspace=ev.target.closest?.('#fpCanvas, #floorplanCanvas, .fp-canvas-wrap, .floorplan-canvas, canvas, svg');
+  if(workspace){
+    setTimeout(()=>{
+      const o=typeof selectedObject==='function'?selectedObject():null;
+      if(o) fpV192AutoShowProperties(o);
+    },0);
+  }
+},true);

@@ -2645,3 +2645,13 @@ body.pdf-exporting .pdf-footer{
   .fp-wall-tile-edit-actions button{min-height:46px;font-size:13px}
   .fp-wall-tile-item-actions button{width:42px;min-width:42px;height:38px;min-height:38px}
 }
+
+/* v1.9.2 – Türhöhe, automatische Eigenschaften, Flächenabzüge */
+
+.fp-v192-door-fields{
+  margin-top:14px;padding-top:12px;border-top:1px solid #dbe3ee;
+}
+.fp-v192-door-fields h4{margin:0 0 10px;font-size:12px;letter-spacing:.05em}
+.fp-v192-door-fields label{display:grid;gap:5px;font-weight:700;font-size:12px}
+.fp-v192-door-fields input{width:100%;min-height:40px;border:1px solid #cbd5e1;border-radius:9px;padding:7px 10px}
+.fp-v192-door-fields small{display:block;margin-top:7px;color:#64748b;line-height:1.35}

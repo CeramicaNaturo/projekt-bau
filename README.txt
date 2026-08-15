@@ -1,35 +1,36 @@
-Projekt Bau v1.9.21 – Stable 3D Reference Style
+Projekt Bau v1.9.22 – 3D Referenz-Match
 
-WICHTIGE KORREKTUR:
-v1.9.20 verwendete komplexe Quad-Prismen. In konkaven Ecken konnten
-Vertex-Reihenfolgen kippen und dadurch dreieckige / schiefe Wände entstehen.
+Basis:
+- direkt aus der vom Benutzer hochgeladenen v1.9.21 ZIP erzeugt.
 
-v1.9.21:
-- Wände wieder mit stabiler THREE.BoxGeometry-Technik.
-- Jede Wand wird als echte Segment-Box mit realer Wandstärke gebaut.
-- Die gespeicherte Wandlinie bleibt die Innenkante.
-- Die Box-Mittellinie wird um halbe Wandstärke nach aussen verschoben.
-- An Wandenden wird um halbe Wandstärke verlängert.
-- Dadurch treffen sich 90°-Ecken sauber und geschlossen.
-- Keine dreieckigen oder verdrehten Wandflächen mehr.
+Wichtigste Änderungen:
+- 3D Kamera ignoriert den grossen Aussenboden vollständig.
+- Kamera wird nur anhand des echten Grundrisses berechnet.
+- Grundriss füllt den 3D-Arbeitsbereich deutlich stärker.
+- Perspektive wurde näher an die gelieferte Referenz angepasst.
+- 3D-Konstruktionsraster ist ausgeblendet.
 
-Türen:
-- Türöffnung wird wirklich aus der Wand ausgespart.
-- Wand wird links und rechts der Tür getrennt.
-- Oberhalb bleibt nur der Sturz.
-- Durch die offene Tür ist der Aussenbereich sichtbar.
-- Türblatt standardmässig 58° geöffnet.
-- Tür sitzt exakt auf der Innenkante der zugehörigen Wand.
+Wände:
+- helle Innen-/Aussenflächen.
+- oben eine einzige dunkle, zusammenhängende Wandring-Fläche.
+- der Wandring wird aus Innenpolygon + mathematisch versetztem Aussenpolygon berechnet.
+- dadurch wirkt die Oberkante wie im Referenzbild geschlossen und sauber.
 
-Fenster:
-- gleiche stabile Wandzuordnung.
-- echte Öffnung mit Brüstung und Sturz.
+Tür:
+- bestehende echte Türöffnung aus v1.9.21 bleibt erhalten.
+- Türblatt standardmässig ca. 52 Grad offen.
+- durch die Türöffnung ist der Aussenboden sichtbar.
 
-3D Darstellung:
-- dunkle saubere Wandoberkanten wie im Referenzbild.
-- heller Aussenboden.
-- neutrale Innenflächen.
-- automatische isometrische Kamera auf den Raum.
-- bestehende realistischere Badobjekte bleiben erhalten.
+Boden:
+- Innenboden neutral grau.
+- Aussenboden erhält eine prozedural erzeugte helle Holz-/Dielenstruktur.
+- keine riesige Rasterfläche mehr in der finalen Ansicht.
+
+Waschbecken:
+- Holz-Waschtischunterschrank.
+- weisse Platte und Becken.
+- schwarzer Wasserhahn.
+
+Bestehende Dusche, WC, Badewanne und weitere 3D-Objekte bleiben erhalten.
 
 Deutsch / de-CH.

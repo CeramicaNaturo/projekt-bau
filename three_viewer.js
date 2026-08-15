@@ -35,7 +35,7 @@ function ensureScene(container){
 
   host = container;
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xeef4fb);
+  scene.background = new THREE.Color(0xf6f7f9);
 
   camera = new THREE.PerspectiveCamera(48, 1, 0.01, 200);
   camera.position.set(6,5.5,7);
@@ -45,6 +45,8 @@ function ensureScene(container){
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.08;
   container.innerHTML='';
   container.appendChild(renderer.domElement);
 
@@ -56,10 +58,10 @@ function ensureScene(container){
   controls.maxDistance = 35;
   controls.maxPolarAngle = Math.PI * .49;
 
-  const hemi = new THREE.HemisphereLight(0xffffff,0x8492a6,2.1);
+  const hemi = new THREE.HemisphereLight(0xffffff,0xaeb6c0,1.75);
   scene.add(hemi);
 
-  const sun = new THREE.DirectionalLight(0xffffff,2.4);
+  const sun = new THREE.DirectionalLight(0xffffff,2.05);
   sun.position.set(8,12,6);
   sun.castShadow=true;
   sun.shadow.mapSize.set(2048,2048);
@@ -67,6 +69,7 @@ function ensureScene(container){
 
   gridHelper = new THREE.GridHelper(20,100,0x9aa9ba,0xd5dee8);
   gridHelper.position.y = 0.001;
+  gridHelper.visible = false;
   scene.add(gridHelper);
 
   resizeObserver = new ResizeObserver(resize);
@@ -626,28 +629,31 @@ function finishObject(group,o){
 function realisticSink(o){
   const g=new THREE.Group();
   const w=m(o.widthCm||60),d=m(o.depthCm||50);
-  const ceramic=CERAMIC(), chrome=CHROME();
+  const ceramic=CERAMIC(),chrome=CHROME();
 
-  // slim cabinet / pedestal body
-  addBox(g,w*.72,.64,d*.62,0,.36,.04,mat(0xf0f1ef,.55,.02));
+  const wood=mat(0x9f6f43,.62,.01);
+  const darkWood=mat(0x7b5436,.70,.01);
 
-  // thick ceramic top
-  addBox(g,w,.085,d,0,.78,0,ceramic);
+  // vanity cabinet
+  addBox(g,w*.94,.70,d*.88,0,.39,0,wood);
+  addBox(g,.018,.58,d*.76,-w*.22,.40,.01,darkWood);
+  addBox(g,.018,.58,d*.76, w*.22,.40,.01,darkWood);
 
-  // oval basin with darker inner bowl
-  addSphere(g,w*.40,.075,d*.34,0,.785,0,ceramic);
-  addSphere(g,w*.31,.042,d*.25,0,.806,0,mat(0xcfd7dc,.22,.06));
+  // white countertop + rectangular basin
+  addBox(g,w,.065,d,0,.775,0,ceramic);
+  addBox(g,w*.62,.10,d*.56,0,.80,0,ceramic);
+  addBox(g,w*.48,.035,d*.42,0,.835,0,mat(0xd7dde0,.22,.02));
 
   // drain
-  addCylinder(g,.025,.025,.012,0,.825,0,chrome,24);
+  addCylinder(g,.022,.022,.010,0,.857,0,chrome,24);
 
-  // curved tap illusion: vertical stem + spout
-  addCylinder(g,.018,.018,.23,0,.94,-d*.27,chrome,18);
-  addCylinder(g,.014,.014,.16,0,1.04,-d*.18,chrome,18,Math.PI/2);
+  // black tap as in reference
+  const black=mat(0x23272b,.30,.45);
+  addCylinder(g,.016,.016,.25,w*.25,.94,-d*.27,black,16);
+  addCylinder(g,.013,.013,.16,w*.25,1.055,-d*.18,black,16,Math.PI/2);
 
   return finishObject(g,o);
 }
-
 function realisticWC(o){
   const g=new THREE.Group();
   const ceramic=CERAMIC(), chrome=CHROME();
@@ -893,7 +899,7 @@ function objectMesh(o){
     const height=Math.max(.5,m(o.heightCm||205));
 
     const frameMat=mat(0xf1f2f3,.34,.04);
-    const leafMat=mat(0xf5f3ee,.44,.01);
+    const leafMat=mat(0xf4f2ed,.38,.01);
     const chrome=CHROME();
 
     // frame only around the real wall opening
@@ -917,7 +923,7 @@ function objectMesh(o){
     leaf.scale.x=left ? -1 : 1;
 
     let openDeg=Number(o.openAngleDeg);
-    if(!Number.isFinite(openDeg))openDeg=58;
+    if(!Number.isFinite(openDeg))openDeg=52;
 
     const signed=(inward?1:-1)*(left?-1:1);
     leaf.rotation.y=THREE.MathUtils.degToRad(openDeg*signed);
@@ -1159,21 +1165,147 @@ function texturedFloorSurface(objects,material){
 
 
 
+
+function polygonSignedArea3D(pts){
+  let a=0;
+  for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+    a+=pts[j].x*pts[i].y-pts[i].x*pts[j].y;
+  }
+  return a/2;
+}
+
+function infiniteLineIntersection2D(a1,a2,b1,b2){
+  const rx=a2.x-a1.x, ry=a2.y-a1.y;
+  const sx=b2.x-b1.x, sy=b2.y-b1.y;
+  const den=rx*sy-ry*sx;
+  if(Math.abs(den)<1e-9)return null;
+  const qx=b1.x-a1.x,qy=b1.y-a1.y;
+  const u=(qx*sy-qy*sx)/den;
+  return {x:a1.x+u*rx,y:a1.y+u*ry};
+}
+
+function offsetPolygonForWallTop(inner,thickness){
+  if(!inner||inner.length<3)return null;
+  const area=polygonSignedArea3D(inner);
+  const ccw=area>0;
+  const shifted=[];
+
+  for(let i=0;i<inner.length;i++){
+    const a=inner[i];
+    const b=inner[(i+1)%inner.length];
+    const dx=b.x-a.x,dy=b.y-a.y;
+    const len=Math.hypot(dx,dy)||1;
+
+    // For CCW polygon interior is left side, therefore outside is right.
+    const nx=ccw ? dy/len : -dy/len;
+    const ny=ccw ? -dx/len : dx/len;
+
+    shifted.push({
+      a:{x:a.x+nx*thickness,y:a.y+ny*thickness},
+      b:{x:b.x+nx*thickness,y:b.y+ny*thickness}
+    });
+  }
+
+  const out=[];
+  for(let i=0;i<shifted.length;i++){
+    const prev=shifted[(i-1+shifted.length)%shifted.length];
+    const cur=shifted[i];
+    const inter=infiniteLineIntersection2D(prev.a,prev.b,cur.a,cur.b);
+    out.push(inter||cur.a);
+  }
+  return out;
+}
+
 function addWallTopCaps(group,objects,roomHeight){
-  const capMat=new THREE.MeshStandardMaterial({
-    color:0x2f3742,
-    roughness:.72,
-    metalness:.01
+  const inner=buildPolygon(objects);
+  if(!inner||inner.length<3)return;
+
+  const walls=(objects||[]).filter(o=>o.type==='wall');
+  const avgTh=walls.length
+    ? walls.reduce((s,w)=>s+m(w.thickness||15),0)/walls.length
+    : .15;
+
+  const outer=offsetPolygonForWallTop(inner,avgTh);
+  if(!outer||outer.length!==inner.length)return;
+
+  const shape=new THREE.Shape();
+  shape.moveTo(outer[0].x,outer[0].y);
+  outer.slice(1).forEach(p=>shape.lineTo(p.x,p.y));
+  shape.closePath();
+
+  const hole=new THREE.Path();
+  hole.moveTo(inner[0].x,inner[0].y);
+  inner.slice(1).forEach(p=>hole.lineTo(p.x,p.y));
+  hole.closePath();
+  shape.holes.push(hole);
+
+  const geo=new THREE.ShapeGeometry(shape);
+  geo.rotateX(Math.PI/2);
+
+  const matCap=new THREE.MeshStandardMaterial({
+    color:0x303842,
+    roughness:.68,
+    metalness:.01,
+    side:THREE.DoubleSide
   });
 
-  for(const w of (objects||[])){
-    if(w.type!=='wall')continue;
-    const f=wallFrame3D(w,objects);
-    const cap=makeWallBoxSegment(
-      w,objects,0,1,.025,capMat,roomHeight-.012,true,true
-    );
-    if(cap)group.add(cap);
+  const cap=new THREE.Mesh(geo,matCap);
+  cap.position.y=roomHeight+.004;
+  cap.receiveShadow=true;
+  cap.renderOrder=5;
+  group.add(cap);
+}
+
+function makeWoodTexture(){
+  const c=document.createElement('canvas');
+  c.width=1024;c.height=1024;
+  const ctx=c.getContext('2d');
+
+  ctx.fillStyle='#d9bb91';
+  ctx.fillRect(0,0,c.width,c.height);
+
+  const plankH=86;
+  for(let y=0;y<c.height;y+=plankH){
+    const row=Math.floor(y/plankH);
+    const shift=(row%2)*150;
+
+    ctx.strokeStyle='rgba(120,87,52,.18)';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(0,y);ctx.lineTo(c.width,y);ctx.stroke();
+
+    for(let x=-shift;x<c.width;x+=300){
+      ctx.beginPath();
+      ctx.moveTo(x,y);ctx.lineTo(x,y+plankH);ctx.stroke();
+    }
+
+    for(let i=0;i<18;i++){
+      const yy=y+8+i*4;
+      ctx.strokeStyle=`rgba(111,76,43,${0.018+(i%3)*0.008})`;
+      ctx.beginPath();
+      ctx.moveTo(0,yy);
+      ctx.bezierCurveTo(220,yy-3,500,yy+4,1024,yy);
+      ctx.stroke();
+    }
   }
+
+  const tex=new THREE.CanvasTexture(c);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+  tex.repeat.set(2.4,2.4);
+  tex.anisotropy=8;
+  return tex;
+}
+
+let _referenceWoodTexture=null;
+function referenceWoodMaterial(){
+  if(!_referenceWoodTexture)_referenceWoodTexture=makeWoodTexture();
+  return new THREE.MeshStandardMaterial({
+    color:0xffffff,
+    map:_referenceWoodTexture,
+    roughness:.72,
+    metalness:0
+  });
 }
 
 function addExteriorGround(group,objects){
@@ -1183,58 +1315,62 @@ function addExteriorGround(group,objects){
   const xs=pts.map(p=>p.x),zs=pts.map(p=>p.y);
   const minX=Math.min(...xs),maxX=Math.max(...xs);
   const minZ=Math.min(...zs),maxZ=Math.max(...zs);
-  const w=Math.max(8,(maxX-minX)+5);
-  const d=Math.max(8,(maxZ-minZ)+5);
+
+  // Large enough to feel like a surrounding floor, but camera will ignore it.
+  const pad=2.4;
+  const w=(maxX-minX)+pad*2;
+  const d=(maxZ-minZ)+pad*2;
   const cx=(minX+maxX)/2,cz=(minZ+maxZ)/2;
 
-  const matGround=new THREE.MeshStandardMaterial({
-    color:0xd7bb93,
-    roughness:.78,
-    metalness:0
-  });
-
-  const ground=new THREE.Mesh(new THREE.PlaneGeometry(w,d),matGround);
+  const ground=new THREE.Mesh(
+    new THREE.PlaneGeometry(w,d),
+    referenceWoodMaterial()
+  );
   ground.rotation.x=-Math.PI/2;
-  ground.position.set(cx,-.018,cz);
+  ground.position.set(cx,-.025,cz);
   ground.receiveShadow=true;
+  ground.userData.excludeFromCameraFit=true;
   group.add(ground);
-
-  // subtle plank lines to resemble the reference wood floor
-  const lineMat=new THREE.LineBasicMaterial({color:0xb9986f,transparent:true,opacity:.14});
-  const step=.24;
-  for(let z=minZ-2;z<=maxZ+2;z+=step){
-    const geo=new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(minX-2,-.012,z),
-      new THREE.Vector3(maxX+2,-.012,z)
-    ]);
-    group.add(new THREE.Line(geo,lineMat));
-  }
 }
-
 
 function fitReferenceCamera(objects){
   if(!camera||!controls)return;
+
   const pts=buildPolygon(objects);
   if(!pts||pts.length<3)return;
 
   const xs=pts.map(p=>p.x),zs=pts.map(p=>p.y);
   const minX=Math.min(...xs),maxX=Math.max(...xs);
   const minZ=Math.min(...zs),maxZ=Math.max(...zs);
-  const cx=(minX+maxX)/2,cz=(minZ+maxZ)/2;
-  const span=Math.max(maxX-minX,maxZ-minZ,2);
 
-  controls.target.set(cx,.9,cz);
+  const width=Math.max(.6,maxX-minX);
+  const depth=Math.max(.6,maxZ-minZ);
+  const span=Math.max(width,depth);
+  const cx=(minX+maxX)/2;
+  const cz=(minZ+maxZ)/2;
+
+  const roomH=Number(currentData?.record?.roomHeightM)||2.4;
+
+  controls.target.set(cx,roomH*.38,cz);
+
+  // Similar isometric viewpoint to the supplied reference:
+  // room fills most of the viewport, door/front side remains visible.
+  const dist=span*1.48 + roomH*.56;
   camera.position.set(
-    cx+span*1.55,
-    span*1.35+1.5,
-    cz+span*1.70
+    cx + dist*.72,
+    roomH + span*.88,
+    cz + dist*.86
   );
+
+  camera.fov=43;
   camera.near=.02;
-  camera.far=500;
+  camera.far=120;
   camera.updateProjectionMatrix();
+
+  controls.minDistance=Math.max(.65,span*.38);
+  controls.maxDistance=Math.max(12,span*5);
   controls.update();
 }
-
 function rebuild(){
   if(!scene || !currentData) return;
 
@@ -1259,14 +1395,14 @@ function rebuild(){
     floorTile,
     Math.max(1,rw/Math.max(.01,m(floorCfg.tileW||60))),
     Math.max(1,rd/Math.max(.01,m(floorCfg.tileH||60))),
-    0xd8d8d3,
+    0xb9bab7,
     {
       originX:floorCfg.originX||options?.tileOriginX||0,
       originY:floorCfg.originY||options?.tileOriginY||0,
       rotation:floorCfg.align==='45'?45:(options?.tileRotation||0)
     }
   );
-  const wallMat=materialForTile(wallTile,4,2,0xf7f7f5);
+  const wallMat=materialForTile(wallTile,4,2,0xf4f3f0);
 
   addExteriorGround(rootGroup,objects);
 
@@ -1282,6 +1418,8 @@ function rebuild(){
     if(mesh)rootGroup.add(mesh);
     addWallTileAreaMeshes(rootGroup,w,roomHeight,objects);
   });
+
+  addWallTopCaps(rootGroup,objects,roomHeight);
 
   (objects||[]).filter(o=>o.type!=='wall'&&o.type!=='text').forEach(o=>{
     const mesh=objectMesh(o);
@@ -1303,7 +1441,7 @@ function rebuild(){
       rootGroup.add(ceiling);
     }
   }
-  centerCamera(rootGroup);
+  fitReferenceCamera(objects);
 }
 
 window.ProjectBau3D={
@@ -1314,7 +1452,7 @@ window.ProjectBau3D={
     rebuild();
     requestAnimationFrame(()=>{
       resize();
-      if(rootGroup)centerCamera(rootGroup);
+      fitReferenceCamera(currentData?.objects||[]);
     });
   },
   update(data){
@@ -1323,11 +1461,11 @@ window.ProjectBau3D={
   },
   resetCamera(){
     resize();
-    if(rootGroup)centerCamera(rootGroup);
+    fitReferenceCamera(currentData?.objects||[]);
   },
   fitView(){
     resize();
-    if(rootGroup)centerCamera(rootGroup);
+    fitReferenceCamera(currentData?.objects||[]);
   },
   resize
 };

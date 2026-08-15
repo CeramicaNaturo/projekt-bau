@@ -2817,3 +2817,5 @@ label[for="fpShowPositions"]{
 .fp-object-offset-dimension{
   display:none!important;
 }
+
+/* v1.9.15 – automatic dimension lanes and collision-free labels */

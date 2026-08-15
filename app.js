@@ -2511,6 +2511,22 @@ function fitFloorplan2D(){
   drawFloorplan();
 }
 
+
+let fpDimensionLayoutBoxes=[];
+
+function resetDimensionLayout(){
+  fpDimensionLayoutBoxes=[];
+}
+
+function boxesOverlap(a,b,pad=6){
+  return !(
+    a.maxX+pad < b.minX ||
+    b.maxX+pad < a.minX ||
+    a.maxY+pad < b.minY ||
+    b.maxY+pad < a.minY
+  );
+}
+
 function drawFloorplan(preview=null){
   if(!fpCanvas||!fpCtx)return;
 
@@ -2554,6 +2570,8 @@ function drawFloorplan(preview=null){
         fpCtx.moveTo(left,y);fpCtx.lineTo(right,y);fpCtx.stroke();
       }
     }
+
+    resetDimensionLayout();
 
     // IMPORTANT: draw each object independently, so one malformed object cannot hide the whole plan.
     try{drawFloorTiles2D()}catch(e){console.error('Bodenfliesen 2D',e)}
@@ -2617,8 +2635,16 @@ function drawFloorplan(preview=null){
       const b=getFloorplanBounds(fpObjects);
       if(fpRecord&&b){
         const area=calculateFloorAreaM2(fpObjects);
-        const cx=(b.minX+b.maxX)/2,cy=(b.minY+b.maxY)/2;
+        let cx=(b.minX+b.maxX)/2,cy=(b.minY+b.maxY)/2;
         const w=235/zoom,h=100/zoom;
+
+        // Keep the room information card away from dimension labels.
+        const cardBox=()=>({minX:cx-w/2,maxX:cx+w/2,minY:cy-h/2,maxY:cy+h/2});
+        let cardTry=0;
+        while(fpDimensionLayoutBoxes.some(db=>boxesOverlap(cardBox(),db,10/zoom)) && cardTry<10){
+          cy+=28/zoom;
+          cardTry++;
+        }
 
         fpCtx.save();
         fpCtx.fillStyle='rgba(255,255,255,.95)';
@@ -2913,86 +2939,138 @@ function wallOutsideNormal(wall){
   const dx=x2-x1,dy=y2-y1;
   const len=Math.hypot(dx,dy)||1;
 
-  // left and right normals
-  let nx=-dy/len, ny=dx/len;
-  const center=fpRoomCenterForDimensions();
+  const left={nx:-dy/len,ny:dx/len};
+  const right={nx:dy/len,ny:-dx/len};
 
-  if(center){
-    const mx=(x1+x2)/2,my=(y1+y2)/2;
-    const toCenterX=center.x-mx,toCenterY=center.y-my;
-    // If chosen normal points inward, flip it.
-    if(nx*toCenterX+ny*toCenterY>0){
-      nx=-nx; ny=-ny;
-    }
+  const mx=(x1+x2)/2,my=(y1+y2)/2;
+  const poly=getRoomPolygon?.();
+
+  if(poly && poly.length>=3){
+    // Test far enough away from the inner edge to get a reliable
+    // inside/outside answer even with a thick wall.
+    const probe=Math.max(18,Number(wall.thickness||15)+8);
+    const lp={x:mx+left.nx*probe,y:my+left.ny*probe};
+    const rp={x:mx+right.nx*probe,y:my+right.ny*probe};
+
+    const lInside=pointInPolygon(lp,poly);
+    const rInside=pointInPolygon(rp,poly);
+
+    if(lInside && !rInside)return right;
+    if(rInside && !lInside)return left;
   }
-  return {nx,ny};
-}
 
+  // Fallback for temporarily open plans.
+  const center=fpRoomCenterForDimensions();
+  if(center){
+    const toCenterX=center.x-mx,toCenterY=center.y-my;
+    return (left.nx*toCenterX+left.ny*toCenterY>0)?right:left;
+  }
+
+  return left;
+}
 function drawProfessionalWallDimension(wall){
   if(!fpShowMeasures || !wall)return;
 
-  // Die gespeicherte Wandlinie ist ab v1.9.13 bereits die lichte Innenkante.
-  const sx=Number(wall.x1), sy=Number(wall.y1);
-  const ex=Number(wall.x2), ey=Number(wall.y2);
+  const sx=Number(wall.x1),sy=Number(wall.y1);
+  const ex=Number(wall.x2),ey=Number(wall.y2);
   const dx=ex-sx,dy=ey-sy;
   const innerLen=Math.hypot(dx,dy);
   if(innerLen<1)return;
 
   const ux=dx/innerLen,uy=dy/innerLen;
   const out=wallOutsideNormal(wall);
-
-  // Masslinie ausserhalb; Hilfslinien starten exakt Innenkante.
-  const offset=Math.max(26,Number(wall.thickness||15)+16);
-  const ax=sx+out.nx*offset, ay=sy+out.ny*offset;
-  const bx=ex+out.nx*offset, by=ey+out.ny*offset;
-  const tick=7;
+  const z=Math.max(.2,fpZoom||1);
 
   fpCtx.save();
-  fpCtx.strokeStyle='#334155';
+  fpCtx.font=`600 ${Math.max(12,14/z)}px Arial`;
+
+  const text=`${formatDimensionMeters(innerLen)} m`;
+  const textWidth=fpCtx.measureText(text).width;
+  const textHeight=Math.max(18/z,14);
+
+  // Automatic dimension lanes.
+  // Start comfortably outside the wall, then move farther out until the
+  // label does not collide with any already placed dimension.
+  let offset=Math.max(34,Number(wall.thickness||15)+22);
+  const laneStep=Math.max(26,24/z);
+
+  let ax,ay,bx,by,mx,my,labelBox;
+  let tries=0;
+
+  while(tries<12){
+    ax=sx+out.nx*offset; ay=sy+out.ny*offset;
+    bx=ex+out.nx*offset; by=ey+out.ny*offset;
+    mx=(ax+bx)/2; my=(ay+by)/2;
+
+    // Axis-aligned bounding box large enough for horizontal or vertical text.
+    const horizontal=Math.abs(dx)>=Math.abs(dy);
+    const halfW=(horizontal?textWidth:textHeight)/2 + 8/z;
+    const halfH=(horizontal?textHeight:textWidth)/2 + 8/z;
+
+    labelBox={
+      minX:mx-halfW,maxX:mx+halfW,
+      minY:my-halfH,maxY:my+halfH
+    };
+
+    const collision=fpDimensionLayoutBoxes.some(b=>boxesOverlap(labelBox,b,5/z));
+    if(!collision)break;
+
+    offset+=laneStep;
+    tries++;
+  }
+
+  fpDimensionLayoutBoxes.push(labelBox);
+
+  const tick=7/z;
+  const extensionGap=5/z;
+
+  fpCtx.strokeStyle='#475569';
   fpCtx.fillStyle='#0f172a';
-  fpCtx.lineWidth=Math.max(.8,1/(fpZoom||1));
+  fpCtx.lineWidth=Math.max(.75,1/z);
   fpCtx.lineCap='butt';
 
-  // Innenkante -> Maßlinie
+  // Extension lines: begin exactly at inner edge, but leave a tiny visual
+  // gap at the wall so the plan remains clean.
   fpCtx.beginPath();
-  fpCtx.moveTo(sx,sy); fpCtx.lineTo(ax,ay);
-  fpCtx.moveTo(ex,ey); fpCtx.lineTo(bx,by);
+  fpCtx.moveTo(sx+out.nx*extensionGap,sy+out.ny*extensionGap);
+  fpCtx.lineTo(ax,ay);
+  fpCtx.moveTo(ex+out.nx*extensionGap,ey+out.ny*extensionGap);
+  fpCtx.lineTo(bx,by);
   fpCtx.stroke();
 
+  // Main dimension line
   fpCtx.beginPath();
-  fpCtx.moveTo(ax,ay); fpCtx.lineTo(bx,by);
+  fpCtx.moveTo(ax,ay);
+  fpCtx.lineTo(bx,by);
   fpCtx.stroke();
 
-  const tx=(ux+out.nx)*tick*.55,ty=(uy+out.ny)*tick*.55;
+  // Architectural diagonal ticks
+  const tx=(ux+out.nx)*tick*.6;
+  const ty=(uy+out.ny)*tick*.6;
   fpCtx.beginPath();
-  fpCtx.moveTo(ax-tx,ay-ty);fpCtx.lineTo(ax+tx,ay+ty);
-  fpCtx.moveTo(bx-tx,by-ty);fpCtx.lineTo(bx+tx,by+ty);
+  fpCtx.moveTo(ax-tx,ay-ty); fpCtx.lineTo(ax+tx,ay+ty);
+  fpCtx.moveTo(bx-tx,by-ty); fpCtx.lineTo(bx+tx,by+ty);
   fpCtx.stroke();
 
-  const mx=(ax+bx)/2,my=(ay+by)/2;
+  // Label remains parallel to the measured wall.
   let angle=Math.atan2(dy,dx);
   if(angle>Math.PI/2 || angle<-Math.PI/2)angle+=Math.PI;
 
   fpCtx.translate(mx,my);
   fpCtx.rotate(angle);
-
-  const z=Math.max(.2,fpZoom||1);
-  fpCtx.font=`600 ${Math.max(12,14/z)}px Arial`;
   fpCtx.textAlign='center';
   fpCtx.textBaseline='middle';
 
-  // 174 cm gespeicherte Länge = 1,74 m ekranda.
-  const text=`${formatDimensionMeters(innerLen)} m`;
-  const tw=fpCtx.measureText(text).width;
-  const pad=5/z,boxH=18/z;
+  const pad=6/z;
+  const boxH=20/z;
 
-  fpCtx.fillStyle='rgba(255,255,255,.96)';
-  fpCtx.fillRect(-tw/2-pad,-boxH/2,tw+pad*2,boxH);
+  fpCtx.fillStyle='rgba(255,255,255,.98)';
+  fpCtx.fillRect(-textWidth/2-pad,-boxH/2,textWidth+pad*2,boxH);
+
   fpCtx.fillStyle='#0f172a';
   fpCtx.fillText(text,0,0);
   fpCtx.restore();
-}
-function fpIsDimensionedObject(o){
+}function fpIsDimensionedObject(o){
   return !!o && !['wall','text'].includes(o.type);
 }
 

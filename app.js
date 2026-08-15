@@ -2515,8 +2515,21 @@ function fitFloorplan2D(){
     return;
   }
 
-  const minX=Math.min(...xs),maxX=Math.max(...xs);
-  const minY=Math.min(...ys),maxY=Math.max(...ys);
+  let minX=Math.min(...xs),maxX=Math.max(...xs);
+  let minY=Math.min(...ys),maxY=Math.max(...ys);
+
+  // Measures are part of the visible CAD drawing, therefore include their
+  // reserved lanes when fitting the plan.
+  if(fpShowMeasures){
+    prepareDimensionLayout();
+    if(fpDimensionLayoutBounds){
+      minX=Math.min(minX,fpDimensionLayoutBounds.minX);
+      maxX=Math.max(maxX,fpDimensionLayoutBounds.maxX);
+      minY=Math.min(minY,fpDimensionLayoutBounds.minY);
+      maxY=Math.max(maxY,fpDimensionLayoutBounds.maxY);
+    }
+  }
+
   const bw=Math.max(100,maxX-minX);
   const bh=Math.max(100,maxY-minY);
 
@@ -2537,8 +2550,8 @@ function fitFloorplan2D(){
                  window.matchMedia('(orientation:landscape)').matches;
 
   // Tablet: fill most of the available workspace.
-  const fillX=isTablet?0.78:0.72;
-  const fillY=isTablet?0.76:0.70;
+  const fillX=isTablet?0.88:0.82;
+  const fillY=isTablet?0.86:0.80;
 
   const fitX=(visibleW*fillX)/bw;
   const fitY=(visibleH*fillY)/bh;
@@ -2564,9 +2577,13 @@ function fitFloorplan2D(){
 
 
 let fpDimensionLayoutBoxes=[];
+let fpDimensionLayoutMap=new Map();
+let fpDimensionLayoutBounds=null;
 
 function resetDimensionLayout(){
   fpDimensionLayoutBoxes=[];
+  fpDimensionLayoutMap=new Map();
+  fpDimensionLayoutBounds=null;
 }
 
 function boxesOverlap(a,b,pad=6){
@@ -2576,6 +2593,134 @@ function boxesOverlap(a,b,pad=6){
     a.maxY+pad < b.minY ||
     b.maxY+pad < a.minY
   );
+}
+
+function expandBounds(base,b){
+  if(!b)return base;
+  if(!base)return {...b};
+  base.minX=Math.min(base.minX,b.minX);
+  base.minY=Math.min(base.minY,b.minY);
+  base.maxX=Math.max(base.maxX,b.maxX);
+  base.maxY=Math.max(base.maxY,b.maxY);
+  return base;
+}
+
+function prepareDimensionLayout(){
+  resetDimensionLayout();
+  if(!fpShowMeasures)return;
+
+  const walls=(fpObjects||[]).filter(o=>o?.type==='wall' && isLayerVisible(o));
+  if(!walls.length)return;
+
+  const z=Math.max(.2,fpZoom||1);
+  const placed=[];
+
+  // Longer walls first. Short dimensions can then move to a free outer lane
+  // instead of hiding long main dimensions.
+  const ordered=[...walls].sort((a,b)=>{
+    const la=Math.hypot(a.x2-a.x1,a.y2-a.y1);
+    const lb=Math.hypot(b.x2-b.x1,b.y2-b.y1);
+    return lb-la;
+  });
+
+  for(const wall of ordered){
+    const sx=Number(wall.x1),sy=Number(wall.y1);
+    const ex=Number(wall.x2),ey=Number(wall.y2);
+    const dx=ex-sx,dy=ey-sy;
+    const len=Math.hypot(dx,dy);
+    if(len<1)continue;
+
+    const ux=dx/len,uy=dy/len;
+    const out=wallOutsideNormal(wall);
+    const horizontal=Math.abs(dx)>=Math.abs(dy);
+    const text=`${formatDimensionMeters(len)} m`;
+
+    const fontPx=Math.max(12,14/z);
+    // Stable approximation; actual text is usually slightly narrower.
+    const textWidth=Math.max(34/z,text.length*fontPx*.60);
+    const textHeight=Math.max(18/z,fontPx*1.35);
+
+    const baseOffset=Math.max(34,Number(wall.thickness||15)+22);
+    const laneStep=Math.max(28,26/z);
+
+    let chosen=null;
+
+    for(let lane=0;lane<14;lane++){
+      const offset=baseOffset+lane*laneStep;
+      const ax=sx+out.nx*offset,ay=sy+out.ny*offset;
+      const bx=ex+out.nx*offset,by=ey+out.ny*offset;
+      const mx=(ax+bx)/2,my=(ay+by)/2;
+
+      const halfW=(horizontal?textWidth:textHeight)/2+9/z;
+      const halfH=(horizontal?textHeight:textWidth)/2+9/z;
+
+      const labelBox={
+        minX:mx-halfW,maxX:mx+halfW,
+        minY:my-halfH,maxY:my+halfH
+      };
+
+      // Full geometry box includes extension lines and endpoints.
+      const fullBox={
+        minX:Math.min(sx,ex,ax,bx,labelBox.minX),
+        maxX:Math.max(sx,ex,ax,bx,labelBox.maxX),
+        minY:Math.min(sy,ey,ay,by,labelBox.minY),
+        maxY:Math.max(sy,ey,ay,by,labelBox.maxY)
+      };
+
+      const collides=placed.some(p=>{
+        // Labels must never overlap. Dimension lines are allowed to cross only
+        // at their extension endpoints, not through another label.
+        return boxesOverlap(labelBox,p.labelBox,10/z);
+      });
+
+      if(!collides){
+        chosen={
+          wallId:wall.id,
+          sx,sy,ex,ey,dx,dy,len,ux,uy,out,
+          ax,ay,bx,by,mx,my,text,
+          textWidth,textHeight,labelBox,fullBox,
+          lane,offset,horizontal
+        };
+        break;
+      }
+    }
+
+    // Absolute fallback: still render every dimension.
+    if(!chosen){
+      const lane=14;
+      const offset=baseOffset+lane*laneStep;
+      const ax=sx+out.nx*offset,ay=sy+out.ny*offset;
+      const bx=ex+out.nx*offset,by=ey+out.ny*offset;
+      const mx=(ax+bx)/2,my=(ay+by)/2;
+      const labelBox={minX:mx-40/z,maxX:mx+40/z,minY:my-14/z,maxY:my+14/z};
+      const fullBox={
+        minX:Math.min(sx,ex,ax,bx,labelBox.minX),
+        maxX:Math.max(sx,ex,ax,bx,labelBox.maxX),
+        minY:Math.min(sy,ey,ay,by,labelBox.minY),
+        maxY:Math.max(sy,ey,ay,by,labelBox.maxY)
+      };
+      chosen={
+        wallId:wall.id,sx,sy,ex,ey,dx,dy,len,ux,uy,out,
+        ax,ay,bx,by,mx,my,text,
+        textWidth:70/z,textHeight:18/z,labelBox,fullBox,
+        lane,offset,horizontal
+      };
+    }
+
+    fpDimensionLayoutMap.set(wall.id,chosen);
+    fpDimensionLayoutBoxes.push(chosen.labelBox);
+    placed.push(chosen);
+    fpDimensionLayoutBounds=expandBounds(fpDimensionLayoutBounds,chosen.fullBox);
+  }
+}
+
+function getDimensionedFloorplanBounds(){
+  let b=getFloorplanBounds(fpObjects);
+  if(fpShowMeasures){
+    prepareDimensionLayout();
+    b=expandBounds(b,fpDimensionLayoutBounds);
+  }
+  return b;
 }
 
 function drawFloorplan(preview=null){
@@ -2622,7 +2767,9 @@ function drawFloorplan(preview=null){
       }
     }
 
-    resetDimensionLayout();
+    // Build the complete external dimension-chain layout before drawing
+    // any wall. Every wall then uses its reserved lane.
+    prepareDimensionLayout();
 
     // IMPORTANT: draw each object independently, so one malformed object cannot hide the whole plan.
     try{drawFloorTiles2D()}catch(e){console.error('Bodenfliesen 2D',e)}
@@ -3022,107 +3169,45 @@ function wallOutsideNormal(wall){
 function drawProfessionalWallDimension(wall){
   if(!fpShowMeasures || !wall)return;
 
-  const sx=Number(wall.x1),sy=Number(wall.y1);
-  const ex=Number(wall.x2),ey=Number(wall.y2);
-  const dx=ex-sx,dy=ey-sy;
-  const innerLen=Math.hypot(dx,dy);
-  if(innerLen<1)return;
+  let d=fpDimensionLayoutMap.get(wall.id);
+  if(!d){
+    prepareDimensionLayout();
+    d=fpDimensionLayoutMap.get(wall.id);
+  }
+  if(!d)return;
 
-  const ux=dx/innerLen,uy=dy/innerLen;
-  const out=wallOutsideNormal(wall);
   const z=Math.max(.2,fpZoom||1);
+  const {sx,sy,ex,ey,ux,uy,ax,ay,bx,by,mx,my,dx,dy,text,textWidth,out}=d;
 
   fpCtx.save();
-  fpCtx.font=`600 ${Math.max(12,14/z)}px Arial`;
-
-  const text=`${formatDimensionMeters(innerLen)} m`;
-  const textWidth=fpCtx.measureText(text).width;
-  const textHeight=Math.max(18/z,14);
-
-  // Viewport in world coordinates.
-  const viewMinX=(-fpViewOffsetX)/(fpZoom||1);
-  const viewMinY=(-fpViewOffsetY)/(fpZoom||1);
-  const viewMaxX=viewMinX+fpCanvas.clientWidth/(fpZoom||1);
-  const viewMaxY=viewMinY+fpCanvas.clientHeight/(fpZoom||1);
-  const safe=18/z;
-
-  let offset=Math.max(34,Number(wall.thickness||15)+22);
-  const laneStep=Math.max(26,24/z);
-
-  let ax,ay,bx,by,mx,my,labelBox;
-  let tries=0;
-
-  while(tries<16){
-    ax=sx+out.nx*offset; ay=sy+out.ny*offset;
-    bx=ex+out.nx*offset; by=ey+out.ny*offset;
-    mx=(ax+bx)/2; my=(ay+by)/2;
-
-    const horizontal=Math.abs(dx)>=Math.abs(dy);
-    const halfW=(horizontal?textWidth:textHeight)/2 + 8/z;
-    const halfH=(horizontal?textHeight:textWidth)/2 + 8/z;
-
-    labelBox={
-      minX:mx-halfW,maxX:mx+halfW,
-      minY:my-halfH,maxY:my+halfH
-    };
-
-    const collision=fpDimensionLayoutBoxes.some(b=>boxesOverlap(labelBox,b,5/z));
-    const clipped=
-      labelBox.minX<viewMinX+safe ||
-      labelBox.maxX>viewMaxX-safe ||
-      labelBox.minY<viewMinY+safe ||
-      labelBox.maxY>viewMaxY-safe;
-
-    if(!collision && !clipped)break;
-
-    // First try the next lane outward.
-    offset+=laneStep;
-    tries++;
-
-    // If outward lanes leave the viewport, flip the lane toward the wall.
-    if(tries===8){
-      offset=-Math.max(30,Number(wall.thickness||15)+18);
-    }
-  }
-
-  // Final clamp of label center so text itself can never be cut.
-  const horizontal=Math.abs(dx)>=Math.abs(dy);
-  const halfW=(horizontal?textWidth:textHeight)/2 + 10/z;
-  const halfH=(horizontal?textHeight:textWidth)/2 + 10/z;
-  mx=Math.max(viewMinX+safe+halfW,Math.min(viewMaxX-safe-halfW,mx));
-  my=Math.max(viewMinY+safe+halfH,Math.min(viewMaxY-safe-halfH,my));
-
-  labelBox={
-    minX:mx-halfW,maxX:mx+halfW,
-    minY:my-halfH,maxY:my+halfH
-  };
-  fpDimensionLayoutBoxes.push(labelBox);
-
-  const tick=7/z;
-  const extensionGap=5/z;
-
   fpCtx.strokeStyle='#475569';
   fpCtx.fillStyle='#0f172a';
   fpCtx.lineWidth=Math.max(.75,1/z);
   fpCtx.lineCap='butt';
 
+  const gap=5/z;
+
+  // Hilfslinien start exactly on the room-side inner edge.
   fpCtx.beginPath();
-  fpCtx.moveTo(sx+out.nx*extensionGap,sy+out.ny*extensionGap);
+  fpCtx.moveTo(sx+out.nx*gap,sy+out.ny*gap);
   fpCtx.lineTo(ax,ay);
-  fpCtx.moveTo(ex+out.nx*extensionGap,ey+out.ny*extensionGap);
+  fpCtx.moveTo(ex+out.nx*gap,ey+out.ny*gap);
   fpCtx.lineTo(bx,by);
   fpCtx.stroke();
 
+  // Main dimension line.
   fpCtx.beginPath();
   fpCtx.moveTo(ax,ay);
   fpCtx.lineTo(bx,by);
   fpCtx.stroke();
 
+  // Architectural diagonal endpoint ticks.
+  const tick=7/z;
   const tx=(ux+out.nx)*tick*.6;
   const ty=(uy+out.ny)*tick*.6;
   fpCtx.beginPath();
-  fpCtx.moveTo(ax-tx,ay-ty); fpCtx.lineTo(ax+tx,ay+ty);
-  fpCtx.moveTo(bx-tx,by-ty); fpCtx.lineTo(bx+tx,by+ty);
+  fpCtx.moveTo(ax-tx,ay-ty);fpCtx.lineTo(ax+tx,ay+ty);
+  fpCtx.moveTo(bx-tx,by-ty);fpCtx.lineTo(bx+tx,by+ty);
   fpCtx.stroke();
 
   let angle=Math.atan2(dy,dx);
@@ -3130,19 +3215,20 @@ function drawProfessionalWallDimension(wall){
 
   fpCtx.translate(mx,my);
   fpCtx.rotate(angle);
+  fpCtx.font=`600 ${Math.max(12,14/z)}px Arial`;
   fpCtx.textAlign='center';
   fpCtx.textBaseline='middle';
 
+  const actualW=fpCtx.measureText(text).width;
   const pad=6/z;
   const boxH=20/z;
 
-  fpCtx.fillStyle='rgba(255,255,255,.98)';
-  fpCtx.fillRect(-textWidth/2-pad,-boxH/2,textWidth+pad*2,boxH);
+  fpCtx.fillStyle='rgba(255,255,255,.99)';
+  fpCtx.fillRect(-actualW/2-pad,-boxH/2,actualW+pad*2,boxH);
   fpCtx.fillStyle='#0f172a';
   fpCtx.fillText(text,0,0);
   fpCtx.restore();
-}
-function fpObjectRealDims(o){
+}function fpObjectRealDims(o){
   const [dw,dd]=fpDefaultObjectDimensions(o?.type);
   return {
     w:Math.max(1,Number(o?.widthCm||dw)),
@@ -3690,7 +3776,44 @@ function generateFloorplan2DPDF(){
     fitFloorplan2D();
     drawFloorplan();
 
-    const image=fpCanvas.toDataURL('image/png',1.0);
+    // Export ONLY the actual drawing + external dimension chains.
+    // This prevents a tiny plan in the middle of a huge blank canvas.
+    const db=getDimensionedFloorplanBounds();
+    if(!db)throw new Error('Keine Grundrissgrenzen');
+
+    const worldPad=28;
+    const cropMinX=db.minX-worldPad;
+    const cropMinY=db.minY-worldPad;
+    const cropMaxX=db.maxX+worldPad;
+    const cropMaxY=db.maxY+worldPad;
+
+    const px1=cropMinX*fpZoom+fpViewOffsetX;
+    const py1=cropMinY*fpZoom+fpViewOffsetY;
+    const px2=cropMaxX*fpZoom+fpViewOffsetX;
+    const py2=cropMaxY*fpZoom+fpViewOffsetY;
+
+    const sx=Math.max(0,Math.floor(px1));
+    const sy=Math.max(0,Math.floor(py1));
+    const sw=Math.min(fpCanvas.width-sx,Math.ceil(px2-px1));
+    const sh=Math.min(fpCanvas.height-sy,Math.ceil(py2-py1));
+
+    if(sw<20 || sh<20)throw new Error('Ungültiger PDF-Ausschnitt');
+
+    const exportCanvas=document.createElement('canvas');
+    const exportScale=2;
+    exportCanvas.width=Math.max(1,Math.round(sw*exportScale));
+    exportCanvas.height=Math.max(1,Math.round(sh*exportScale));
+    const ectx=exportCanvas.getContext('2d');
+    ectx.fillStyle='#ffffff';
+    ectx.fillRect(0,0,exportCanvas.width,exportCanvas.height);
+    ectx.imageSmoothingEnabled=true;
+    ectx.drawImage(
+      fpCanvas,
+      sx,sy,sw,sh,
+      0,0,exportCanvas.width,exportCanvas.height
+    );
+
+    const image=exportCanvas.toDataURL('image/png',1.0);
 
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({
@@ -3738,15 +3861,15 @@ function generateFloorplan2DPDF(){
     doc.line(margin,31,pageW-margin,31);
 
     // Canvas image fitted into the large central PDF area.
-    const imgW=fpCanvas.width;
-    const imgH=fpCanvas.height;
+    const imgW=exportCanvas.width;
+    const imgH=exportCanvas.height;
     const maxW=pageW-margin*2;
-    const maxH=pageH-48;
+    const maxH=pageH-43;
     const ratio=Math.min(maxW/imgW,maxH/imgH);
     const drawW=imgW*ratio;
     const drawH=imgH*ratio;
     const x=(pageW-drawW)/2;
-    const y=36+(maxH-drawH)/2;
+    const y=33+(maxH-drawH)/2;
 
     doc.addImage(image,'PNG',x,y,drawW,drawH,undefined,'FAST');
 

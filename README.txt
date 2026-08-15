@@ -1,18 +1,28 @@
-Projekt Bau v1.9.16 – Ölçü görünürlüğü + 500 ms Wand-Hold
+Projekt Bau v1.9.17 – Professionelle Außen-Maßketten
 
-Ölçüler:
-- Ölçü etiketleri artık görünür canvas sınırının dışına çıkamaz.
-- Etiket kesilecekse otomatik başka ölçü şeridine taşınır.
-- 16 şeride kadar çakışma / görünürlük kontrolü yapılır.
-- Dış şerit ekrandan çıkarsa ölçü otomatik karşı şeride alınır.
-- Son aşamada metin merkezi görünür alana clamp edilir.
-- Kısa ve uzun bütün Innenmaße okunabilir kalır.
+Grundlegende Änderung:
+- Maßlinien werden nicht mehr während jeder Wand einzeln improvisiert.
+- Vor dem Zeichnen wird zuerst für ALLE Wände ein gemeinsamer Maßplan berechnet.
+- Jeder Wandabschnitt erhält garantiert eine eigene Maßlinie.
+- Längere Hauptmasse werden zuerst platziert.
+- Kurze Maße erhalten bei Platzmangel automatisch die nächste freie Außenspur.
+- Bis zu 14 Maßspuren pro Wandseite werden unterstützt.
+- Kein Maß wird absichtlich in den Raum hineingedrückt.
+- Alle Werte bleiben lichte Innenmaße (Innenkante -> Innenkante).
 
-Auswählen / Wand bewegen:
-- Duvara kısa dokunmak / tıklamak sadece duvarı seçer.
-- Duvar hemen hareket etmez.
-- Duvarı oynatmak için 500 ms basılı tutmak gerekir.
-- 500 ms dolduktan sonra sürükleme aktif olur.
-- Mouse ve Touch için aynı davranış geçerlidir.
+2D Ansicht:
+- Auto-Fit berücksichtigt nun auch alle Außen-Maßketten.
+- Dadurch werden obere/untere/seitliche Maße nicht abgeschnitten.
+- Der verfügbare Arbeitsbereich wird stärker ausgenutzt.
+
+2D als PDF:
+- Es wird nicht mehr der komplette riesige CAD-Canvas exportiert.
+- PDF bestimmt die echte Grenze von:
+  Grundriss + allen Außenmaßen.
+- Nur dieser Bereich wird hochauflösend ausgeschnitten.
+- Grundriss erscheint dadurch deutlich größer und mittig auf A4 Querformat.
+- Keine unnötig großen weißen Flächen.
+
+500-ms-Wand-Hold aus v1.9.16 bleibt erhalten.
 
 Deutsch / de-CH.

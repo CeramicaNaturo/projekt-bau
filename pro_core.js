@@ -62,7 +62,7 @@ function install(){
   if(installed)return;installed=true;
   if(q('fpSave'))q('fpSave').onclick=()=>persist(true);
   q('fpProValidate')?.addEventListener('click',showCheck);q('fpProExport')?.addEventListener('click',exportPlan);q('fpProValidationClose')?.addEventListener('click',()=>q('fpProValidationPanel')?.classList.add('hidden'));
-  if(typeof drawFloorplan==='function'){const original=drawFloorplan;drawFloorplan=function(...args){const r=original.apply(this,args);updateStatus();scheduleSave();return r}}
+  if(typeof drawFloorplan==='function'){const original=drawFloorplan;drawFloorplan=function(...args){const r=original.apply(this,args);updateStatus();return r}}
   if(typeof setFloorTool==='function'){const original=setFloorTool;setFloorTool=function(...args){const r=original.apply(this,args);updateStatus();return r}}
   if(typeof updateSelectedInfo==='function'){const original=updateSelectedInfo;updateSelectedInfo=function(...args){const r=original.apply(this,args);updateStatus();return r}}
   q('floorplanModal')?.addEventListener('change',e=>{if(e.target.matches('input,select,textarea'))scheduleSave()},true);

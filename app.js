@@ -1641,9 +1641,9 @@ function openFloorplan(project,record){
   $('fpSnap').checked=true;fpSnapEnabled=true;
   const gridToggle=$('fpShowGrid'),posToggle=$('fpShowPositions'),measureToggle=$('fpShowMeasures');
   if(gridToggle)gridToggle.checked=true;
-  if(posToggle)posToggle.checked=true;
+  if(posToggle)posToggle.checked=false;
   if(measureToggle)measureToggle.checked=true;
-  fpShowGrid=true;fpShowPositions=true;fpShowMeasures=true;
+  fpShowGrid=true;fpShowPositions=false;fpShowMeasures=true;
   $('floorplanEditorTitle').textContent=`Grundriss · ${record.name}`;
   $('floorplanModal').classList.remove('hidden');
   setTimeout(forceWorkspaceRootRefit,100);
@@ -2463,10 +2463,11 @@ function resize2DCanvas(){
   const rect=wrap.getBoundingClientRect();
   const cssW=Math.max(700,Math.round(rect.width||wrap.clientWidth||1200));
   const cssH=Math.max(420,Math.round(rect.height||wrap.clientHeight||650));
-  const dpr=Math.min(window.devicePixelRatio||1,1.5);
+  // v2.0.1: CAD zoom uses visible CSS pixels 1:1.
+  const dpr=1;
 
-  const pxW=Math.round(cssW*dpr);
-  const pxH=Math.round(cssH*dpr);
+  const pxW=Math.round(cssW);
+  const pxH=Math.round(cssH);
 
   if(fpCanvas.width!==pxW)fpCanvas.width=pxW;
   if(fpCanvas.height!==pxH)fpCanvas.height=pxH;
@@ -2518,20 +2519,10 @@ function fitFloorplan2D(){
   let minX=Math.min(...xs),maxX=Math.max(...xs);
   let minY=Math.min(...ys),maxY=Math.max(...ys);
 
-  // Measures are part of the visible CAD drawing, therefore include their
-  // reserved lanes when fitting the plan.
-  if(fpShowMeasures){
-    prepareDimensionLayout();
-    if(fpDimensionLayoutBounds){
-      minX=Math.min(minX,fpDimensionLayoutBounds.minX);
-      maxX=Math.max(maxX,fpDimensionLayoutBounds.maxX);
-      minY=Math.min(minY,fpDimensionLayoutBounds.minY);
-      maxY=Math.max(maxY,fpDimensionLayoutBounds.maxY);
-    }
-  }
-
-  const bw=Math.max(100,maxX-minX);
-  const bh=Math.max(100,maxY-minY);
+  // v2.0.1: Auto-Fit uses the real plan geometry only.
+  // External measurement lanes may never shrink the room itself.
+  const bw=Math.max(80,maxX-minX);
+  const bh=Math.max(80,maxY-minY);
 
   // Use the ACTUAL visible CAD size, not only backing-store dimensions.
   const wrap=fpCanvas.parentElement;
@@ -2550,14 +2541,15 @@ function fitFloorplan2D(){
                  window.matchMedia('(orientation:landscape)').matches;
 
   // Tablet: fill most of the available workspace.
-  const fillX=isTablet?0.88:0.82;
-  const fillY=isTablet?0.86:0.80;
+  const fillX=isTablet?0.94:0.90;
+  const fillY=isTablet?0.91:0.88;
 
-  const fitX=(visibleW*fillX)/bw;
-  const fitY=(visibleH*fillY)/bh;
+  const marginCm=28;
+  const fitX=(visibleW*fillX)/(bw+marginCm*2);
+  const fitY=(visibleH*fillY)/(bh+marginCm*2);
 
   // Allow significantly larger automatic zoom on tablets.
-  const maxZoom=isTablet?4.5:3.0;
+  const maxZoom=isTablet?6.0:5.0;
   fpZoom=Math.max(.08,Math.min(maxZoom,fitX,fitY));
 
   const cx=(minX+maxX)/2;
@@ -2565,9 +2557,8 @@ function fitFloorplan2D(){
 
   fpViewOffsetX=fpCanvas.width/2-cx*fpZoom;
 
-  // Slight upward bias because the object palette occupies the bottom visually.
-  const verticalBias=isTablet ? fpCanvas.height*0.04 : 0;
-  fpViewOffsetY=fpCanvas.height/2-cy*fpZoom-verticalBias;
+  // v2.0.1: exact centering in the available CAD workspace.
+  fpViewOffsetY=fpCanvas.height/2-cy*fpZoom;
 
   const z=$('fpZoomReset');
   if(z)z.textContent=`${Math.round(fpZoom*100)}%`;

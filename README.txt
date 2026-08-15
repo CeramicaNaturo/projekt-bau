@@ -1,36 +1,10 @@
-Projekt Bau v2.0.0 PRO
+Projekt Bau v2.0.1 PRO – 2D CAD Fix
 
-PROFESYONEL ÇEKİRDEK
-- Otomatik kayıt (900 ms)
-- Gespeichert / Nicht gespeichert / Speicherfehler durumu
-- Ctrl+S kayıt
-- Speichern editörü kapatmaz
-- Teknik Grundriss-Prüfung
-- Açık duvar uçları kontrolü
-- Kapanmamış plan kontrolü
-- Tür/Fenster duvar bağlantısı kontrolü
-- Raumhöhe kontrolü
-- Plan JSON export
-- Profesyonel CAD durum çubuğu
-- Werkzeug / Fang / Auswahl / Fläche / Speicherstatus
-
-KISAYOLLAR
-- F = Ansicht einpassen
-- 2 = 2D CAD
-- 3 = 3D
-- V = Grundriss prüfen
-- ESC = Auswählen
-- Ctrl+S = Speichern
-
-MEVCUT MODÜLLER
-- 2D CAD / 3D
-- Innenmass-System
-- Wand / Tür / Fenster
-- Sanitär / Möbel
-- Wand- und Bodenfliesen
-- Einteilung / Fliesenstart
-- 2D als PDF / PDF-Bericht
-- Fotos / Aufgaben / Material
-- Projekt Backup
-
-Bu sürümden sonra geliştirmeler 2.x serisinde yapılmalıdır.
+- Canvas zoom 1:1 CSS pixel
+- Auto-Fit only actual Grundriss geometry
+- Measurement lanes no longer shrink plan
+- Tablet fills ~90% workspace
+- X/Y coordinates default OFF
+- Innenmaße remain ON
+- Exact centering
+- Existing project data preserved

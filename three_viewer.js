@@ -1166,96 +1166,6 @@ function texturedFloorSurface(objects,material){
 
 
 
-function polygonSignedArea3D(pts){
-  let a=0;
-  for(let i=0,j=pts.length-1;i<pts.length;j=i++){
-    a+=pts[j].x*pts[i].y-pts[i].x*pts[j].y;
-  }
-  return a/2;
-}
-
-function infiniteLineIntersection2D(a1,a2,b1,b2){
-  const rx=a2.x-a1.x, ry=a2.y-a1.y;
-  const sx=b2.x-b1.x, sy=b2.y-b1.y;
-  const den=rx*sy-ry*sx;
-  if(Math.abs(den)<1e-9)return null;
-  const qx=b1.x-a1.x,qy=b1.y-a1.y;
-  const u=(qx*sy-qy*sx)/den;
-  return {x:a1.x+u*rx,y:a1.y+u*ry};
-}
-
-function offsetPolygonForWallTop(inner,thickness){
-  if(!inner||inner.length<3)return null;
-  const area=polygonSignedArea3D(inner);
-  const ccw=area>0;
-  const shifted=[];
-
-  for(let i=0;i<inner.length;i++){
-    const a=inner[i];
-    const b=inner[(i+1)%inner.length];
-    const dx=b.x-a.x,dy=b.y-a.y;
-    const len=Math.hypot(dx,dy)||1;
-
-    // For CCW polygon interior is left side, therefore outside is right.
-    const nx=ccw ? dy/len : -dy/len;
-    const ny=ccw ? -dx/len : dx/len;
-
-    shifted.push({
-      a:{x:a.x+nx*thickness,y:a.y+ny*thickness},
-      b:{x:b.x+nx*thickness,y:b.y+ny*thickness}
-    });
-  }
-
-  const out=[];
-  for(let i=0;i<shifted.length;i++){
-    const prev=shifted[(i-1+shifted.length)%shifted.length];
-    const cur=shifted[i];
-    const inter=infiniteLineIntersection2D(prev.a,prev.b,cur.a,cur.b);
-    out.push(inter||cur.a);
-  }
-  return out;
-}
-
-function addWallTopCaps(group,objects,roomHeight){
-  const inner=buildPolygon(objects);
-  if(!inner||inner.length<3)return;
-
-  const walls=(objects||[]).filter(o=>o.type==='wall');
-  const avgTh=walls.length
-    ? walls.reduce((s,w)=>s+m(w.thickness||15),0)/walls.length
-    : .15;
-
-  const outer=offsetPolygonForWallTop(inner,avgTh);
-  if(!outer||outer.length!==inner.length)return;
-
-  const shape=new THREE.Shape();
-  shape.moveTo(outer[0].x,outer[0].y);
-  outer.slice(1).forEach(p=>shape.lineTo(p.x,p.y));
-  shape.closePath();
-
-  const hole=new THREE.Path();
-  hole.moveTo(inner[0].x,inner[0].y);
-  inner.slice(1).forEach(p=>hole.lineTo(p.x,p.y));
-  hole.closePath();
-  shape.holes.push(hole);
-
-  const geo=new THREE.ShapeGeometry(shape);
-  geo.rotateX(Math.PI/2);
-
-  const matCap=new THREE.MeshStandardMaterial({
-    color:0x343a40,
-    roughness:.68,
-    metalness:.01,
-    side:THREE.DoubleSide
-  });
-
-  const cap=new THREE.Mesh(geo,matCap);
-  cap.position.y=roomHeight+.004;
-  cap.receiveShadow=true;
-  cap.renderOrder=5;
-  group.add(cap);
-}
-
 function makeWoodTexture(){
   const c=document.createElement('canvas');
   c.width=1024;c.height=1024;
@@ -1317,7 +1227,7 @@ function addExteriorGround(group,objects){
   const minZ=Math.min(...zs),maxZ=Math.max(...zs);
 
   // Large enough to feel like a surrounding floor, but camera will ignore it.
-  const pad=1.25;
+  const pad=.70;
   const w=(maxX-minX)+pad*2;
   const d=(maxZ-minZ)+pad*2;
   const cx=(minX+maxX)/2,cz=(minZ+maxZ)/2;
@@ -1335,47 +1245,36 @@ function addExteriorGround(group,objects){
 
 function fitReferenceCamera(objects){
   if(!camera||!controls)return;
-
   const pts=buildPolygon(objects);
   if(!pts||pts.length<3)return;
 
   const xs=pts.map(p=>p.x), zs=pts.map(p=>p.y);
   const minX=Math.min(...xs), maxX=Math.max(...xs);
   const minZ=Math.min(...zs), maxZ=Math.max(...zs);
-  const width=Math.max(.6,maxX-minX);
-  const depth=Math.max(.6,maxZ-minZ);
-  const cx=(minX+maxX)/2;
-  const cz=(minZ+maxZ)/2;
-  const roomH=Number(currentData?.record?.roomHeightM)||2.4;
+  const w=Math.max(.5,maxX-minX), d=Math.max(.5,maxZ-minZ);
+  const cx=(minX+maxX)/2, cz=(minZ+maxZ)/2;
+  const h=Number(currentData?.record?.roomHeightM)||2.4;
+  const diag=Math.hypot(w,d);
 
-  // Referans: oda ekranın ana objesi; üstten değil, yaklaşık 45° mimari perspektif.
-  controls.target.set(cx,roomH*.34,cz);
+  controls.target.set(cx,h*.43,cz);
+  const dist=Math.max(2.35,diag*.61+h*.18);
 
-  // Dar/uzun odalarda mesafeyi yalnız uzun kenara göre büyütme.
-  // Böylece oda küçücük kalmaz.
-  const footprint=Math.sqrt(width*width+depth*depth);
-  const dist=Math.max(3.15, footprint*.82 + roomH*.30);
-
-  // Ön kapı tarafını ve sağ duvarı gören mimari açı.
-  camera.position.set(
-    cx + dist*.78,
-    roomH*.92 + dist*.50,
-    cz + dist*.92
-  );
-
-  camera.fov=39;
+  // Reference-style architectural oblique view.
+  camera.position.set(cx+dist*.72,h*.62+dist*.30,cz+dist*.88);
+  camera.fov=46;
   camera.near=.02;
   camera.far=100;
   camera.updateProjectionMatrix();
 
   controls.enableDamping=true;
   controls.dampingFactor=.08;
-  controls.minPolarAngle=THREE.MathUtils.degToRad(28);
-  controls.maxPolarAngle=THREE.MathUtils.degToRad(78);
-  controls.minDistance=Math.max(1.2,footprint*.42);
-  controls.maxDistance=Math.max(10,footprint*3.2);
+  controls.minPolarAngle=THREE.MathUtils.degToRad(42);
+  controls.maxPolarAngle=THREE.MathUtils.degToRad(80);
+  controls.minDistance=Math.max(1.0,diag*.30);
+  controls.maxDistance=Math.max(8,diag*2.8);
   controls.update();
-}function rebuild(){
+}
+function rebuild(){
   if(!scene || !currentData) return;
 
   if(rootGroup){
@@ -1406,7 +1305,11 @@ function fitReferenceCamera(objects){
       rotation:floorCfg.align==='45'?45:(options?.tileRotation||0)
     }
   );
-  const wallMat=materialForTile(wallTile,4,2,0xf0efec);
+  const wallMat=wallTile?.photo
+    ? materialForTile(wallTile,4,2,0xf0efec)
+    : new THREE.MeshStandardMaterial({
+        color:0xf1f0ed, roughness:.82, metalness:0, side:THREE.DoubleSide
+      });
 
   addExteriorGround(rootGroup,objects);
 
@@ -1423,7 +1326,6 @@ function fitReferenceCamera(objects){
     addWallTileAreaMeshes(rootGroup,w,roomHeight,objects);
   });
 
-  addWallTopCaps(rootGroup,objects,roomHeight);
 
   (objects||[]).filter(o=>o.type!=='wall'&&o.type!=='text').forEach(o=>{
     const mesh=objectMesh(o);

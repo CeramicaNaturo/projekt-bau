@@ -1,31 +1,34 @@
-Projekt Bau v1.9.18 – ALLE Wandmasse auf oberster Ebene
+Projekt Bau v1.9.19 – 3D Ecken + Türen + realistischere Objekte
 
-Asıl Fehler behoben:
-In früheren Versionen wurde das Maß einer Wand direkt beim Zeichnen
-dieser Wand gerendert. Danach gezeichnete Wände / Ecken / Rauminfo
-konnten diese Maßlinie oder den Text wieder überdecken.
+3D Wände:
+- Jede Wand wird als extrudiertes Wand-Polygon erzeugt.
+- Gespeicherte Wandlinie bleibt die Innenkante.
+- Wandstärke wächst nach aussen.
+- An verbundenen Wänden werden die äusseren Wandkanten mathematisch geschnitten.
+- Dadurch entstehen saubere Miter-Ecken statt überlappender Boxen / Vorsprünge.
 
-v1.9.18:
-1. Zuerst werden ALLE Wände gezeichnet.
-2. Dann alle Wandverbindungen / Ecken.
-3. Dann Rauminfo und andere CAD-Inhalte.
-4. GANZ ZUM SCHLUSS werden sämtliche Wandmasse gezeichnet.
+Tür:
+- 2D-Türen werden im 3D-Modell immer als Türgruppe erzeugt.
+- Türrahmen, Türblatt und Griff sind sichtbar.
+- Türblatt wird standardmässig 35° geöffnet dargestellt, damit es nicht in der Wand verschwindet.
+- Öffnungsrichtung links/rechts und innen/aussen werden berücksichtigt.
+- Türhöhe und Türbreite werden verwendet.
 
-Dadurch:
-- keine Wand kann mehr ein Maß überdecken.
-- 0,60 m erscheint vollständig statt nur „6 m“.
-- kurze Zwischenwände behalten ihr Maß.
-- jede sichtbare Wand muss genau einen Maßeintrag erhalten.
-- falls ein Layout-Eintrag fehlt, erzeugt ein Fallback trotzdem ein Maß.
-- Konsole meldet einen Fehler, falls Wandanzahl und Maßanzahl nicht übereinstimmen.
+Fenster:
+- Rahmen, Glas, Mittelsteg und Brüstungshöhe werden realistischer dargestellt.
 
-Maßwerte bleiben:
-- lichte Innenmaße
-- Innenkante -> Innenkante
-- Meterdarstellung
+Realistischere Badobjekte:
+- Waschbecken
+- WC
+- Dusche
+- Badewanne
+wurden geometrisch überarbeitet und verwenden ihre echten Breite/Tiefe-Masse.
 
-2D als PDF nutzt denselben finalen Renderdurchlauf,
-deshalb werden auch dort alle Maße als oberste Ebene exportiert.
+Bestehende Funktionen:
+- Innenmasse
+- 500-ms-Wand-Hold
+- Fliesen
+- 2D/PDF
+bleiben erhalten.
 
-500-ms-Hold zum Verschieben von Wänden bleibt erhalten.
 Deutsch / de-CH.

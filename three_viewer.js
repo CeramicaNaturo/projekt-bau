@@ -275,16 +275,104 @@ function addWallTileAreaMeshes(group,w,roomHeight,objects){
   }
 }
 
-function wallMesh(w,height,material){
-  const x1=m(w.x1), z1=m(w.y1), x2=m(w.x2), z2=m(w.y2);
+function wallOuterNormal3D(w,objects){
+  const x1=m(w.x1),z1=m(w.y1),x2=m(w.x2),z2=m(w.y2);
   const dx=x2-x1,dz=z2-z1;
-  const len=Math.hypot(dx,dz);
-  if(len<.001) return null;
-  const thickness=m(w.thickness||15);
-  const geo=new THREE.BoxGeometry(len,height,thickness);
+  const len=Math.hypot(dx,dz)||1;
+  let nx=-dz/len,nz=dx/len;
+
+  const c=roomCentroid3D(objects||[]);
+  if(c){
+    const mx=(x1+x2)/2,mz=(z1+z2)/2;
+    // normal pointing toward room centre = inward -> flip to outward
+    if(nx*(c.x-mx)+nz*(c.z-mz)>0){
+      nx=-nx;nz=-nz;
+    }
+  }
+  return {nx,nz};
+}
+
+function lineIntersectionXZ(a1,a2,b1,b2){
+  const r={x:a2.x-a1.x,z:a2.z-a1.z};
+  const s={x:b2.x-b1.x,z:b2.z-b1.z};
+  const den=r.x*s.z-r.z*s.x;
+  if(Math.abs(den)<1e-9)return null;
+  const q={x:b1.x-a1.x,z:b1.z-a1.z};
+  const tt=(q.x*s.z-q.z*s.x)/den;
+  return {x:a1.x+tt*r.x,z:a1.z+tt*r.z};
+}
+
+function wallOuterLine3D(w,objects){
+  const x1=m(w.x1),z1=m(w.y1),x2=m(w.x2),z2=m(w.y2);
+  const {nx,nz}=wallOuterNormal3D(w,objects);
+  const th=m(w.thickness||15);
+  return {
+    a:{x:x1+nx*th,z:z1+nz*th},
+    b:{x:x2+nx*th,z:z2+nz*th}
+  };
+}
+
+function connectedWallsAt3D(w,objects,atStart){
+  const px=atStart?m(w.x1):m(w.x2);
+  const pz=atStart?m(w.y1):m(w.y2);
+  const tol=.035;
+  return (objects||[]).filter(o=>{
+    if(o===w||o.type!=='wall')return false;
+    const a=Math.hypot(m(o.x1)-px,m(o.y1)-pz);
+    const b=Math.hypot(m(o.x2)-px,m(o.y2)-pz);
+    return Math.min(a,b)<tol;
+  });
+}
+
+function wallOuterJointPoint3D(w,objects,atStart){
+  const inner={
+    x:atStart?m(w.x1):m(w.x2),
+    z:atStart?m(w.y1):m(w.y2)
+  };
+  const selfLine=wallOuterLine3D(w,objects);
+  const own=atStart?selfLine.a:selfLine.b;
+  const others=connectedWallsAt3D(w,objects,atStart);
+
+  for(const other of others){
+    const otherLine=wallOuterLine3D(other,objects);
+    const inter=lineIntersectionXZ(selfLine.a,selfLine.b,otherLine.a,otherLine.b);
+    if(!inter)continue;
+
+    const maxT=Math.max(m(w.thickness||15),m(other.thickness||15));
+    if(Math.hypot(inter.x-inner.x,inter.z-inner.z)<=maxT*4){
+      return inter;
+    }
+  }
+  return own;
+}
+
+function wallMesh(w,height,material,objects){
+  const x1=m(w.x1),z1=m(w.y1),x2=m(w.x2),z2=m(w.y2);
+  const len=Math.hypot(x2-x1,z2-z1);
+  if(len<.001)return null;
+
+  // Saved wall line = room-side inner edge.
+  const o1=wallOuterJointPoint3D(w,objects,true);
+  const o2=wallOuterJointPoint3D(w,objects,false);
+
+  const shape=new THREE.Shape();
+  shape.moveTo(x1,z1);
+  shape.lineTo(x2,z2);
+  shape.lineTo(o2.x,o2.z);
+  shape.lineTo(o1.x,o1.z);
+  shape.closePath();
+
+  const geo=new THREE.ExtrudeGeometry(shape,{
+    depth:height,
+    bevelEnabled:false,
+    steps:1
+  });
+
+  // ExtrudeGeometry uses XY + Z depth; rotate so depth becomes vertical Y.
+  geo.rotateX(Math.PI/2);
+  geo.translate(0,height,0);
+
   const mesh=new THREE.Mesh(geo,material.clone());
-  mesh.position.set((x1+x2)/2,height/2,(z1+z2)/2);
-  mesh.rotation.y=-Math.atan2(dz,dx);
   mesh.castShadow=true;
   mesh.receiveShadow=true;
   return mesh;
@@ -419,18 +507,22 @@ function realisticSink(o){
   const w=m(o.widthCm||60),d=m(o.depthCm||50);
   const ceramic=CERAMIC(), chrome=CHROME();
 
-  // basin rim
-  addBox(g,w,.07,d,0,.82,0,ceramic);
-  // bowl cavity illusion
-  addSphere(g,w*.38,.08,d*.32,0,.79,0,mat(0xdfe4e7,.18,0));
-  addSphere(g,w*.30,.035,d*.25,0,.77,0,mat(0x9ea7ad,.22,.15));
+  // slim cabinet / pedestal body
+  addBox(g,w*.72,.64,d*.62,0,.36,.04,mat(0xf0f1ef,.55,.02));
 
-  // pedestal / vanity support
-  addCylinder(g,.11,.14,.70,0,.39,0,ceramic,32);
+  // thick ceramic top
+  addBox(g,w,.085,d,0,.78,0,ceramic);
 
-  // tap
-  addCylinder(g,.018,.018,.23,0,.97,-d*.22,chrome,20);
-  addCylinder(g,.014,.014,.15,0,.99,-d*.16,chrome,20,Math.PI/2,0,0);
+  // oval basin with darker inner bowl
+  addSphere(g,w*.40,.075,d*.34,0,.785,0,ceramic);
+  addSphere(g,w*.31,.042,d*.25,0,.806,0,mat(0xcfd7dc,.22,.06));
+
+  // drain
+  addCylinder(g,.025,.025,.012,0,.825,0,chrome,24);
+
+  // curved tap illusion: vertical stem + spout
+  addCylinder(g,.018,.018,.23,0,.94,-d*.27,chrome,18);
+  addCylinder(g,.014,.014,.16,0,1.04,-d*.18,chrome,18,Math.PI/2);
 
   return finishObject(g,o);
 }
@@ -438,53 +530,53 @@ function realisticSink(o){
 function realisticWC(o){
   const g=new THREE.Group();
   const ceramic=CERAMIC(), chrome=CHROME();
-  const [dw,dd]=objectDefaultDims3D('wc');
-  const sx=Math.max(.05,Number(o.widthCm||dw)/dw);
-  const sz=Math.max(.05,Number(o.depthCm||dd)/dd);
+  const w=m(o.widthCm||40),d=m(o.depthCm||70);
 
-  // base
-  addBox(g,.34,.18,.48,0,.12,.08,ceramic);
-  // bowl
-  addSphere(g,.27,.19,.37,0,.30,.02,ceramic);
-  // seat ring (dark thin)
+  // floor foot + rounded bowl
+  addBox(g,w*.70,.16,d*.42,0,.10,d*.10,ceramic);
+  addSphere(g,w*.42,.18,d*.32,0,.29,d*.05,ceramic);
+
+  // seat ring
   const ring=new THREE.Mesh(
-    new THREE.TorusGeometry(.19,.025,12,36),
-    mat(0xe7e7e4,.35,0)
+    new THREE.TorusGeometry(Math.min(w,d)*.30,.022,14,42),
+    mat(0xf0f0ee,.30,0)
   );
-  ring.scale.z=1.28;
+  ring.scale.z=1.24;
   ring.rotation.x=Math.PI/2;
-  ring.position.set(0,.43,-.02);
+  ring.position.set(0,.43,d*.03);
   g.add(ring);
 
-  // cistern
-  addBox(g,.38,.48,.20,0,.52,-.30,ceramic);
-  addCylinder(g,.018,.018,.018,.12,.77,-.405,chrome,16);
+  // cistern against wall side
+  addBox(g,w*.92,.50,d*.22,0,.55,-d*.34,ceramic);
+  addCylinder(g,.016,.016,.018,w*.18,.81,-d*.455,chrome,16);
 
-  g.scale.x*=sx; g.scale.z*=sz;
   return finishObject(g,o);
 }
 
 function realisticShower(o){
   const g=new THREE.Group();
   const w=m(o.widthCm||90),d=m(o.depthCm||90);
+  const chrome=CHROME(),glass=glassMat();
 
-  // tray
-  addBox(g,w,.045,d,0,.025,0,WHITE());
-  addCylinder(g,.035,.035,.012,0,.055,0,CHROME(),24);
+  // low tray with raised edge
+  addBox(g,w,.035,d,0,.02,0,WHITE());
+  addBox(g,w,.035,.025,0,.055,-d/2,WHITE());
+  addBox(g,.025,.035,d,-w/2,.055,0,WHITE());
+  addCylinder(g,.035,.035,.012,0,.052,0,chrome,24);
 
-  // glass walls
-  const glass=glassMat();
-  addBox(g,w,1.95,.012,0,.98,-d/2,glass);
-  addBox(g,.012,1.95,d,-w/2,.98,0,glass);
+  // two glass panels
+  addBox(g,w,1.95,.012,0,.99,-d/2,glass);
+  addBox(g,.012,1.95,d,-w/2,.99,0,glass);
 
-  // vertical frames
-  const chrome=CHROME();
-  addCylinder(g,.012,.012,1.95,-w/2,.98,-d/2,chrome,12);
-  addCylinder(g,.012,.012,1.95,w/2,.98,-d/2,chrome,12);
+  // polished frames
+  addCylinder(g,.010,.010,1.95,-w/2,.99,-d/2,chrome,12);
+  addCylinder(g,.010,.010,1.95, w/2,.99,-d/2,chrome,12);
+  addCylinder(g,.010,.010,1.95,-w/2,.99, d/2,chrome,12);
 
-  // shower bar / head
-  addCylinder(g,.012,.012,1.45,w*.28,.90,d*.30,chrome,12);
-  addSphere(g,.055,.018,.055,w*.28,1.58,d*.30,chrome);
+  // shower rail + mixer + head
+  addCylinder(g,.011,.011,1.35,w*.28,.95,d*.30,chrome,12);
+  addSphere(g,.065,.018,.065,w*.28,1.58,d*.30,chrome);
+  addCylinder(g,.028,.028,.055,w*.28,.88,d*.30,chrome,20,Math.PI/2);
 
   return finishObject(g,o);
 }
@@ -494,18 +586,20 @@ function realisticBathtub(o){
   const w=m(o.widthCm||180),d=m(o.depthCm||80);
   const ceramic=CERAMIC();
 
-  // tub body
-  addBox(g,w,.52,d,0,.28,0,ceramic);
+  // outer shell
+  addBox(g,w,.50,d,0,.27,0,ceramic);
 
-  // inner cavity illusion
-  addBox(g,w*.82,.16,d*.66,0,.48,0,mat(0xd9e0e4,.2,0));
+  // inset cavity illusion with two nested rounded volumes
+  addSphere(g,w*.42,.16,d*.36,0,.47,0,mat(0xe5eaed,.18,0));
+  addSphere(g,w*.34,.105,d*.28,0,.49,0,mat(0xcfd7dc,.20,.02));
 
   // rim
-  addBox(g,w,.045,d,0,.56,0,ceramic);
+  addBox(g,w,.045,d,0,.555,0,ceramic);
 
-  // chrome drain + faucet
-  addCylinder(g,.03,.03,.012,-w*.28,.575,0,CHROME(),24);
-  addCylinder(g,.018,.018,.20,w*.34,.66,-d*.34,CHROME(),16);
+  // drain and tap set
+  addCylinder(g,.028,.028,.012,-w*.30,.575,0,CHROME(),24);
+  addCylinder(g,.016,.016,.20,w*.36,.66,-d*.34,CHROME(),16);
+  addCylinder(g,.012,.012,.13,w*.36,.76,-d*.27,CHROME(),16,Math.PI/2);
 
   return finishObject(g,o);
 }
@@ -676,28 +770,52 @@ function objectMesh(o){
     const g=new THREE.Group();
     const w=m(o.widthCm||90);
     const h=Math.max(.5,m(o.heightCm||205));
-    // door leaf
-    addBox(g,w,h,.045,0,h/2,0,WOOD());
-    // handle
-    addCylinder(g,.018,.018,.11,w*.34,Math.min(h*.52,1.05),.04,CHROME(),16,Math.PI/2);
-    if((o.openingDirection||'right')==='left')g.rotation.y=Math.PI;
+    const frame=mat(0xe9edf0,.42,.08);
+    const wood=WOOD();
+    const chrome=CHROME();
+
+    // Visible frame posts + lintel
+    addBox(g,.055,h+.08,.075,-w/2,h/2,0,frame);
+    addBox(g,.055,h+.08,.075, w/2,h/2,0,frame);
+    addBox(g,w+.11,.055,.075,0,h+.025,0,frame);
+
+    // Door leaf as separate pivot group. 2D opening direction controls hinge side.
+    const leaf=new THREE.Group();
+    addBox(leaf,w*.98,h,.045,w*.49,h/2,0,wood);
+    addCylinder(leaf,.016,.016,.11,w*.80,Math.min(h*.52,1.05),.045,chrome,16,Math.PI/2);
+
+    const left=(o.openingDirection||'right')==='left';
+    const inward=(o.openingSide||o.swingSide||'inside')!=='outside';
+
+    leaf.position.x=left ? w/2 : -w/2;
+    leaf.scale.x=left ? -1 : 1;
+
+    // Give the leaf a visible opening angle so it cannot disappear inside the wall.
+    let openDeg=Number(o.openAngleDeg);
+    if(!Number.isFinite(openDeg))openDeg=35;
+    const signed=(inward?1:-1)*(left?-1:1);
+    leaf.rotation.y=THREE.MathUtils.degToRad(openDeg*signed);
+    g.add(leaf);
+
     return finishObject(g,o);
   }
-
   if(type==='window'){
     const g=new THREE.Group();
     const w=m(o.widthCm||100);
-    // frame
-    addBox(g,w,.055,.06,0,.58,0,CHROME());
-    addBox(g,w,.055,.06,0,1.72,0,CHROME());
-    addBox(g,.055,1.18,.06,-w/2,.15+1.13,0,CHROME());
-    addBox(g,.055,1.18,.06,w/2,.15+1.13,0,CHROME());
-    // glass
-    addBox(g,w*.92,1.08,.02,0,1.15,0,glassMat());
-    if((o.openingDirection||'right')==='left')g.rotation.y=Math.PI;
+    const h=Math.max(.5,m(o.heightCm||120));
+    const sill=Math.max(.2,m(o.sillHeightCm||90));
+    const frame=mat(0xdce1e5,.36,.18);
+
+    addBox(g,w,.055,.08,0,sill,0,frame);
+    addBox(g,w,.055,.08,0,sill+h,0,frame);
+    addBox(g,.055,h,.08,-w/2,sill+h/2,0,frame);
+    addBox(g,.055,h,.08, w/2,sill+h/2,0,frame);
+    addBox(g,.035,h*.95,.025,0,sill+h/2,0,glassMat());
+
+    // centre mullion for a more architectural appearance
+    addBox(g,.035,h,.055,0,sill+h/2,0,frame);
     return finishObject(g,o);
   }
-
   if(type==='wc')return realisticWC(o);
   if(type==='shower')return realisticShower(o);
   if(type==='bathtub')return realisticBathtub(o);
@@ -933,7 +1051,7 @@ function rebuild(){
   addFloorTileGrid(rootGroup,currentData);
 
   (objects||[]).filter(o=>o.type==='wall').forEach(w=>{
-    const mesh=wallMesh(w,roomHeight,wallMat);
+    const mesh=wallMesh(w,roomHeight,wallMat,objects);
     if(mesh)rootGroup.add(mesh);
     addWallTileAreaMeshes(rootGroup,w,roomHeight,objects);
   });

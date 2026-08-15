@@ -1,28 +1,31 @@
-Projekt Bau v1.9.17 – Professionelle Außen-Maßketten
+Projekt Bau v1.9.18 – ALLE Wandmasse auf oberster Ebene
 
-Grundlegende Änderung:
-- Maßlinien werden nicht mehr während jeder Wand einzeln improvisiert.
-- Vor dem Zeichnen wird zuerst für ALLE Wände ein gemeinsamer Maßplan berechnet.
-- Jeder Wandabschnitt erhält garantiert eine eigene Maßlinie.
-- Längere Hauptmasse werden zuerst platziert.
-- Kurze Maße erhalten bei Platzmangel automatisch die nächste freie Außenspur.
-- Bis zu 14 Maßspuren pro Wandseite werden unterstützt.
-- Kein Maß wird absichtlich in den Raum hineingedrückt.
-- Alle Werte bleiben lichte Innenmaße (Innenkante -> Innenkante).
+Asıl Fehler behoben:
+In früheren Versionen wurde das Maß einer Wand direkt beim Zeichnen
+dieser Wand gerendert. Danach gezeichnete Wände / Ecken / Rauminfo
+konnten diese Maßlinie oder den Text wieder überdecken.
 
-2D Ansicht:
-- Auto-Fit berücksichtigt nun auch alle Außen-Maßketten.
-- Dadurch werden obere/untere/seitliche Maße nicht abgeschnitten.
-- Der verfügbare Arbeitsbereich wird stärker ausgenutzt.
+v1.9.18:
+1. Zuerst werden ALLE Wände gezeichnet.
+2. Dann alle Wandverbindungen / Ecken.
+3. Dann Rauminfo und andere CAD-Inhalte.
+4. GANZ ZUM SCHLUSS werden sämtliche Wandmasse gezeichnet.
 
-2D als PDF:
-- Es wird nicht mehr der komplette riesige CAD-Canvas exportiert.
-- PDF bestimmt die echte Grenze von:
-  Grundriss + allen Außenmaßen.
-- Nur dieser Bereich wird hochauflösend ausgeschnitten.
-- Grundriss erscheint dadurch deutlich größer und mittig auf A4 Querformat.
-- Keine unnötig großen weißen Flächen.
+Dadurch:
+- keine Wand kann mehr ein Maß überdecken.
+- 0,60 m erscheint vollständig statt nur „6 m“.
+- kurze Zwischenwände behalten ihr Maß.
+- jede sichtbare Wand muss genau einen Maßeintrag erhalten.
+- falls ein Layout-Eintrag fehlt, erzeugt ein Fallback trotzdem ein Maß.
+- Konsole meldet einen Fehler, falls Wandanzahl und Maßanzahl nicht übereinstimmen.
 
-500-ms-Wand-Hold aus v1.9.16 bleibt erhalten.
+Maßwerte bleiben:
+- lichte Innenmaße
+- Innenkante -> Innenkante
+- Meterdarstellung
 
+2D als PDF nutzt denselben finalen Renderdurchlauf,
+deshalb werden auch dort alle Maße als oberste Ebene exportiert.
+
+500-ms-Hold zum Verschieben von Wänden bleibt erhalten.
 Deutsch / de-CH.

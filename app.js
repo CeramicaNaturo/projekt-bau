@@ -2863,6 +2863,14 @@ function drawFloorplan(preview=null){
       }
     }catch(e){console.error('Rauminfo',e)}
 
+    // TOP LAYER:
+    // Nothing is allowed to cover wall dimensions after this point.
+    try{
+      drawAllProfessionalWallDimensions();
+    }catch(e){
+      console.error('Wandmasse Endpass',e);
+    }
+
     fpCtx.restore();
     fpLastRenderError='';
 
@@ -3166,6 +3174,54 @@ function wallOutsideNormal(wall){
 
   return left;
 }
+
+function drawAllProfessionalWallDimensions(){
+  if(!fpShowMeasures)return;
+
+  const walls=(fpObjects||[]).filter(o=>o?.type==='wall' && isLayerVisible(o));
+
+  // Rebuild once from the final wall geometry.
+  prepareDimensionLayout();
+
+  let rendered=0;
+  for(const wall of walls){
+    // Hard fallback: if a wall somehow has no reserved layout,
+    // rebuild its basic measure directly rather than silently omitting it.
+    if(!fpDimensionLayoutMap.has(wall.id)){
+      const sx=Number(wall.x1),sy=Number(wall.y1);
+      const ex=Number(wall.x2),ey=Number(wall.y2);
+      const dx=ex-sx,dy=ey-sy;
+      const len=Math.hypot(dx,dy);
+      if(len>=1){
+        const out=wallOutsideNormal(wall);
+        const ux=dx/len,uy=dy/len;
+        const offset=Math.max(42,Number(wall.thickness||15)+26);
+        const ax=sx+out.nx*offset,ay=sy+out.ny*offset;
+        const bx=ex+out.nx*offset,by=ey+out.ny*offset;
+        fpDimensionLayoutMap.set(wall.id,{
+          wallId:wall.id,sx,sy,ex,ey,dx,dy,len,ux,uy,out,
+          ax,ay,bx,by,mx:(ax+bx)/2,my:(ay+by)/2,
+          text:`${formatDimensionMeters(len)} m`,
+          textWidth:70,textHeight:20,
+          labelBox:{minX:(ax+bx)/2-40,maxX:(ax+bx)/2+40,minY:(ay+by)/2-14,maxY:(ay+by)/2+14},
+          fullBox:{minX:Math.min(sx,ex,ax,bx),maxX:Math.max(sx,ex,ax,bx),minY:Math.min(sy,ey,ay,by),maxY:Math.max(sy,ey,ay,by)},
+          lane:99,offset,horizontal:Math.abs(dx)>=Math.abs(dy)
+        });
+      }
+    }
+
+    if(fpDimensionLayoutMap.has(wall.id)){
+      drawProfessionalWallDimension(wall);
+      rendered++;
+    }
+  }
+
+  // Do not silently lose a dimension again.
+  if(rendered!==walls.length){
+    console.error(`Massfehler: ${walls.length} Wände, aber ${rendered} Masse gezeichnet.`);
+  }
+}
+
 function drawProfessionalWallDimension(wall){
   if(!fpShowMeasures || !wall)return;
 
@@ -3323,7 +3379,9 @@ function drawFpObject(o,preview=false){
 
       drawWallTileAreas2D(o);
 
-      drawProfessionalWallDimension(o);
+      // v1.9.18: Wandmasse NICHT hier zeichnen.
+      // Alle Wandmasse kommen erst nach allen Wänden / Ecken / Rauminfo
+      // auf die oberste Zeichenebene.
       if(selected){
         // professionele Endpunktgriffe
         for(const p of [{x:o.x1,y:o.y1},{x:o.x2,y:o.y2}]){

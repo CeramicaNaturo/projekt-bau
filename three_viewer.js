@@ -900,7 +900,7 @@ function objectMesh(o){
 
     const frameMat=mat(0xf1f2f3,.34,.04);
     const leafMat=mat(0xf4f2ed,.38,.01);
-    const chrome=CHROME();
+    const chrome=mat(0x25282c,.28,.55);
 
     // frame only around the real wall opening
     addBox(g,.045,height+.06,.065,-width/2,height/2,0,frameMat);
@@ -909,7 +909,7 @@ function objectMesh(o){
 
     // pivoted door leaf
     const leaf=new THREE.Group();
-    addBox(leaf,width*.98,height,.038,width*.49,height/2,0,leafMat);
+    addBox(leaf,width*.98,height,.050,width*.49,height/2,0,leafMat);
     addCylinder(
       leaf,.014,.014,.11,
       width*.80,Math.min(height*.50,1.02),.035,
@@ -1243,7 +1243,7 @@ function addWallTopCaps(group,objects,roomHeight){
   geo.rotateX(Math.PI/2);
 
   const matCap=new THREE.MeshStandardMaterial({
-    color:0x303842,
+    color:0x343a40,
     roughness:.68,
     metalness:.01,
     side:THREE.DoubleSide
@@ -1317,7 +1317,7 @@ function addExteriorGround(group,objects){
   const minZ=Math.min(...zs),maxZ=Math.max(...zs);
 
   // Large enough to feel like a surrounding floor, but camera will ignore it.
-  const pad=2.4;
+  const pad=1.25;
   const w=(maxX-minX)+pad*2;
   const d=(maxZ-minZ)+pad*2;
   const cx=(minX+maxX)/2,cz=(minZ+maxZ)/2;
@@ -1339,39 +1339,43 @@ function fitReferenceCamera(objects){
   const pts=buildPolygon(objects);
   if(!pts||pts.length<3)return;
 
-  const xs=pts.map(p=>p.x),zs=pts.map(p=>p.y);
-  const minX=Math.min(...xs),maxX=Math.max(...xs);
-  const minZ=Math.min(...zs),maxZ=Math.max(...zs);
-
+  const xs=pts.map(p=>p.x), zs=pts.map(p=>p.y);
+  const minX=Math.min(...xs), maxX=Math.max(...xs);
+  const minZ=Math.min(...zs), maxZ=Math.max(...zs);
   const width=Math.max(.6,maxX-minX);
   const depth=Math.max(.6,maxZ-minZ);
-  const span=Math.max(width,depth);
   const cx=(minX+maxX)/2;
   const cz=(minZ+maxZ)/2;
-
   const roomH=Number(currentData?.record?.roomHeightM)||2.4;
 
-  controls.target.set(cx,roomH*.38,cz);
+  // Referans: oda ekranın ana objesi; üstten değil, yaklaşık 45° mimari perspektif.
+  controls.target.set(cx,roomH*.34,cz);
 
-  // Similar isometric viewpoint to the supplied reference:
-  // room fills most of the viewport, door/front side remains visible.
-  const dist=span*1.48 + roomH*.56;
+  // Dar/uzun odalarda mesafeyi yalnız uzun kenara göre büyütme.
+  // Böylece oda küçücük kalmaz.
+  const footprint=Math.sqrt(width*width+depth*depth);
+  const dist=Math.max(3.15, footprint*.82 + roomH*.30);
+
+  // Ön kapı tarafını ve sağ duvarı gören mimari açı.
   camera.position.set(
-    cx + dist*.72,
-    roomH + span*.88,
-    cz + dist*.86
+    cx + dist*.78,
+    roomH*.92 + dist*.50,
+    cz + dist*.92
   );
 
-  camera.fov=43;
+  camera.fov=39;
   camera.near=.02;
-  camera.far=120;
+  camera.far=100;
   camera.updateProjectionMatrix();
 
-  controls.minDistance=Math.max(.65,span*.38);
-  controls.maxDistance=Math.max(12,span*5);
+  controls.enableDamping=true;
+  controls.dampingFactor=.08;
+  controls.minPolarAngle=THREE.MathUtils.degToRad(28);
+  controls.maxPolarAngle=THREE.MathUtils.degToRad(78);
+  controls.minDistance=Math.max(1.2,footprint*.42);
+  controls.maxDistance=Math.max(10,footprint*3.2);
   controls.update();
-}
-function rebuild(){
+}function rebuild(){
   if(!scene || !currentData) return;
 
   if(rootGroup){
@@ -1395,14 +1399,14 @@ function rebuild(){
     floorTile,
     Math.max(1,rw/Math.max(.01,m(floorCfg.tileW||60))),
     Math.max(1,rd/Math.max(.01,m(floorCfg.tileH||60))),
-    0xb9bab7,
+    0xaeb0ae,
     {
       originX:floorCfg.originX||options?.tileOriginX||0,
       originY:floorCfg.originY||options?.tileOriginY||0,
       rotation:floorCfg.align==='45'?45:(options?.tileRotation||0)
     }
   );
-  const wallMat=materialForTile(wallTile,4,2,0xf4f3f0);
+  const wallMat=materialForTile(wallTile,4,2,0xf0efec);
 
   addExteriorGround(rootGroup,objects);
 
@@ -1411,7 +1415,7 @@ function rebuild(){
     : floorMesh(objects,floorMat);
   if(floor) rootGroup.add(floor);
 
-  addFloorTileGrid(rootGroup,currentData);
+  if(floorTile) addFloorTileGrid(rootGroup,currentData);
 
   (objects||[]).filter(o=>o.type==='wall').forEach(w=>{
     const mesh=wallMeshGroup(w,roomHeight,wallMat,objects);

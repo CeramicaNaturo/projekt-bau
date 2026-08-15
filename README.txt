@@ -1,36 +1,15 @@
-Projekt Bau v1.9.22 – 3D Referenz-Match
+Projekt Bau v1.9.23 – 3D Referenz Kamera Düzeltmesi
 
-Basis:
-- direkt aus der vom Benutzer hochgeladenen v1.9.21 ZIP erzeugt.
+Bu sürüm v1.9.22'nin ekranda fazla yukarıdan ve fazla uzaktan görünmesi üzerine düzeltildi.
 
-Wichtigste Änderungen:
-- 3D Kamera ignoriert den grossen Aussenboden vollständig.
-- Kamera wird nur anhand des echten Grundrisses berechnet.
-- Grundriss füllt den 3D-Arbeitsbereich deutlich stärker.
-- Perspektive wurde näher an die gelieferte Referenz angepasst.
-- 3D-Konstruktionsraster ist ausgeblendet.
+- 3D kamera artık top-down görünmüyor.
+- Grundriss 3D çalışma alanını çok daha fazla dolduruyor.
+- Kamera yaklaşık 45° mimari perspektife indirildi.
+- Dış ahşap zemin küçültüldü; ana unsur oda.
+- İç zemin referanstaki gibi daha belirgin gri.
+- Duvar üst halkası koyu antrasit.
+- Fayans seçilmemişse zeminde CAD/fayans grid'i çizilmiyor.
+- Kapı boşluğu gerçek açıklık olarak kalıyor; kapı kanadı açık ve dış zemin görünür.
+- Mevcut gerçekçi WC, Dusche, Badewanne, Waschtisch modelleri korunuyor.
 
-Wände:
-- helle Innen-/Aussenflächen.
-- oben eine einzige dunkle, zusammenhängende Wandring-Fläche.
-- der Wandring wird aus Innenpolygon + mathematisch versetztem Aussenpolygon berechnet.
-- dadurch wirkt die Oberkante wie im Referenzbild geschlossen und sauber.
-
-Tür:
-- bestehende echte Türöffnung aus v1.9.21 bleibt erhalten.
-- Türblatt standardmässig ca. 52 Grad offen.
-- durch die Türöffnung ist der Aussenboden sichtbar.
-
-Boden:
-- Innenboden neutral grau.
-- Aussenboden erhält eine prozedural erzeugte helle Holz-/Dielenstruktur.
-- keine riesige Rasterfläche mehr in der finalen Ansicht.
-
-Waschbecken:
-- Holz-Waschtischunterschrank.
-- weisse Platte und Becken.
-- schwarzer Wasserhahn.
-
-Bestehende Dusche, WC, Badewanne und weitere 3D-Objekte bleiben erhalten.
-
-Deutsch / de-CH.
+Deutsch / de-CH arayüz korunmuştur.

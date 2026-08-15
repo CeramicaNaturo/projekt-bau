@@ -1,7 +1,14 @@
-Projekt Bau v1.9.24
-- v1.9.23'te köşeleri bozan ikinci siyah/offset duvar üst poligonu kaldırıldı.
-- Artık yalnız gerçek duvar geometrisi çiziliyor.
-- Kamera daha alçak ve daha yakın mimari perspektife getirildi.
-- Oda 3D ekranda daha büyük görünür.
-- Dış zemin alanı küçültüldü.
-- Kapı açıklıkları ve 3D objeler korunur.
+Projekt Bau v1.9.25 – Referenz 3D Layout
+
+Bu sürümde hedef, verilen referans görünüme yaklaşmaktır.
+
+- Kamera artık kapının bulunduğu duvarı referans alır.
+- Kamera kapının dış tarafına yerleşir ve odaya doğru bakar.
+- Oda ekranda büyük görünür.
+- Duvar segmentleri köşelerin içine doğru uzatılmaz.
+- Her köşe için ayrı miter dolgu geometrisi oluşturulur.
+- Böylece köşelerdeki çıkıntı/çift duvar görüntüsü azaltılır.
+- Kapı çerçevesi ve kanadı ahşap rengindedir.
+- Kapı gerçek açıklıkta ve yaklaşık 48° açık görünür.
+- Dış ahşap zemin görünür kalır.
+- İç gri zemin ve mevcut WC/Dusche/Waschtisch 3D objeleri korunur.

@@ -382,11 +382,11 @@ function makeWallBoxSegment(w,objects,t0,t1,height,material,y0=0,extendStart=fal
 
   // Corners: extend half wall thickness along wall direction.
   // This makes orthogonal wall boxes overlap cleanly without gaps.
-  let extraStart=extendStart ? f.th/2 : 0;
-  let extraEnd=extendEnd ? f.th/2 : 0;
-  segLen += extraStart + extraEnd;
-
-  const centerShift=(extraEnd-extraStart)/2;
+  // v1.9.25: duvar segmentleri köşenin içinden geçmez.
+  // Köşeler ayrı bir miter dolgu geometrisi ile kapatılır.
+  let extraStart=0;
+  let extraEnd=0;
+  const centerShift=0;
   const baseX=f.x1 + f.dx*centerT + f.nx*f.th/2;
   const baseZ=f.z1 + f.dz*centerT + f.nz*f.th/2;
 
@@ -416,6 +416,112 @@ function nearestWallForOpening3D(o,objects){
     if(!best||dist<best.dist)best={wall:w,t:q,dist,len:Math.sqrt(l2)};
   }
   return best;
+}
+
+
+function connectedWallPairsAtPoint(objects){
+  const walls=(objects||[]).filter(o=>o.type==='wall');
+  const tol=.035;
+  const groups=[];
+
+  function keyFor(x,z){
+    return `${Math.round(x/tol)}_${Math.round(z/tol)}`;
+  }
+
+  const map=new Map();
+  for(const w of walls){
+    const pts=[
+      {x:m(w.x1),z:m(w.y1),w},
+      {x:m(w.x2),z:m(w.y2),w}
+    ];
+    for(const p of pts){
+      const k=keyFor(p.x,p.z);
+      if(!map.has(k))map.set(k,{x:p.x,z:p.z,walls:[]});
+      const g=map.get(k);
+      if(!g.walls.includes(w))g.walls.push(w);
+    }
+  }
+
+  return [...map.values()].filter(g=>g.walls.length>=2);
+}
+
+function wallOuterPointAtVertex3D(w,v,objects){
+  const f=wallFrame3D(w,objects);
+  return {x:v.x+f.nx*f.th,z:v.z+f.nz*f.th};
+}
+
+function outerLineForWall3D(w,objects){
+  const f=wallFrame3D(w,objects);
+  return {
+    a:{x:f.x1+f.nx*f.th,z:f.z1+f.nz*f.th},
+    b:{x:f.x2+f.nx*f.th,z:f.z2+f.nz*f.th}
+  };
+}
+
+function intersectXZ(a1,a2,b1,b2){
+  const rx=a2.x-a1.x, rz=a2.z-a1.z;
+  const sx=b2.x-b1.x, sz=b2.z-b1.z;
+  const den=rx*sz-rz*sx;
+  if(Math.abs(den)<1e-8)return null;
+  const qx=b1.x-a1.x,qz=b1.z-a1.z;
+  const t=(qx*sz-qz*sx)/den;
+  return {x:a1.x+t*rx,z:a1.z+t*rz};
+}
+
+function cornerFillerMesh(vertex,w1,w2,height,objects,material){
+  const o1=wallOuterPointAtVertex3D(w1,vertex,objects);
+  const o2=wallOuterPointAtVertex3D(w2,vertex,objects);
+  const l1=outerLineForWall3D(w1,objects);
+  const l2=outerLineForWall3D(w2,objects);
+  const inter=intersectXZ(l1.a,l1.b,l2.a,l2.b);
+
+  if(!inter)return null;
+
+  const maxT=Math.max(wallFrame3D(w1,objects).th,wallFrame3D(w2,objects).th);
+  if(Math.hypot(inter.x-vertex.x,inter.z-vertex.z)>maxT*4)return null;
+
+  const pts=[vertex,o1,inter,o2];
+  const verts=[];
+  const idx=[];
+
+  pts.forEach(q=>verts.push(q.x,0,q.z));
+  pts.forEach(q=>verts.push(q.x,height,q.z));
+
+  // bottom/top fan
+  idx.push(0,2,1, 0,3,2);
+  idx.push(4,5,6, 4,6,7);
+
+  for(let i=0;i<4;i++){
+    const j=(i+1)%4;
+    idx.push(i,j,4+j, i,4+j,4+i);
+  }
+
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+
+  const mesh=new THREE.Mesh(geo,material.clone());
+  mesh.castShadow=true;
+  mesh.receiveShadow=true;
+  return mesh;
+}
+
+function addCleanWallCorners(group,objects,height,material){
+  const joints=connectedWallPairsAtPoint(objects);
+  for(const j of joints){
+    // Most architectural corners connect exactly two walls.
+    for(let i=0;i<j.walls.length;i++){
+      for(let k=i+1;k<j.walls.length;k++){
+        const mesh=cornerFillerMesh(
+          {x:j.x,z:j.z},
+          j.walls[i],j.walls[k],
+          height,objects,material
+        );
+        if(mesh)group.add(mesh);
+      }
+    }
+  }
 }
 
 function openingsForWall3D(w,objects){
@@ -631,7 +737,7 @@ function realisticSink(o){
   const w=m(o.widthCm||60),d=m(o.depthCm||50);
   const ceramic=CERAMIC(),chrome=CHROME();
 
-  const wood=mat(0x9f6f43,.62,.01);
+  const wood=mat(0x8f6037,.60,.01);
   const darkWood=mat(0x7b5436,.70,.01);
 
   // vanity cabinet
@@ -898,8 +1004,8 @@ function objectMesh(o){
     const width=m(o.widthCm||90);
     const height=Math.max(.5,m(o.heightCm||205));
 
-    const frameMat=mat(0xf1f2f3,.34,.04);
-    const leafMat=mat(0xf4f2ed,.38,.01);
+    const frameMat=mat(0xc89557,.58,.02);
+    const leafMat=mat(0xb77a3f,.62,.01);
     const chrome=mat(0x25282c,.28,.55);
 
     // frame only around the real wall opening
@@ -923,7 +1029,7 @@ function objectMesh(o){
     leaf.scale.x=left ? -1 : 1;
 
     let openDeg=Number(o.openAngleDeg);
-    if(!Number.isFinite(openDeg))openDeg=52;
+    if(!Number.isFinite(openDeg))openDeg=48;
 
     const signed=(inward?1:-1)*(left?-1:1);
     leaf.rotation.y=THREE.MathUtils.degToRad(openDeg*signed);
@@ -1227,7 +1333,7 @@ function addExteriorGround(group,objects){
   const minZ=Math.min(...zs),maxZ=Math.max(...zs);
 
   // Large enough to feel like a surrounding floor, but camera will ignore it.
-  const pad=.70;
+  const pad=1.00;
   const w=(maxX-minX)+pad*2;
   const d=(maxZ-minZ)+pad*2;
   const cx=(minX+maxX)/2,cz=(minZ+maxZ)/2;
@@ -1245,36 +1351,63 @@ function addExteriorGround(group,objects){
 
 function fitReferenceCamera(objects){
   if(!camera||!controls)return;
+
   const pts=buildPolygon(objects);
   if(!pts||pts.length<3)return;
 
   const xs=pts.map(p=>p.x), zs=pts.map(p=>p.y);
   const minX=Math.min(...xs), maxX=Math.max(...xs);
   const minZ=Math.min(...zs), maxZ=Math.max(...zs);
-  const w=Math.max(.5,maxX-minX), d=Math.max(.5,maxZ-minZ);
+  const width=Math.max(.5,maxX-minX);
+  const depth=Math.max(.5,maxZ-minZ);
+  const diag=Math.hypot(width,depth);
   const cx=(minX+maxX)/2, cz=(minZ+maxZ)/2;
-  const h=Number(currentData?.record?.roomHeightM)||2.4;
-  const diag=Math.hypot(w,d);
+  const roomH=Number(currentData?.record?.roomHeightM)||2.4;
 
-  controls.target.set(cx,h*.43,cz);
-  const dist=Math.max(2.35,diag*.61+h*.18);
+  let camX,camZ;
+  const door=(objects||[]).find(o=>o.type==='door');
 
-  // Reference-style architectural oblique view.
-  camera.position.set(cx+dist*.72,h*.62+dist*.30,cz+dist*.88);
-  camera.fov=46;
+  if(door){
+    const hit=nearestWallForOpening3D(door,objects);
+    if(hit){
+      const f=wallFrame3D(hit.wall,objects);
+      const doorX=f.x1+f.dx*hit.t;
+      const doorZ=f.z1+f.dz*hit.t;
+
+      // Camera sits outside the entrance and looks into the room.
+      const dist=Math.max(2.4,diag*.72);
+      camX=doorX+f.nx*dist + f.ux*dist*.34;
+      camZ=doorZ+f.nz*dist + f.uz*dist*.34;
+    }
+  }
+
+  if(!Number.isFinite(camX)||!Number.isFinite(camZ)){
+    const dist=Math.max(2.4,diag*.72);
+    camX=cx+dist*.72;
+    camZ=cz+dist*.88;
+  }
+
+  controls.target.set(cx,roomH*.43,cz);
+
+  camera.position.set(
+    camX,
+    roomH*.78 + Math.max(1.15,diag*.28),
+    camZ
+  );
+
+  camera.fov=42;
   camera.near=.02;
   camera.far=100;
   camera.updateProjectionMatrix();
 
   controls.enableDamping=true;
   controls.dampingFactor=.08;
-  controls.minPolarAngle=THREE.MathUtils.degToRad(42);
-  controls.maxPolarAngle=THREE.MathUtils.degToRad(80);
+  controls.minPolarAngle=THREE.MathUtils.degToRad(35);
+  controls.maxPolarAngle=THREE.MathUtils.degToRad(78);
   controls.minDistance=Math.max(1.0,diag*.30);
-  controls.maxDistance=Math.max(8,diag*2.8);
+  controls.maxDistance=Math.max(8,diag*3);
   controls.update();
-}
-function rebuild(){
+}function rebuild(){
   if(!scene || !currentData) return;
 
   if(rootGroup){
@@ -1325,6 +1458,8 @@ function rebuild(){
     if(mesh)rootGroup.add(mesh);
     addWallTileAreaMeshes(rootGroup,w,roomHeight,objects);
   });
+
+  addCleanWallCorners(rootGroup,objects,roomHeight,wallMat);
 
 
   (objects||[]).filter(o=>o.type!=='wall'&&o.type!=='text').forEach(o=>{

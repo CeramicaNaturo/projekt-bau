@@ -1,14 +1,36 @@
-Projekt Bau v1.9.25 – Referenz 3D Layout
+Projekt Bau v2.0.0 PRO
 
-Bu sürümde hedef, verilen referans görünüme yaklaşmaktır.
+PROFESYONEL ÇEKİRDEK
+- Otomatik kayıt (900 ms)
+- Gespeichert / Nicht gespeichert / Speicherfehler durumu
+- Ctrl+S kayıt
+- Speichern editörü kapatmaz
+- Teknik Grundriss-Prüfung
+- Açık duvar uçları kontrolü
+- Kapanmamış plan kontrolü
+- Tür/Fenster duvar bağlantısı kontrolü
+- Raumhöhe kontrolü
+- Plan JSON export
+- Profesyonel CAD durum çubuğu
+- Werkzeug / Fang / Auswahl / Fläche / Speicherstatus
 
-- Kamera artık kapının bulunduğu duvarı referans alır.
-- Kamera kapının dış tarafına yerleşir ve odaya doğru bakar.
-- Oda ekranda büyük görünür.
-- Duvar segmentleri köşelerin içine doğru uzatılmaz.
-- Her köşe için ayrı miter dolgu geometrisi oluşturulur.
-- Böylece köşelerdeki çıkıntı/çift duvar görüntüsü azaltılır.
-- Kapı çerçevesi ve kanadı ahşap rengindedir.
-- Kapı gerçek açıklıkta ve yaklaşık 48° açık görünür.
-- Dış ahşap zemin görünür kalır.
-- İç gri zemin ve mevcut WC/Dusche/Waschtisch 3D objeleri korunur.
+KISAYOLLAR
+- F = Ansicht einpassen
+- 2 = 2D CAD
+- 3 = 3D
+- V = Grundriss prüfen
+- ESC = Auswählen
+- Ctrl+S = Speichern
+
+MEVCUT MODÜLLER
+- 2D CAD / 3D
+- Innenmass-System
+- Wand / Tür / Fenster
+- Sanitär / Möbel
+- Wand- und Bodenfliesen
+- Einteilung / Fliesenstart
+- 2D als PDF / PDF-Bericht
+- Fotos / Aufgaben / Material
+- Projekt Backup
+
+Bu sürümden sonra geliştirmeler 2.x serisinde yapılmalıdır.

@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer"><strong>Version 1.9.25</strong></div>
+  <div class="cad-sidebar-footer"><strong>Version 2.0.0 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v1.9.25</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.0.0 PRO</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -274,7 +274,9 @@
       <div class="fp-appbar-left">
         <button id="closeFloorplan" class="icon-button" title="Zurück">⌂</button>
         <strong>Grundriss bearbeiten</strong>
+        <span class="fp-pro-chip">CAD PRO</span>
         <span id="floorplanEditorTitle" class="fp-plan-select">Grundriss</span>
+        <span id="fpAutosaveBadge" class="fp-autosave-badge" data-state="saved">Gespeichert</span>
       </div>
       <div class="fp-appbar-actions">
         <button id="fpToggleInspector" class="secondary fp-tablet-only" title="Eigenschaften ein-/ausblenden">Eigenschaften</button>
@@ -282,6 +284,8 @@
           <button id="fpView2D" class="secondary active">2D CAD</button>
           <button id="fpView3D" class="secondary">3D</button>
         </div>
+        <button id="fpProValidate" class="secondary" title="Grundriss technisch prüfen">Prüfen</button>
+        <button id="fpProExport" class="secondary" title="Grundriss als JSON exportieren">Plan exportieren</button>
         <button id="fpSave" class="primary">Speichern</button>
         <button id="fp2DPdfButton" class="secondary" title="2D-Grundriss direkt als PDF">2D als PDF</button>
         <button id="fpPdfButton" class="secondary">PDF-Bericht erstellen</button>
@@ -698,10 +702,23 @@
       <button data-add-object="drain"><b>⊠</b><span>Bodenablauf</span></button>
     </div>
 
-    <div class="fp-statusbar">
-      <span>TIPP: Wandlänge wird beim Zeichnen live angezeigt · Folgewand startet automatisch am letzten Endpunkt · Ziehen = bewegen · STRG = fein · SHIFT = 45°/90° · Entf = löschen · STRG+D = duplizieren · Feinposition: <b id="fpFineStatus">1 cm</b></span>
-      <span id="fpStatusSelection">Keine Auswahl</span>
+    <div id="fpProStatusbar" class="fp-pro-statusbar">
+      <div><span class="fp-status-dot"></span><strong>CAD PRO</strong></div>
+      <div id="fpProToolStatus">Werkzeug: Auswählen</div>
+      <div id="fpProSnapStatus">Fang: 1 cm</div>
+      <div id="fpProSelectionStatus">Keine Auswahl</div>
+      <div id="fpProAreaStatus">Fläche: –</div>
+      <div id="fpProSaveStatus">Gespeichert</div>
     </div>
+
+    <aside id="fpProValidationPanel" class="fp-pro-validation hidden">
+      <div class="fp-pro-validation-head">
+        <div><small>TECHNISCHE PRÜFUNG</small><strong>Grundriss-Check</strong></div>
+        <button id="fpProValidationClose" type="button" class="icon-button">×</button>
+      </div>
+      <div id="fpProValidationSummary" class="fp-pro-validation-summary"></div>
+      <div id="fpProValidationList" class="fp-pro-validation-list"></div>
+    </aside>
   </div>
 </div>
 <script type="importmap">
@@ -712,8 +729,9 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=1925"></script>
+<script type="module" src="three_viewer.js?v=2000"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=1925"></script>
+<script src="app.js?v=2000"></script>
+<script src="pro_core.js?v=2000"></script>
 </body>
 </html>

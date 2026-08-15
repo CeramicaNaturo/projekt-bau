@@ -1,34 +1,32 @@
-Projekt Bau v1.9.19 – 3D Ecken + Türen + realistischere Objekte
+Projekt Bau v1.9.20 – 3D Referenzstil
 
-3D Wände:
-- Jede Wand wird als extrudiertes Wand-Polygon erzeugt.
-- Gespeicherte Wandlinie bleibt die Innenkante.
+Diese Version richtet die 3D-Ansicht an dem zuletzt vorgeschlagenen Referenzbild aus.
+
+Wände:
+- Keine ExtrudeGeometry-Wandartefakte mehr.
+- Wandkörper werden als eigene präzise Quad-Prismen erzeugt.
+- Gemeinsame Ecken verwenden berechnete Miter-Aussenpunkte.
+- Innenkante bleibt exakt die Grundriss-Innenkante.
 - Wandstärke wächst nach aussen.
-- An verbundenen Wänden werden die äusseren Wandkanten mathematisch geschnitten.
-- Dadurch entstehen saubere Miter-Ecken statt überlappender Boxen / Vorsprünge.
 
-Tür:
-- 2D-Türen werden im 3D-Modell immer als Türgruppe erzeugt.
-- Türrahmen, Türblatt und Griff sind sichtbar.
-- Türblatt wird standardmässig 35° geöffnet dargestellt, damit es nicht in der Wand verschwindet.
-- Öffnungsrichtung links/rechts und innen/aussen werden berücksichtigt.
-- Türhöhe und Türbreite werden verwendet.
+Türen:
+- Tür erzeugt jetzt eine ECHTE Öffnung in der zugehörigen Wand.
+- Wand wird links/rechts der Tür geteilt.
+- Über der Tür bleibt nur der Sturz.
+- Durch die geöffnete Tür sieht man tatsächlich nach draussen.
+- Türrahmen und Türblatt werden an der nächstgelegenen Wand ausgerichtet.
+- Türblatt standardmässig ca. 52° geöffnet.
 
 Fenster:
-- Rahmen, Glas, Mittelsteg und Brüstungshöhe werden realistischer dargestellt.
+- Auch Fenster erzeugen eine echte Wandöffnung.
+- Unterhalb bleibt die Brüstung, oberhalb der Sturz.
+- Rahmen/Glas werden exakt an der Wand ausgerichtet.
 
-Realistischere Badobjekte:
-- Waschbecken
-- WC
-- Dusche
-- Badewanne
-wurden geometrisch überarbeitet und verwenden ihre echten Breite/Tiefe-Masse.
+3D Umgebung:
+- Grosser heller Holz-/Bauboden ausserhalb des Raums.
+- Innenboden dunkler/neutraler wie im Referenzbild.
+- Hellere Innenwände und kräftigere Beleuchtung.
 
-Bestehende Funktionen:
-- Innenmasse
-- 500-ms-Wand-Hold
-- Fliesen
-- 2D/PDF
-bleiben erhalten.
+Bestehende realistischere Badobjekte aus v1.9.19 bleiben erhalten.
 
 Deutsch / de-CH.

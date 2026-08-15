@@ -346,31 +346,30 @@ function wallOuterJointPoint3D(w,objects,atStart){
   return own;
 }
 
-function wallMesh(w,height,material,objects){
-  const x1=m(w.x1),z1=m(w.y1),x2=m(w.x2),z2=m(w.y2);
-  const len=Math.hypot(x2-x1,z2-z1);
-  if(len<.001)return null;
+function makePrismFromQuad(points,height,material){
+  // points = [{x,z}, ...] clockwise/counter-clockwise footprint
+  const verts=[];
+  const faces=[];
 
-  // Saved wall line = room-side inner edge.
-  const o1=wallOuterJointPoint3D(w,objects,true);
-  const o2=wallOuterJointPoint3D(w,objects,false);
+  // bottom
+  points.forEach(p=>verts.push(p.x,0,p.z));
+  // top
+  points.forEach(p=>verts.push(p.x,height,p.z));
 
-  const shape=new THREE.Shape();
-  shape.moveTo(x1,z1);
-  shape.lineTo(x2,z2);
-  shape.lineTo(o2.x,o2.z);
-  shape.lineTo(o1.x,o1.z);
-  shape.closePath();
+  // bottom + top triangles (quad)
+  faces.push(0,2,1, 0,3,2);
+  faces.push(4,5,6, 4,6,7);
 
-  const geo=new THREE.ExtrudeGeometry(shape,{
-    depth:height,
-    bevelEnabled:false,
-    steps:1
-  });
+  // four sides
+  for(let i=0;i<4;i++){
+    const j=(i+1)%4;
+    faces.push(i,j,4+j, i,4+j,4+i);
+  }
 
-  // ExtrudeGeometry uses XY + Z depth; rotate so depth becomes vertical Y.
-  geo.rotateX(Math.PI/2);
-  geo.translate(0,height,0);
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  geo.setIndex(faces);
+  geo.computeVertexNormals();
 
   const mesh=new THREE.Mesh(geo,material.clone());
   mesh.castShadow=true;
@@ -378,6 +377,125 @@ function wallMesh(w,height,material,objects){
   return mesh;
 }
 
+function wallSegmentPrism(w,objects,t0,t1,height,material,miterStart=false,miterEnd=false){
+  const x1=m(w.x1),z1=m(w.y1),x2=m(w.x2),z2=m(w.y2);
+  const dx=x2-x1,dz=z2-z1;
+  const len=Math.hypot(dx,dz)||1;
+  const ux=dx/len,uz=dz/len;
+  const {nx,nz}=wallOuterNormal3D(w,objects);
+  const th=m(w.thickness||15);
+
+  const i1={x:x1+dx*t0,z:z1+dz*t0};
+  const i2={x:x1+dx*t1,z:z1+dz*t1};
+
+  let o1={x:i1.x+nx*th,z:i1.z+nz*th};
+  let o2={x:i2.x+nx*th,z:i2.z+nz*th};
+
+  if(miterStart && t0<=1e-6)o1=wallOuterJointPoint3D(w,objects,true);
+  if(miterEnd && t1>=1-1e-6)o2=wallOuterJointPoint3D(w,objects,false);
+
+  return makePrismFromQuad([i1,i2,o2,o1],height,material);
+}
+
+function nearestWallForOpening3D(o,objects){
+  const px=m(o.x),pz=m(o.y);
+  let best=null;
+  for(const w of (objects||[])){
+    if(w.type!=='wall')continue;
+    const x1=m(w.x1),z1=m(w.y1),x2=m(w.x2),z2=m(w.y2);
+    const dx=x2-x1,dz=z2-z1,l2=dx*dx+dz*dz;
+    if(l2<1e-8)continue;
+    const q=Math.max(0,Math.min(1,((px-x1)*dx+(pz-z1)*dz)/l2));
+    const x=x1+q*dx,z=z1+q*dz;
+    const dist=Math.hypot(px-x,pz-z);
+    if(!best||dist<best.dist)best={wall:w,t:q,dist,len:Math.sqrt(l2)};
+  }
+  return best;
+}
+
+function openingsForWall3D(w,objects){
+  const out=[];
+  const x1=m(w.x1),z1=m(w.y1),x2=m(w.x2),z2=m(w.y2);
+  const len=Math.hypot(x2-x1,z2-z1)||1;
+
+  for(const o of (objects||[])){
+    if(o.type!=='door'&&o.type!=='window')continue;
+    const hit=nearestWallForOpening3D(o,objects);
+    if(!hit||hit.wall!==w)continue;
+
+    const width=m(o.widthCm||(o.type==='door'?90:100));
+    const halfT=width/(2*len);
+    const a=Math.max(0,hit.t-halfT);
+    const b=Math.min(1,hit.t+halfT);
+
+    if(b-a>.001){
+      out.push({
+        type:o.type,
+        object:o,
+        a,b,
+        bottom:o.type==='door'?0:Math.max(.1,m(o.sillHeightCm||90)),
+        top:o.type==='door'
+          ?Math.max(.5,m(o.heightCm||205))
+          :Math.max(.6,m((o.sillHeightCm||90)+(o.heightCm||120)))
+      });
+    }
+  }
+  return out.sort((p,q)=>p.a-q.a);
+}
+
+function wallMeshGroup(w,height,material,objects){
+  const group=new THREE.Group();
+  const openings=openingsForWall3D(w,objects);
+
+  if(!openings.length){
+    const mesh=wallSegmentPrism(w,objects,0,1,height,material,true,true);
+    group.add(mesh);
+    return group;
+  }
+
+  let cursor=0;
+  for(let i=0;i<openings.length;i++){
+    const op=openings[i];
+
+    // solid wall before opening
+    if(op.a>cursor+.001){
+      const part=wallSegmentPrism(
+        w,objects,cursor,op.a,height,material,
+        cursor<=1e-6,false
+      );
+      group.add(part);
+    }
+
+    // lintel above door/window: opening remains genuinely empty below.
+    if(op.top<height-.01){
+      const lintelH=height-op.top;
+      const lintel=wallSegmentPrism(
+        w,objects,op.a,op.b,lintelH,material,false,false
+      );
+      lintel.position.y=op.top;
+      group.add(lintel);
+    }
+
+    // for window, keep wall below sill
+    if(op.type==='window' && op.bottom>.01){
+      const lower=wallSegmentPrism(
+        w,objects,op.a,op.b,op.bottom,material,false,false
+      );
+      group.add(lower);
+    }
+
+    cursor=Math.max(cursor,op.b);
+  }
+
+  if(cursor<1-.001){
+    const part=wallSegmentPrism(
+      w,objects,cursor,1,height,material,false,true
+    );
+    group.add(part);
+  }
+
+  return group;
+}
 function buildPolygon(objects){
   const walls=(objects||[]).filter(o=>o.type==='wall');
   if(walls.length<3) return null;
@@ -610,7 +728,7 @@ function realisticKitchenSink(o){
   const steel=mat(0xb9c1c8,.24,.72);
 
   // counter block
-  addBox(g,w,.07,d,0,.90,0,mat(0xd8d8d3,.5,.08));
+  addBox(g,w,.07,d,0,.90,0,mat(0xbfc0bd,.5,.08));
   // inset bowl
   addBox(g,w*.66,.20,d*.56,0,.79,0,steel);
   // dark interior
@@ -770,32 +888,43 @@ function objectMesh(o){
     const g=new THREE.Group();
     const w=m(o.widthCm||90);
     const h=Math.max(.5,m(o.heightCm||205));
-    const frame=mat(0xe9edf0,.42,.08);
-    const wood=WOOD();
+    const frame=mat(0xf2f3f4,.36,.06);
+    const wood=mat(0xf0eee9,.50,.02);
     const chrome=CHROME();
 
-    // Visible frame posts + lintel
-    addBox(g,.055,h+.08,.075,-w/2,h/2,0,frame);
-    addBox(g,.055,h+.08,.075, w/2,h/2,0,frame);
-    addBox(g,w+.11,.055,.075,0,h+.025,0,frame);
+    // Door frame around the actual wall opening
+    addBox(g,.045,h+.06,.075,-w/2,h/2,0,frame);
+    addBox(g,.045,h+.06,.075, w/2,h/2,0,frame);
+    addBox(g,w+.09,.045,.075,0,h+.02,0,frame);
 
-    // Door leaf as separate pivot group. 2D opening direction controls hinge side.
     const leaf=new THREE.Group();
-    addBox(leaf,w*.98,h,.045,w*.49,h/2,0,wood);
-    addCylinder(leaf,.016,.016,.11,w*.80,Math.min(h*.52,1.05),.045,chrome,16,Math.PI/2);
+    addBox(leaf,w*.97,h,.038,w*.485,h/2,0,wood);
+    addCylinder(leaf,.014,.014,.10,w*.80,Math.min(h*.50,1.02),.035,chrome,16,Math.PI/2);
 
     const left=(o.openingDirection||'right')==='left';
     const inward=(o.openingSide||o.swingSide||'inside')!=='outside';
 
-    leaf.position.x=left ? w/2 : -w/2;
-    leaf.scale.x=left ? -1 : 1;
+    leaf.position.x=left?w/2:-w/2;
+    leaf.scale.x=left?-1:1;
 
-    // Give the leaf a visible opening angle so it cannot disappear inside the wall.
     let openDeg=Number(o.openAngleDeg);
-    if(!Number.isFinite(openDeg))openDeg=35;
+    if(!Number.isFinite(openDeg))openDeg=52;
+
     const signed=(inward?1:-1)*(left?-1:1);
     leaf.rotation.y=THREE.MathUtils.degToRad(openDeg*signed);
     g.add(leaf);
+
+    // Snap/rotate door group to its nearest wall so the real hole and door match.
+    const hit=nearestWallForOpening3D(o,currentData?.objects||[]);
+    if(hit){
+      const ww=hit.wall;
+      const x1=m(ww.x1),z1=m(ww.y1),x2=m(ww.x2),z2=m(ww.y2);
+      const dx=x2-x1,dz=z2-z1;
+      const px=x1+dx*hit.t,pz=z1+dz*hit.t;
+      g.position.set(px,0,pz);
+      g.rotation.y=-Math.atan2(dz,dx);
+      return g;
+    }
 
     return finishObject(g,o);
   }
@@ -804,16 +933,25 @@ function objectMesh(o){
     const w=m(o.widthCm||100);
     const h=Math.max(.5,m(o.heightCm||120));
     const sill=Math.max(.2,m(o.sillHeightCm||90));
-    const frame=mat(0xdce1e5,.36,.18);
+    const frame=mat(0xf0f2f4,.30,.12);
 
-    addBox(g,w,.055,.08,0,sill,0,frame);
-    addBox(g,w,.055,.08,0,sill+h,0,frame);
-    addBox(g,.055,h,.08,-w/2,sill+h/2,0,frame);
-    addBox(g,.055,h,.08, w/2,sill+h/2,0,frame);
-    addBox(g,.035,h*.95,.025,0,sill+h/2,0,glassMat());
+    addBox(g,w,.045,.07,0,sill,0,frame);
+    addBox(g,w,.045,.07,0,sill+h,0,frame);
+    addBox(g,.045,h,.07,-w/2,sill+h/2,0,frame);
+    addBox(g,.045,h,.07, w/2,sill+h/2,0,frame);
+    addBox(g,.025,h*.96,.020,0,sill+h/2,0,glassMat());
+    addBox(g,.025,h,.045,0,sill+h/2,0,frame);
 
-    // centre mullion for a more architectural appearance
-    addBox(g,.035,h,.055,0,sill+h/2,0,frame);
+    const hit=nearestWallForOpening3D(o,currentData?.objects||[]);
+    if(hit){
+      const ww=hit.wall;
+      const x1=m(ww.x1),z1=m(ww.y1),x2=m(ww.x2),z2=m(ww.y2);
+      const dx=x2-x1,dz=z2-z1;
+      g.position.set(x1+dx*hit.t,0,z1+dz*hit.t);
+      g.rotation.y=-Math.atan2(dz,dx);
+      return g;
+    }
+
     return finishObject(g,o);
   }
   if(type==='wc')return realisticWC(o);
@@ -1010,6 +1148,42 @@ function texturedFloorSurface(objects,material){
   return mesh;
 }
 
+
+function addExteriorGround(group,objects){
+  const pts=buildPolygon(objects);
+  if(!pts||pts.length<3)return;
+
+  const xs=pts.map(p=>p.x),zs=pts.map(p=>p.y);
+  const minX=Math.min(...xs),maxX=Math.max(...xs);
+  const minZ=Math.min(...zs),maxZ=Math.max(...zs);
+  const w=Math.max(8,(maxX-minX)+5);
+  const d=Math.max(8,(maxZ-minZ)+5);
+  const cx=(minX+maxX)/2,cz=(minZ+maxZ)/2;
+
+  const matGround=new THREE.MeshStandardMaterial({
+    color:0xd7bb93,
+    roughness:.78,
+    metalness:0
+  });
+
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(w,d),matGround);
+  ground.rotation.x=-Math.PI/2;
+  ground.position.set(cx,-.018,cz);
+  ground.receiveShadow=true;
+  group.add(ground);
+
+  // subtle plank lines to resemble the reference wood floor
+  const lineMat=new THREE.LineBasicMaterial({color:0xb9986f,transparent:true,opacity:.28});
+  const step=.24;
+  for(let z=minZ-2;z<=maxZ+2;z+=step){
+    const geo=new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(minX-2,-.012,z),
+      new THREE.Vector3(maxX+2,-.012,z)
+    ]);
+    group.add(new THREE.Line(geo,lineMat));
+  }
+}
+
 function rebuild(){
   if(!scene || !currentData) return;
 
@@ -1041,7 +1215,9 @@ function rebuild(){
       rotation:floorCfg.align==='45'?45:(options?.tileRotation||0)
     }
   );
-  const wallMat=materialForTile(wallTile,4,2,0xf1f3f5);
+  const wallMat=materialForTile(wallTile,4,2,0xf7f7f5);
+
+  addExteriorGround(rootGroup,objects);
 
   const floor = floorTile?.photo
     ? texturedFloorSurface(objects,floorMat)
@@ -1051,7 +1227,7 @@ function rebuild(){
   addFloorTileGrid(rootGroup,currentData);
 
   (objects||[]).filter(o=>o.type==='wall').forEach(w=>{
-    const mesh=wallMesh(w,roomHeight,wallMat,objects);
+    const mesh=wallMeshGroup(w,roomHeight,wallMat,objects);
     if(mesh)rootGroup.add(mesh);
     addWallTileAreaMeshes(rootGroup,w,roomHeight,objects);
   });

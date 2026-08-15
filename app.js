@@ -541,6 +541,7 @@ function initTileTools(){
 let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
 let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null,fpObjectRotateDrag=null,fpPinchState=null,fpPickingFloorTileOrigin=false,fpEditingWallTileAreaId=null;
+let fpWallMoveHold={timer:null,ready:false,wallId:null,start:null,moved:false};
 let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpLastRenderError='',fpObjectWallSnap=true,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
 const fpCanvas=$('floorplanCanvas'),fpCtx=fpCanvas.getContext('2d');
@@ -1804,6 +1805,35 @@ function floorStart(ev){
     }
 
     const hit=hitTest(p);
+
+  // v1.9.16: In Auswahl-Modus bewegt sich eine Wand nicht sofort.
+  // Kurzer Tap/Klick = nur auswählen. Erst nach 500 ms Halten darf gezogen werden.
+  if(fpTool==='select' && hit && hit.type==='wall'){
+    fpSelectedId=hit.id;
+    fpDragOffset=null;
+
+    if(fpWallMoveHold.timer)clearTimeout(fpWallMoveHold.timer);
+    fpWallMoveHold={
+      timer:null,
+      ready:false,
+      wallId:hit.id,
+      start:{x:p.x,y:p.y},
+      moved:false
+    };
+
+    fpWallMoveHold.timer=setTimeout(()=>{
+      if(fpWallMoveHold.wallId===hit.id){
+        fpWallMoveHold.ready=true;
+        fpDragOffset={x:p.x,y:p.y};
+      }
+    },500);
+
+    updateSelectedInfo();
+    drawFloorplan();
+    ev.preventDefault();
+    return;
+  }
+
     fpSelectedId=hit?hit.id:null;
     if(hit){
       pushHistory();
@@ -1904,6 +1934,18 @@ function floorMove(ev){
 
   const p=fpPoint(ev);
 
+  // Duvar için 500 ms bekleme dolmadan hiçbir konum değişikliği yapma.
+  if(fpWallMoveHold.wallId && !fpWallMoveHold.ready){
+    const dx=p.x-(fpWallMoveHold.start?.x||p.x);
+    const dy=p.y-(fpWallMoveHold.start?.y||p.y);
+    if(Math.hypot(dx,dy)>8){
+      fpWallMoveHold.moved=true;
+    }
+    ev.preventDefault();
+    return;
+  }
+
+
   if(fpTool==='pan' && fpPanStart){
     const r=fpCanvas.getBoundingClientRect();
     const sx=fpCanvas.width/r.width;
@@ -1977,6 +2019,15 @@ function floorMove(ev){
 }
 
 function floorEnd(ev){
+
+  if(fpWallMoveHold.timer){
+    clearTimeout(fpWallMoveHold.timer);
+    fpWallMoveHold.timer=null;
+  }
+  fpWallMoveHold.ready=false;
+  fpWallMoveHold.wallId=null;
+  fpWallMoveHold.start=null;
+
   if(!fpDrawing)return;
   ev.preventDefault();
 
@@ -2988,21 +3039,24 @@ function drawProfessionalWallDimension(wall){
   const textWidth=fpCtx.measureText(text).width;
   const textHeight=Math.max(18/z,14);
 
-  // Automatic dimension lanes.
-  // Start comfortably outside the wall, then move farther out until the
-  // label does not collide with any already placed dimension.
+  // Viewport in world coordinates.
+  const viewMinX=(-fpViewOffsetX)/(fpZoom||1);
+  const viewMinY=(-fpViewOffsetY)/(fpZoom||1);
+  const viewMaxX=viewMinX+fpCanvas.clientWidth/(fpZoom||1);
+  const viewMaxY=viewMinY+fpCanvas.clientHeight/(fpZoom||1);
+  const safe=18/z;
+
   let offset=Math.max(34,Number(wall.thickness||15)+22);
   const laneStep=Math.max(26,24/z);
 
   let ax,ay,bx,by,mx,my,labelBox;
   let tries=0;
 
-  while(tries<12){
+  while(tries<16){
     ax=sx+out.nx*offset; ay=sy+out.ny*offset;
     bx=ex+out.nx*offset; by=ey+out.ny*offset;
     mx=(ax+bx)/2; my=(ay+by)/2;
 
-    // Axis-aligned bounding box large enough for horizontal or vertical text.
     const horizontal=Math.abs(dx)>=Math.abs(dy);
     const halfW=(horizontal?textWidth:textHeight)/2 + 8/z;
     const halfH=(horizontal?textHeight:textWidth)/2 + 8/z;
@@ -3013,12 +3067,35 @@ function drawProfessionalWallDimension(wall){
     };
 
     const collision=fpDimensionLayoutBoxes.some(b=>boxesOverlap(labelBox,b,5/z));
-    if(!collision)break;
+    const clipped=
+      labelBox.minX<viewMinX+safe ||
+      labelBox.maxX>viewMaxX-safe ||
+      labelBox.minY<viewMinY+safe ||
+      labelBox.maxY>viewMaxY-safe;
 
+    if(!collision && !clipped)break;
+
+    // First try the next lane outward.
     offset+=laneStep;
     tries++;
+
+    // If outward lanes leave the viewport, flip the lane toward the wall.
+    if(tries===8){
+      offset=-Math.max(30,Number(wall.thickness||15)+18);
+    }
   }
 
+  // Final clamp of label center so text itself can never be cut.
+  const horizontal=Math.abs(dx)>=Math.abs(dy);
+  const halfW=(horizontal?textWidth:textHeight)/2 + 10/z;
+  const halfH=(horizontal?textHeight:textWidth)/2 + 10/z;
+  mx=Math.max(viewMinX+safe+halfW,Math.min(viewMaxX-safe-halfW,mx));
+  my=Math.max(viewMinY+safe+halfH,Math.min(viewMaxY-safe-halfH,my));
+
+  labelBox={
+    minX:mx-halfW,maxX:mx+halfW,
+    minY:my-halfH,maxY:my+halfH
+  };
   fpDimensionLayoutBoxes.push(labelBox);
 
   const tick=7/z;
@@ -3029,8 +3106,6 @@ function drawProfessionalWallDimension(wall){
   fpCtx.lineWidth=Math.max(.75,1/z);
   fpCtx.lineCap='butt';
 
-  // Extension lines: begin exactly at inner edge, but leave a tiny visual
-  // gap at the wall so the plan remains clean.
   fpCtx.beginPath();
   fpCtx.moveTo(sx+out.nx*extensionGap,sy+out.ny*extensionGap);
   fpCtx.lineTo(ax,ay);
@@ -3038,13 +3113,11 @@ function drawProfessionalWallDimension(wall){
   fpCtx.lineTo(bx,by);
   fpCtx.stroke();
 
-  // Main dimension line
   fpCtx.beginPath();
   fpCtx.moveTo(ax,ay);
   fpCtx.lineTo(bx,by);
   fpCtx.stroke();
 
-  // Architectural diagonal ticks
   const tx=(ux+out.nx)*tick*.6;
   const ty=(uy+out.ny)*tick*.6;
   fpCtx.beginPath();
@@ -3052,7 +3125,6 @@ function drawProfessionalWallDimension(wall){
   fpCtx.moveTo(bx-tx,by-ty); fpCtx.lineTo(bx+tx,by+ty);
   fpCtx.stroke();
 
-  // Label remains parallel to the measured wall.
   let angle=Math.atan2(dy,dx);
   if(angle>Math.PI/2 || angle<-Math.PI/2)angle+=Math.PI;
 
@@ -3066,14 +3138,10 @@ function drawProfessionalWallDimension(wall){
 
   fpCtx.fillStyle='rgba(255,255,255,.98)';
   fpCtx.fillRect(-textWidth/2-pad,-boxH/2,textWidth+pad*2,boxH);
-
   fpCtx.fillStyle='#0f172a';
   fpCtx.fillText(text,0,0);
   fpCtx.restore();
-}function fpIsDimensionedObject(o){
-  return !!o && !['wall','text'].includes(o.type);
 }
-
 function fpObjectRealDims(o){
   const [dw,dd]=fpDefaultObjectDimensions(o?.type);
   return {

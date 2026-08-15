@@ -346,55 +346,57 @@ function wallOuterJointPoint3D(w,objects,atStart){
   return own;
 }
 
-function makePrismFromQuad(points,height,material){
-  // points = [{x,z}, ...] clockwise/counter-clockwise footprint
-  const verts=[];
-  const faces=[];
 
-  // bottom
-  points.forEach(p=>verts.push(p.x,0,p.z));
-  // top
-  points.forEach(p=>verts.push(p.x,height,p.z));
-
-  // bottom + top triangles (quad)
-  faces.push(0,2,1, 0,3,2);
-  faces.push(4,5,6, 4,6,7);
-
-  // four sides
-  for(let i=0;i<4;i++){
-    const j=(i+1)%4;
-    faces.push(i,j,4+j, i,4+j,4+i);
-  }
-
-  const geo=new THREE.BufferGeometry();
-  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
-  geo.setIndex(faces);
-  geo.computeVertexNormals();
-
-  const mesh=new THREE.Mesh(geo,material.clone());
-  mesh.castShadow=true;
-  mesh.receiveShadow=true;
-  return mesh;
-}
-
-function wallSegmentPrism(w,objects,t0,t1,height,material,miterStart=false,miterEnd=false){
+function wallFrame3D(w,objects){
   const x1=m(w.x1),z1=m(w.y1),x2=m(w.x2),z2=m(w.y2);
   const dx=x2-x1,dz=z2-z1;
   const len=Math.hypot(dx,dz)||1;
   const ux=dx/len,uz=dz/len;
-  const {nx,nz}=wallOuterNormal3D(w,objects);
-  const th=m(w.thickness||15);
+  const out=wallOuterNormal3D(w,objects);
+  const th=Math.max(.02,m(w.thickness||15));
 
-  const i1={x:x1+dx*t0,z:z1+dz*t0};
-  const i2={x:x1+dx*t1,z:z1+dz*t1};
+  // gespeicherte Linie = Innenkante
+  // Box-Mittellinie liegt um halbe Wandstärke nach aussen versetzt
+  return {
+    x1,z1,x2,z2,dx,dz,len,ux,uz,
+    nx:out.nx,nz:out.nz,
+    th,
+    cx:(x1+x2)/2 + out.nx*th/2,
+    cz:(z1+z2)/2 + out.nz*th/2,
+    angle:-Math.atan2(dz,dx)
+  };
+}
 
-  let o1={x:i1.x+nx*th,z:i1.z+nz*th};
-  let o2={x:i2.x+nx*th,z:i2.z+nz*th};
+function makeWallBoxSegment(w,objects,t0,t1,height,material,y0=0,extendStart=false,extendEnd=false){
+  const f=wallFrame3D(w,objects);
 
-  if(miterStart && t0<=1e-6)o1=wallOuterJointPoint3D(w,objects,true);
-  if(miterEnd && t1>=1-1e-6)o2=wallOuterJointPoint3D(w,objects,false);
+  let a=Math.max(0,Math.min(1,t0));
+  let b=Math.max(0,Math.min(1,t1));
+  if(b<=a+.0001)return null;
 
-  return makePrismFromQuad([i1,i2,o2,o1],height,material);
+  let segLen=(b-a)*f.len;
+  let centerT=(a+b)/2;
+
+  // Corners: extend half wall thickness along wall direction.
+  // This makes orthogonal wall boxes overlap cleanly without gaps.
+  let extraStart=extendStart ? f.th/2 : 0;
+  let extraEnd=extendEnd ? f.th/2 : 0;
+  segLen += extraStart + extraEnd;
+
+  const centerShift=(extraEnd-extraStart)/2;
+  const baseX=f.x1 + f.dx*centerT + f.nx*f.th/2;
+  const baseZ=f.z1 + f.dz*centerT + f.nz*f.th/2;
+
+  const cx=baseX + f.ux*centerShift;
+  const cz=baseZ + f.uz*centerShift;
+
+  const geo=new THREE.BoxGeometry(segLen,height,f.th);
+  const mesh=new THREE.Mesh(geo,material.clone());
+  mesh.position.set(cx,y0+height/2,cz);
+  mesh.rotation.y=f.angle;
+  mesh.castShadow=true;
+  mesh.receiveShadow=true;
+  return mesh;
 }
 
 function nearestWallForOpening3D(o,objects){
@@ -448,50 +450,51 @@ function wallMeshGroup(w,height,material,objects){
   const openings=openingsForWall3D(w,objects);
 
   if(!openings.length){
-    const mesh=wallSegmentPrism(w,objects,0,1,height,material,true,true);
-    group.add(mesh);
+    const mesh=makeWallBoxSegment(w,objects,0,1,height,material,0,true,true);
+    if(mesh)group.add(mesh);
     return group;
   }
 
   let cursor=0;
+
   for(let i=0;i<openings.length;i++){
     const op=openings[i];
 
-    // solid wall before opening
+    // full-height wall before the opening
     if(op.a>cursor+.001){
-      const part=wallSegmentPrism(
-        w,objects,cursor,op.a,height,material,
+      const before=makeWallBoxSegment(
+        w,objects,cursor,op.a,height,material,0,
         cursor<=1e-6,false
       );
-      group.add(part);
+      if(before)group.add(before);
     }
 
-    // lintel above door/window: opening remains genuinely empty below.
+    // wall below a window sill
+    if(op.type==='window' && op.bottom>.01){
+      const lower=makeWallBoxSegment(
+        w,objects,op.a,op.b,op.bottom,material,0,false,false
+      );
+      if(lower)group.add(lower);
+    }
+
+    // lintel above door/window
     if(op.top<height-.01){
       const lintelH=height-op.top;
-      const lintel=wallSegmentPrism(
-        w,objects,op.a,op.b,lintelH,material,false,false
+      const lintel=makeWallBoxSegment(
+        w,objects,op.a,op.b,lintelH,material,op.top,false,false
       );
-      lintel.position.y=op.top;
-      group.add(lintel);
-    }
-
-    // for window, keep wall below sill
-    if(op.type==='window' && op.bottom>.01){
-      const lower=wallSegmentPrism(
-        w,objects,op.a,op.b,op.bottom,material,false,false
-      );
-      group.add(lower);
+      if(lintel)group.add(lintel);
     }
 
     cursor=Math.max(cursor,op.b);
   }
 
+  // full-height wall after last opening
   if(cursor<1-.001){
-    const part=wallSegmentPrism(
-      w,objects,cursor,1,height,material,false,true
+    const after=makeWallBoxSegment(
+      w,objects,cursor,1,height,material,0,false,true
     );
-    group.add(part);
+    if(after)group.add(after);
   }
 
   return group;
@@ -574,7 +577,7 @@ function glassMat(){
   return new THREE.MeshPhysicalMaterial({
     color:0xd8f3ff,
     transparent:true,
-    opacity:.28,
+    opacity:.14,
     roughness:.08,
     metalness:0,
     transmission:.55,
@@ -886,43 +889,50 @@ function objectMesh(o){
 
   if(type==='door'){
     const g=new THREE.Group();
-    const w=m(o.widthCm||90);
-    const h=Math.max(.5,m(o.heightCm||205));
-    const frame=mat(0xf2f3f4,.36,.06);
-    const wood=mat(0xf0eee9,.50,.02);
+    const width=m(o.widthCm||90);
+    const height=Math.max(.5,m(o.heightCm||205));
+
+    const frameMat=mat(0xf1f2f3,.34,.04);
+    const leafMat=mat(0xf5f3ee,.44,.01);
     const chrome=CHROME();
 
-    // Door frame around the actual wall opening
-    addBox(g,.045,h+.06,.075,-w/2,h/2,0,frame);
-    addBox(g,.045,h+.06,.075, w/2,h/2,0,frame);
-    addBox(g,w+.09,.045,.075,0,h+.02,0,frame);
+    // frame only around the real wall opening
+    addBox(g,.045,height+.06,.065,-width/2,height/2,0,frameMat);
+    addBox(g,.045,height+.06,.065, width/2,height/2,0,frameMat);
+    addBox(g,width+.09,.045,.065,0,height+.02,0,frameMat);
 
+    // pivoted door leaf
     const leaf=new THREE.Group();
-    addBox(leaf,w*.97,h,.038,w*.485,h/2,0,wood);
-    addCylinder(leaf,.014,.014,.10,w*.80,Math.min(h*.50,1.02),.035,chrome,16,Math.PI/2);
+    addBox(leaf,width*.98,height,.038,width*.49,height/2,0,leafMat);
+    addCylinder(
+      leaf,.014,.014,.11,
+      width*.80,Math.min(height*.50,1.02),.035,
+      chrome,16,Math.PI/2
+    );
 
     const left=(o.openingDirection||'right')==='left';
     const inward=(o.openingSide||o.swingSide||'inside')!=='outside';
 
-    leaf.position.x=left?w/2:-w/2;
-    leaf.scale.x=left?-1:1;
+    leaf.position.x=left ? width/2 : -width/2;
+    leaf.scale.x=left ? -1 : 1;
 
     let openDeg=Number(o.openAngleDeg);
-    if(!Number.isFinite(openDeg))openDeg=52;
+    if(!Number.isFinite(openDeg))openDeg=58;
 
     const signed=(inward?1:-1)*(left?-1:1);
     leaf.rotation.y=THREE.MathUtils.degToRad(openDeg*signed);
     g.add(leaf);
 
-    // Snap/rotate door group to its nearest wall so the real hole and door match.
     const hit=nearestWallForOpening3D(o,currentData?.objects||[]);
     if(hit){
       const ww=hit.wall;
-      const x1=m(ww.x1),z1=m(ww.y1),x2=m(ww.x2),z2=m(ww.y2);
-      const dx=x2-x1,dz=z2-z1;
-      const px=x1+dx*hit.t,pz=z1+dz*hit.t;
+      const f=wallFrame3D(ww,currentData?.objects||[]);
+      const px=f.x1+f.dx*hit.t;
+      const pz=f.z1+f.dz*hit.t;
+
+      // sit exactly at the inner wall edge, no wall box behind it
       g.position.set(px,0,pz);
-      g.rotation.y=-Math.atan2(dz,dx);
+      g.rotation.y=f.angle;
       return g;
     }
 
@@ -945,10 +955,9 @@ function objectMesh(o){
     const hit=nearestWallForOpening3D(o,currentData?.objects||[]);
     if(hit){
       const ww=hit.wall;
-      const x1=m(ww.x1),z1=m(ww.y1),x2=m(ww.x2),z2=m(ww.y2);
-      const dx=x2-x1,dz=z2-z1;
-      g.position.set(x1+dx*hit.t,0,z1+dz*hit.t);
-      g.rotation.y=-Math.atan2(dz,dx);
+      const f=wallFrame3D(ww,currentData?.objects||[]);
+      g.position.set(f.x1+f.dx*hit.t,0,f.z1+f.dz*hit.t);
+      g.rotation.y=f.angle;
       return g;
     }
 
@@ -1149,6 +1158,24 @@ function texturedFloorSurface(objects,material){
 }
 
 
+
+function addWallTopCaps(group,objects,roomHeight){
+  const capMat=new THREE.MeshStandardMaterial({
+    color:0x2f3742,
+    roughness:.72,
+    metalness:.01
+  });
+
+  for(const w of (objects||[])){
+    if(w.type!=='wall')continue;
+    const f=wallFrame3D(w,objects);
+    const cap=makeWallBoxSegment(
+      w,objects,0,1,.025,capMat,roomHeight-.012,true,true
+    );
+    if(cap)group.add(cap);
+  }
+}
+
 function addExteriorGround(group,objects){
   const pts=buildPolygon(objects);
   if(!pts||pts.length<3)return;
@@ -1173,7 +1200,7 @@ function addExteriorGround(group,objects){
   group.add(ground);
 
   // subtle plank lines to resemble the reference wood floor
-  const lineMat=new THREE.LineBasicMaterial({color:0xb9986f,transparent:true,opacity:.28});
+  const lineMat=new THREE.LineBasicMaterial({color:0xb9986f,transparent:true,opacity:.14});
   const step=.24;
   for(let z=minZ-2;z<=maxZ+2;z+=step){
     const geo=new THREE.BufferGeometry().setFromPoints([
@@ -1182,6 +1209,30 @@ function addExteriorGround(group,objects){
     ]);
     group.add(new THREE.Line(geo,lineMat));
   }
+}
+
+
+function fitReferenceCamera(objects){
+  if(!camera||!controls)return;
+  const pts=buildPolygon(objects);
+  if(!pts||pts.length<3)return;
+
+  const xs=pts.map(p=>p.x),zs=pts.map(p=>p.y);
+  const minX=Math.min(...xs),maxX=Math.max(...xs);
+  const minZ=Math.min(...zs),maxZ=Math.max(...zs);
+  const cx=(minX+maxX)/2,cz=(minZ+maxZ)/2;
+  const span=Math.max(maxX-minX,maxZ-minZ,2);
+
+  controls.target.set(cx,.9,cz);
+  camera.position.set(
+    cx+span*1.55,
+    span*1.35+1.5,
+    cz+span*1.70
+  );
+  camera.near=.02;
+  camera.far=500;
+  camera.updateProjectionMatrix();
+  controls.update();
 }
 
 function rebuild(){

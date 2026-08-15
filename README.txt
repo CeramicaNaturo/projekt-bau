@@ -1,32 +1,35 @@
-Projekt Bau v1.9.20 – 3D Referenzstil
+Projekt Bau v1.9.21 – Stable 3D Reference Style
 
-Diese Version richtet die 3D-Ansicht an dem zuletzt vorgeschlagenen Referenzbild aus.
+WICHTIGE KORREKTUR:
+v1.9.20 verwendete komplexe Quad-Prismen. In konkaven Ecken konnten
+Vertex-Reihenfolgen kippen und dadurch dreieckige / schiefe Wände entstehen.
 
-Wände:
-- Keine ExtrudeGeometry-Wandartefakte mehr.
-- Wandkörper werden als eigene präzise Quad-Prismen erzeugt.
-- Gemeinsame Ecken verwenden berechnete Miter-Aussenpunkte.
-- Innenkante bleibt exakt die Grundriss-Innenkante.
-- Wandstärke wächst nach aussen.
+v1.9.21:
+- Wände wieder mit stabiler THREE.BoxGeometry-Technik.
+- Jede Wand wird als echte Segment-Box mit realer Wandstärke gebaut.
+- Die gespeicherte Wandlinie bleibt die Innenkante.
+- Die Box-Mittellinie wird um halbe Wandstärke nach aussen verschoben.
+- An Wandenden wird um halbe Wandstärke verlängert.
+- Dadurch treffen sich 90°-Ecken sauber und geschlossen.
+- Keine dreieckigen oder verdrehten Wandflächen mehr.
 
 Türen:
-- Tür erzeugt jetzt eine ECHTE Öffnung in der zugehörigen Wand.
-- Wand wird links/rechts der Tür geteilt.
-- Über der Tür bleibt nur der Sturz.
-- Durch die geöffnete Tür sieht man tatsächlich nach draussen.
-- Türrahmen und Türblatt werden an der nächstgelegenen Wand ausgerichtet.
-- Türblatt standardmässig ca. 52° geöffnet.
+- Türöffnung wird wirklich aus der Wand ausgespart.
+- Wand wird links und rechts der Tür getrennt.
+- Oberhalb bleibt nur der Sturz.
+- Durch die offene Tür ist der Aussenbereich sichtbar.
+- Türblatt standardmässig 58° geöffnet.
+- Tür sitzt exakt auf der Innenkante der zugehörigen Wand.
 
 Fenster:
-- Auch Fenster erzeugen eine echte Wandöffnung.
-- Unterhalb bleibt die Brüstung, oberhalb der Sturz.
-- Rahmen/Glas werden exakt an der Wand ausgerichtet.
+- gleiche stabile Wandzuordnung.
+- echte Öffnung mit Brüstung und Sturz.
 
-3D Umgebung:
-- Grosser heller Holz-/Bauboden ausserhalb des Raums.
-- Innenboden dunkler/neutraler wie im Referenzbild.
-- Hellere Innenwände und kräftigere Beleuchtung.
-
-Bestehende realistischere Badobjekte aus v1.9.19 bleiben erhalten.
+3D Darstellung:
+- dunkle saubere Wandoberkanten wie im Referenzbild.
+- heller Aussenboden.
+- neutrale Innenflächen.
+- automatische isometrische Kamera auf den Raum.
+- bestehende realistischere Badobjekte bleiben erhalten.
 
 Deutsch / de-CH.

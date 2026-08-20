@@ -760,6 +760,27 @@ function realisticSink(o){
 
   return finishObject(g,o);
 }
+function realisticMirror(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||80);
+  const h=Math.max(.25,m(o.heightCm||80));
+  const mount=Math.max(.20,m(o.mountHeightCm||110));
+  const frame=mat(0x20252b,.24,.55);
+  const mirrorMat=new THREE.MeshPhysicalMaterial({
+    color:0xdcecf2,metalness:.72,roughness:.08,
+    transparent:true,opacity:.88,clearcoat:1,clearcoatRoughness:.04,
+    side:THREE.DoubleSide
+  });
+
+  addBox(g,w+.045,h+.045,.035,0,mount+h/2,0,frame);
+  addBox(g,w,h,.018,0,mount+h/2,-.022,mirrorMat);
+
+  // subtle reflected highlight
+  addBox(g,w*.08,h*.72,.006,-w*.28,mount+h*.52,-.035,
+         new THREE.MeshPhysicalMaterial({color:0xffffff,transparent:true,opacity:.28,roughness:.05}));
+
+  return finishObject(g,o);
+}
 function realisticWC(o){
   const g=new THREE.Group();
   const ceramic=CERAMIC(), chrome=CHROME();
@@ -1096,6 +1117,7 @@ function objectMesh(o){
   if(type==='shower')return realisticShower(o);
   if(type==='bathtub')return realisticBathtub(o);
   if(type==='sink')return realisticSink(o);
+  if(type==='mirror')return realisticMirror(o);
   if(type==='kitchenSink')return realisticKitchenSink(o);
   if(type==='stove')return realisticStove(o);
   if(type==='fridge')return realisticFridge(o);

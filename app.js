@@ -540,7 +540,7 @@ function initTileTools(){
 
 let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
-let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null,fpObjectRotateDrag=null,fpPinchState=null,fpPickingFloorTileOrigin=false,fpEditingWallTileAreaId=null;
+let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null,fpObjectRotateDrag=null,fpPinchState=null,fpPickingFloorTileOrigin=false,fpDraggingFloorTileOrigin=false,fpFloorTileDragStart=null,fpEditingWallTileAreaId=null;
 let fpWallMoveHold={timer:null,ready:false,wallId:null,start:null,moved:false};
 let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpLastRenderError='',fpObjectWallSnap=true,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
@@ -557,7 +557,7 @@ function restoreObjects(arr){fpObjects=JSON.parse(JSON.stringify(arr));fpSelecte
 function layerForType(type){
   if(type==='wall')return 'walls';
   if(type==='door'||type==='window')return 'openings';
-  if(['wc','shower','bathtub','sink','drain','kitchenSink'].includes(type))return 'sanitary';
+  if(['wc','shower','bathtub','sink','drain','kitchenSink','mirror'].includes(type))return 'sanitary';
   if(['stove','fridge','washingMachine','table','chair','sofa','bed','cabinet','plant'].includes(type))return 'furniture';
   return 'notes';
 }
@@ -1365,6 +1365,28 @@ function drawWallTileAreas2D(wall){
 function ensureFloorTileConfig(){if(!fpRecord)return null;if(!fpRecord.floorTile)fpRecord.floorTile={enabled:false,tileW:60,tileH:60,jointMm:2,pattern:'straight',originMode:'manual',originX:0,originY:0,align:'room',materialId:''};return fpRecord.floorTile}
 function roomBoundsCm(){const w=(fpObjects||[]).filter(o=>o.type==='wall');if(!w.length)return null;const xs=[],ys=[];w.forEach(v=>{xs.push(+v.x1,+v.x2);ys.push(+v.y1,+v.y2)});return{minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)}}
 function resolveFloorTileOrigin(c){const b=roomBoundsCm();if(!b)return{x:+c.originX||0,y:+c.originY||0};const m=c.originMode||'manual';if(m==='topLeft')return{x:b.minX,y:b.minY};if(m==='topRight')return{x:b.maxX,y:b.minY};if(m==='bottomLeft')return{x:b.minX,y:b.maxY};if(m==='bottomRight')return{x:b.maxX,y:b.maxY};if(m==='center')return{x:(b.minX+b.maxX)/2,y:(b.minY+b.maxY)/2};return{x:+c.originX||0,y:+c.originY||0}}
+
+function floorTileOriginHandleHit(p){
+  const c=ensureFloorTileConfig();
+  if(!c?.enabled || (c.originMode||'manual')!=='manual')return false;
+  const o=resolveFloorTileOrigin(c);
+  const r=22/Math.max(.2,fpZoom||1);
+  return Math.hypot(p.x-o.x,p.y-o.y)<=r;
+}
+function setFloorTileOriginFromPoint(p,live=true){
+  const c=ensureFloorTileConfig();if(!c)return;
+  c.enabled=true;c.originMode='manual';
+  // Manuel Einteilung: no grid snapping. User can slide joints continuously.
+  c.originX=Math.round(Number(p.x)*10)/10;
+  c.originY=Math.round(Number(p.y)*10)/10;
+  const ox=$('fpFloorTileOriginX'),oy=$('fpFloorTileOriginY'),mode=$('fpFloorTileOriginMode');
+  if(ox)ox.value=String(c.originX);
+  if(oy)oy.value=String(c.originY);
+  if(mode)mode.value='manual';
+  syncFloorTileTo3D(c);
+  if(live){drawFloorplan();if(fp3DMode)refresh3D();}
+}
+
 function readFloorTileControls(c){c.tileW=Math.max(1,+$('fpFloorTileW')?.value||60);c.tileH=Math.max(1,+$('fpFloorTileH')?.value||60);c.jointMm=Math.max(0,+$('fpFloorTileJoint')?.value||0);c.pattern=$('fpFloorTilePattern')?.value||'straight';c.originMode=$('fpFloorTileOriginMode')?.value||'manual';c.align=$('fpFloorTileAlign')?.value||'room';c.originX=+$('fpFloorTileOriginX')?.value||0;c.originY=+$('fpFloorTileOriginY')?.value||0;c.materialId=$('fpFloorTileMaterial')?.value||''}
 
 function tileMaterialOptionsHtml(selected=''){
@@ -1403,7 +1425,7 @@ function updateFloorTileInfo(){const c=ensureFloorTileConfig(),i=$('fpFloorTileI
 function syncFloorTileTo3D(c){if(!c)return;const o=resolveFloorTileOrigin(c);fp3DOptions.tileOriginX=Math.round(o.x);fp3DOptions.tileOriginY=Math.round(o.y);fp3DOptions.tileRotation=c.align==='45'?45:0;fp3DOptions.floorMaterialId=c.materialId||'';if(fpRecord)fpRecord.threeDOptions={...fp3DOptions}}
 function applyFloorTileConfig(){const c=ensureFloorTileConfig();if(!c)return;pushHistory();readFloorTileControls(c);c.enabled=true;syncFloorTileTo3D(c);updateFloorTilePanel();drawFloorplan();if(fp3DMode)refresh3D()}
 function centerFloorTileLayout(){const c=ensureFloorTileConfig(),b=roomBoundsCm();if(!c||!b)return;readFloorTileControls(c);const rx=((b.maxX-b.minX)%c.tileW+c.tileW)%c.tileW,ry=((b.maxY-b.minY)%c.tileH+c.tileH)%c.tileH;c.originMode='manual';c.originX=b.minX+rx/2;c.originY=b.minY+ry/2;c.enabled=true;syncFloorTileTo3D(c);updateFloorTilePanel();drawFloorplan();if(fp3DMode)refresh3D()}
-function drawFloorTiles2D(){const c=ensureFloorTileConfig();if(!c?.enabled)return;const p=getRoomPolygon(),b=roomBoundsCm();if(!p||!b)return;let tw=+c.tileW||60,th=+c.tileH||60;if(c.pattern==='vertical')[tw,th]=[th,tw];const o=resolveFloorTileOrigin(c),z=Math.max(.2,fpZoom||1);fpCtx.save();fpCtx.strokeStyle='rgba(14,116,144,.55)';fpCtx.lineWidth=.8/z;fpCtx.beginPath();p.forEach((q,k)=>k?fpCtx.lineTo(q.x,q.y):fpCtx.moveTo(q.x,q.y));fpCtx.closePath();fpCtx.clip();fpCtx.translate(o.x,o.y);fpCtx.rotate(c.align==='45'?Math.PI/4:0);fpCtx.translate(-o.x,-o.y);const mg=Math.max(b.maxX-b.minX,b.maxY-b.minY)*1.5+500,sx=Math.floor((b.minX-mg-o.x)/tw)*tw+o.x,ex=Math.ceil((b.maxX+mg-o.x)/tw)*tw+o.x,sy=Math.floor((b.minY-mg-o.y)/th)*th+o.y,ey=Math.ceil((b.maxY+mg-o.y)/th)*th+o.y;for(let x=sx;x<=ex;x+=tw){fpCtx.beginPath();fpCtx.moveTo(x,sy);fpCtx.lineTo(x,ey);fpCtx.stroke()}for(let y=sy,row=0;y<=ey;y+=th,row++){fpCtx.beginPath();fpCtx.moveTo(sx,y);fpCtx.lineTo(ex,y);fpCtx.stroke();let sh=0;if(c.pattern==='half'&&row%2)sh=tw/2;if(c.pattern==='third')sh=(row%3)*tw/3;if(sh)for(let x=sx+sh;x<=ex;x+=tw){fpCtx.beginPath();fpCtx.moveTo(x,y);fpCtx.lineTo(x,y+th);fpCtx.stroke()}}fpCtx.restore();fpCtx.save();fpCtx.strokeStyle='#0e7490';fpCtx.fillStyle='#0e7490';fpCtx.lineWidth=2/z;fpCtx.beginPath();fpCtx.arc(o.x,o.y,7/z,0,Math.PI*2);fpCtx.stroke();fpCtx.font=`bold ${11/z}px Arial`;fpCtx.fillText('Fliesenstart',o.x+10/z,o.y-10/z);fpCtx.restore()}
+function drawFloorTiles2D(){const c=ensureFloorTileConfig();if(!c?.enabled)return;const p=getRoomPolygon(),b=roomBoundsCm();if(!p||!b)return;let tw=+c.tileW||60,th=+c.tileH||60;if(c.pattern==='vertical')[tw,th]=[th,tw];const o=resolveFloorTileOrigin(c),z=Math.max(.2,fpZoom||1);fpCtx.save();fpCtx.strokeStyle='rgba(14,116,144,.55)';fpCtx.lineWidth=.8/z;fpCtx.beginPath();p.forEach((q,k)=>k?fpCtx.lineTo(q.x,q.y):fpCtx.moveTo(q.x,q.y));fpCtx.closePath();fpCtx.clip();fpCtx.translate(o.x,o.y);fpCtx.rotate(c.align==='45'?Math.PI/4:0);fpCtx.translate(-o.x,-o.y);const mg=Math.max(b.maxX-b.minX,b.maxY-b.minY)*1.5+500,sx=Math.floor((b.minX-mg-o.x)/tw)*tw+o.x,ex=Math.ceil((b.maxX+mg-o.x)/tw)*tw+o.x,sy=Math.floor((b.minY-mg-o.y)/th)*th+o.y,ey=Math.ceil((b.maxY+mg-o.y)/th)*th+o.y;for(let x=sx;x<=ex;x+=tw){fpCtx.beginPath();fpCtx.moveTo(x,sy);fpCtx.lineTo(x,ey);fpCtx.stroke()}for(let y=sy,row=0;y<=ey;y+=th,row++){fpCtx.beginPath();fpCtx.moveTo(sx,y);fpCtx.lineTo(ex,y);fpCtx.stroke();let sh=0;if(c.pattern==='half'&&row%2)sh=tw/2;if(c.pattern==='third')sh=(row%3)*tw/3;if(sh)for(let x=sx+sh;x<=ex;x+=tw){fpCtx.beginPath();fpCtx.moveTo(x,y);fpCtx.lineTo(x,y+th);fpCtx.stroke()}}fpCtx.restore();fpCtx.save();fpCtx.strokeStyle='#0e7490';fpCtx.fillStyle='#0e7490';fpCtx.lineWidth=2/z;fpCtx.beginPath();fpCtx.arc(o.x,o.y,9/z,0,Math.PI*2);fpCtx.fillStyle='rgba(255,255,255,.95)';fpCtx.fill();fpCtx.stroke();fpCtx.beginPath();fpCtx.moveTo(o.x-5/z,o.y);fpCtx.lineTo(o.x+5/z,o.y);fpCtx.moveTo(o.x,o.y-5/z);fpCtx.lineTo(o.x,o.y+5/z);fpCtx.stroke();fpCtx.font=`bold ${11/z}px Arial`;fpCtx.fillStyle='#0e7490';fpCtx.fillText('Fliesenstart · ziehen',o.x+13/z,o.y-11/z);fpCtx.restore()}
 
 function updateWallQuickPanel(){
   const panel=$('fpWallQuickPanel');
@@ -1875,11 +1897,23 @@ function hitTest(p){
 }
 function floorStart(ev){
   if(!fpCanvas)return;
-  if(fpPickingFloorTileOrigin){ev.preventDefault();const p=fpPoint(ev),c=ensureFloorTileConfig();c.enabled=true;c.originMode='manual';c.originX=snap(p.x);c.originY=snap(p.y);syncFloorTileTo3D(c);fpPickingFloorTileOrigin=false;updateFloorTilePanel();drawFloorplan();if(fp3DMode)refresh3D();return;}
+  if(fpPickingFloorTileOrigin){ev.preventDefault();const p=fpPoint(ev);setFloorTileOriginFromPoint(p,false);fpPickingFloorTileOrigin=false;updateFloorTilePanel();drawFloorplan();if(fp3DMode)refresh3D();return;}
   ev.preventDefault();
 
   const p=fpPoint(ev);
   updateCadMousePosition(p);
+
+  // v2.2: drag the visible Fliesenstart handle directly in Auswahl mode.
+  if(fpTool==='select' && floorTileOriginHandleHit(p)){
+    pushHistory();
+    fpDraggingFloorTileOrigin=true;
+    fpFloorTileDragStart={x:p.x,y:p.y};
+    fpDrawing=true;
+    fpSelectedId=null;
+    fpDragOffset=null;
+    fpCanvas.style.cursor='grabbing';
+    return;
+  }
 
   if(fpTool==='pan'){
     fpPanStart={x:ev.clientX,y:ev.clientY,offsetX:fpViewOffsetX,offsetY:fpViewOffsetY};
@@ -2007,13 +2041,14 @@ function floorStart(ev){
       door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],
       bathtub:[180,80],sink:[60,50],drain:[15,15],
       kitchenSink:[60,60],stove:[60,60],fridge:[60,65],washingMachine:[60,65],
-      table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45]
+      table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45],mirror:[80,5]
     };
     const d=dims[fpTool]||[60,40];
     const newObj={
       id:uidObj(),type:fpTool,x,y,rotation:0,scale:1,
       widthCm:d[0],depthCm:d[1],layer:layerForType(fpTool),
-      heightCm:fpTool==='door'?205:(fpTool==='window'?120:undefined),
+      heightCm:fpTool==='door'?205:(fpTool==='window'?120:(fpTool==='mirror'?80:undefined)),
+      mountHeightCm:fpTool==='mirror'?110:undefined,
       sillHeightCm:fpTool==='window'?90:undefined,
       openingDirection:(fpTool==='door'||fpTool==='window')?'right':undefined,
       openingSide:fpTool==='door'?'inside':undefined,
@@ -2034,6 +2069,11 @@ function floorMove(ev){
   ev.preventDefault();
 
   const p=fpPoint(ev);
+
+  if(fpDraggingFloorTileOrigin){
+    setFloorTileOriginFromPoint(p,true);
+    return;
+  }
 
   // Duvar için 500 ms bekleme dolmadan hiçbir konum değişikliği yapma.
   if(fpWallMoveHold.wallId && !fpWallMoveHold.ready){
@@ -2121,6 +2161,18 @@ function floorMove(ev){
 }
 
 function floorEnd(ev){
+
+  if(fpDraggingFloorTileOrigin){
+    fpDraggingFloorTileOrigin=false;
+    fpFloorTileDragStart=null;
+    fpDrawing=false;
+    fpCanvas.style.cursor='';
+    updateFloorTilePanel();
+    save();
+    drawFloorplan();
+    if(fp3DMode)refresh3D();
+    return;
+  }
 
   if(fpWallMoveHold.timer){
     clearTimeout(fpWallMoveHold.timer);
@@ -3242,7 +3294,7 @@ function fpDefaultObjectDimensions(type){
     door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],
     bathtub:[180,80],sink:[60,50],drain:[15,15],
     kitchenSink:[60,60],stove:[60,60],fridge:[60,65],washingMachine:[60,65],
-    table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45]
+    table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45],mirror:[80,5]
   };
   return dims[type]||[60,40];
 }
@@ -3681,6 +3733,21 @@ function drawFpObject(o,preview=false){
     for(const ang of [-1.2,-.6,0,.6,1.2]){
       fpCtx.beginPath();fpCtx.ellipse(o.x+Math.sin(ang)*18,o.y-6+Math.cos(ang)*12,10,5,ang,0,Math.PI*2);fpCtx.stroke();
     }
+
+  }else if(o.type==='mirror'){
+    const mw=Math.max(20,Number(o.widthCm||80));
+    const md=Math.max(4,Number(o.depthCm||5));
+    fpCtx.lineWidth=3;
+    fpCtx.fillStyle='rgba(186,230,253,.28)';
+    fpCtx.fillRect(o.x-mw/2,o.y-md/2,mw,md);
+    fpCtx.strokeRect(o.x-mw/2,o.y-md/2,mw,md);
+    fpCtx.lineWidth=1.5;
+    fpCtx.beginPath();
+    fpCtx.moveTo(o.x-mw*.42,o.y+md*.18);
+    fpCtx.lineTo(o.x-mw*.18,o.y-md*.18);
+    fpCtx.moveTo(o.x+mw*.08,o.y+md*.18);
+    fpCtx.lineTo(o.x+mw*.34,o.y-md*.18);
+    fpCtx.stroke();
 
   }else if(o.type==='text'){
     fpCtx.font='bold 24px Arial';

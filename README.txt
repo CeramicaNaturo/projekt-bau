@@ -1,32 +1,23 @@
-Projekt Bau v2.1.0 PRO
+Projekt Bau v2.2.0 PRO
 
-NESNELER / DUVARA YAPIŞMA
-- Sanitär ve mobilya nesneleri duvara grid yuvarlaması olmadan oturur.
-- Nesnenin arka kenarı duvarın gerçek Innenkante'sine matematiksel olarak dayanır.
-- Ölçü değiştirildiğinde duvara bağlı nesne tekrar otomatik duvara oturtulur.
-- wallId bağlantısı korunur.
+NEU – FLIESENEINTEILUNG DIREKT ZIEHEN
+- Bodenfliesen aktivieren.
+- Origin/Start auf "Manuell" stellen.
+- Im Grundriss erscheint "Fliesenstart · ziehen".
+- Im Werkzeug "Auswählen" den runden Fliesenstart-Griff direkt anfassen.
+- Griff frei ziehen: die komplette Bodeneinteilung verschiebt sich live.
+- Keine Raster-Rundung beim Ziehen; Position wird auf 1 mm (0.1 cm) gespeichert.
+- 3D-Fliesenraster wird während des Ziehens synchronisiert.
+- Bestehende numerische Origin X/Y Eingabe bleibt erhalten.
 
-KAPI
-- Breite ayrı ayarlanabilir.
-- Höhe ayrı ayarlanabilir.
-- Anschlag Links / Rechts.
-- Öffnet nach innen / nach aussen.
-- Position in der Wand: Innenseite / Aussenseite.
-- 2D açılım yayı seçilen iç/dış yöne göre çizilir.
-- 3D kapı seçilen duvar yüzüne taşınır.
-- Ahşap kapı görünümü korunur.
+NEU – SPIEGEL
+- Objektpalette enthält "Spiegel".
+- Standard: 80 cm breit, 80 cm hoch.
+- Spiegel gehört zur Sanitär-Ebene.
+- Objekte-an-Wand-Fang funktioniert auch beim Spiegel.
+- 2D: technisches Spiegel-Symbol.
+- 3D: Rahmen + reflektierende Spiegeloberfläche + Highlight.
+- Breite/Tiefe können über die vorhandenen Objektmasse geändert werden.
+- Spiegelhöhe wird im Datenmodell gespeichert.
 
-PENCERE
-- Breite ayrı ayarlanabilir.
-- Höhe ayrı ayarlanabilir.
-- Brüstungshöhe ayarlanabilir.
-- Position in der Wand: Innenseite / Aussenseite.
-- 2D pencere sembolü gerçek genişliğe göre ölçeklenir.
-- 3D pencere çerçevesi, çift cam paneli, orta kayıt ve kol içerir.
-
-GERÇEKÇİ NESNELER
-- WC 2D sembolü daha teknik/gerçekçi.
-- WC 3D geometrisi güncellendi.
-- Mevcut gerçekçi Dusche, Badewanne, Waschbecken ve mobilyalar korunur.
-
-Sürüm: 2.1.0 PRO
+Version 2.2.0 PRO

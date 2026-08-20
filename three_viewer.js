@@ -760,6 +760,26 @@ function realisticSink(o){
 
   return finishObject(g,o);
 }
+function realisticNiche(o){
+  const g=new THREE.Group();
+  const w=m(o.widthCm||60);
+  const h=Math.max(.10,m(o.heightCm||60));
+  const d=Math.max(.03,m(o.depthCm||12));
+  const bottom=Math.max(0,m(o.mountHeightCm||100));
+  const edge=Math.min(.035,Math.max(.012,w*.035));
+  const inner=mat(0xd7d7d2,.88,.01);
+  const edgeMat=mat(0xf1f0eb,.82,.01);
+  const back=mat(0xbfc2c2,.94,.0);
+
+  // Recess cavity: back plane and four reveals.
+  addBox(g,w-edge*2,h-edge*2,.018,0,bottom+h/2,d*.48,back);
+  addBox(g,edge,h,d, -w/2+edge/2,bottom+h/2,0,edgeMat);
+  addBox(g,edge,h,d,  w/2-edge/2,bottom+h/2,0,edgeMat);
+  addBox(g,w-edge*2,edge,d,0,bottom+edge/2,0,inner);
+  addBox(g,w-edge*2,edge,d,0,bottom+h-edge/2,0,inner);
+
+  return finishObject(g,o);
+}
 function realisticMirror(o){
   const g=new THREE.Group();
   const w=m(o.widthCm||80);
@@ -1118,6 +1138,7 @@ function objectMesh(o){
   if(type==='bathtub')return realisticBathtub(o);
   if(type==='sink')return realisticSink(o);
   if(type==='mirror')return realisticMirror(o);
+  if(type==='niche')return realisticNiche(o);
   if(type==='kitchenSink')return realisticKitchenSink(o);
   if(type==='stove')return realisticStove(o);
   if(type==='fridge')return realisticFridge(o);

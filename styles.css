@@ -2868,3 +2868,7 @@ label[for="fpShowPositions"]{
   font-size:10px;
   line-height:1.35;
 }
+
+.fp-niche-properties{margin-top:14px;padding-top:12px;border-top:1px solid #dbe3ea}
+.fp-niche-properties label{display:grid;grid-template-columns:1fr 92px;gap:10px;align-items:center;margin:7px 0;font-size:12px}
+.fp-niche-properties input{width:100%;box-sizing:border-box}

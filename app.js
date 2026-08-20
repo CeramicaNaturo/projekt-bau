@@ -556,7 +556,7 @@ function restoreObjects(arr){fpObjects=JSON.parse(JSON.stringify(arr));fpSelecte
 
 function layerForType(type){
   if(type==='wall')return 'walls';
-  if(type==='door'||type==='window')return 'openings';
+  if(type==='door'||type==='window'||type==='niche')return 'openings';
   if(['wc','shower','bathtub','sink','drain','kitchenSink','mirror'].includes(type))return 'sanitary';
   if(['stove','fridge','washingMachine','table','chair','sofa','bed','cabinet','plant'].includes(type))return 'furniture';
   return 'notes';
@@ -2041,14 +2041,14 @@ function floorStart(ev){
       door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],
       bathtub:[180,80],sink:[60,50],drain:[15,15],
       kitchenSink:[60,60],stove:[60,60],fridge:[60,65],washingMachine:[60,65],
-      table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45],mirror:[80,5]
+      table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45],mirror:[80,5],niche:[60,12]
     };
     const d=dims[fpTool]||[60,40];
     const newObj={
       id:uidObj(),type:fpTool,x,y,rotation:0,scale:1,
       widthCm:d[0],depthCm:d[1],layer:layerForType(fpTool),
-      heightCm:fpTool==='door'?205:(fpTool==='window'?120:(fpTool==='mirror'?80:undefined)),
-      mountHeightCm:fpTool==='mirror'?110:undefined,
+      heightCm:fpTool==='door'?205:(fpTool==='window'?120:(fpTool==='mirror'?80:(fpTool==='niche'?60:undefined))),
+      mountHeightCm:fpTool==='mirror'?110:(fpTool==='niche'?100:undefined),
       sillHeightCm:fpTool==='window'?90:undefined,
       openingDirection:(fpTool==='door'||fpTool==='window')?'right':undefined,
       openingSide:fpTool==='door'?'inside':undefined,
@@ -2591,7 +2591,48 @@ function setSelectedDimensions(){
   updateSelectedInfo();
   if(fp3DMode)refresh3D();
 }
+
+function fpEnsureNicheInspector(o){
+  let box=document.getElementById('fpNicheProperties');
+  const host=document.getElementById('fpSelectionProperties') ||
+             document.getElementById('fpProperties') ||
+             document.querySelector('.fp-properties') ||
+             document.querySelector('.cad-inspector');
+  if(!o || o.type!=='niche'){
+    if(box)box.remove();
+    return;
+  }
+  if(!host)return;
+  if(!box){
+    box=document.createElement('div');
+    box.id='fpNicheProperties';
+    box.className='cad-inspector-section fp-niche-properties';
+    box.innerHTML=`
+      <h4>NISCHE</h4>
+      <label>Breite (cm)<input id="fpNicheWidth" type="number" min="10" step="1"></label>
+      <label>Höhe (cm)<input id="fpNicheHeight" type="number" min="10" step="1"></label>
+      <label>Tiefe (cm)<input id="fpNicheDepth" type="number" min="3" step="1"></label>
+      <label>Unterkante ab Boden (cm)<input id="fpNicheBottom" type="number" min="0" step="1"></label>`;
+    host.appendChild(box);
+  }
+  const bind=(id,key,min)=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.value=String(Number(o[key]??0));
+    el.onchange=()=>{
+      pushHistory();
+      o[key]=Math.max(min,Number(el.value)||min);
+      if(key==='depthCm')o.depthCm=Math.max(3,o.depthCm);
+      save();drawFloorplan();updateSelectedInfo();refresh3D();
+    };
+  };
+  bind('fpNicheWidth','widthCm',10);
+  bind('fpNicheHeight','heightCm',10);
+  bind('fpNicheDepth','depthCm',3);
+  bind('fpNicheBottom','mountHeightCm',0);
+}
+
 function updateSelectedInfo(){
+  setTimeout(()=>fpEnsureNicheInspector(selectedObject()),0);
   const el=$('fpSelectedInfo');if(!el)return;
   const o=fpObjects.find(x=>x.id===fpSelectedId);
   if(!o){el.textContent='Keine Auswahl';refreshOpeningPanel();updateWallQuickPanel();return}
@@ -3294,7 +3335,7 @@ function fpDefaultObjectDimensions(type){
     door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],
     bathtub:[180,80],sink:[60,50],drain:[15,15],
     kitchenSink:[60,60],stove:[60,60],fridge:[60,65],washingMachine:[60,65],
-    table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45],mirror:[80,5]
+    table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45],mirror:[80,5],niche:[60,12]
   };
   return dims[type]||[60,40];
 }
@@ -3733,6 +3774,21 @@ function drawFpObject(o,preview=false){
     for(const ang of [-1.2,-.6,0,.6,1.2]){
       fpCtx.beginPath();fpCtx.ellipse(o.x+Math.sin(ang)*18,o.y-6+Math.cos(ang)*12,10,5,ang,0,Math.PI*2);fpCtx.stroke();
     }
+
+  }else if(o.type==='niche'){
+    const nw=Math.max(20,Number(o.widthCm||60));
+    const nd=Math.max(4,Number(o.depthCm||12));
+    fpCtx.lineWidth=3;
+    fpCtx.fillStyle='rgba(226,232,240,.55)';
+    fpCtx.fillRect(o.x-nw/2,o.y-nd/2,nw,nd);
+    fpCtx.strokeRect(o.x-nw/2,o.y-nd/2,nw,nd);
+    fpCtx.lineWidth=1.4;
+    fpCtx.setLineDash([5,4]);
+    fpCtx.beginPath();
+    fpCtx.moveTo(o.x-nw/2+5,o.y);
+    fpCtx.lineTo(o.x+nw/2-5,o.y);
+    fpCtx.stroke();
+    fpCtx.setLineDash([]);
 
   }else if(o.type==='mirror'){
     const mw=Math.max(20,Number(o.widthCm||80));

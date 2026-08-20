@@ -808,13 +808,61 @@ function refreshWallLetters(){
 }
 function refreshOpeningPanel(){
   const o=selectedObject();
-  const panel=$('fpOpeningPanel'),sel=$('fpOpeningDirection'),title=$('fpOpeningTitle');
+  const panel=$('fpOpeningPanel');
+  const dir=$('fpOpeningDirection');
+  const title=$('fpOpeningTitle');
+  const width=$('fpOpeningWidth');
+  const height=$('fpOpeningHeight');
+  const side=$('fpOpeningSide');
+  const face=$('fpWallFace');
+  const swingRow=$('fpDoorSwingRow');
+  const sillRow=$('fpWindowSillRow');
+  const sill=$('fpWindowSillHeight');
+
   const isOpening=!!o&&(o.type==='door'||o.type==='window');
   if(panel)panel.classList.toggle('hidden',!isOpening);
   if(!isOpening)return;
+
+  ensureOpeningDefaults(o);
+
   if(title)title.textContent=o.type==='door'?'Tür':'Fenster';
-  if(sel)sel.value=o.openingDirection||'right';
+  if(dir)dir.value=o.openingDirection||'right';
+  if(width)width.value=Math.round(Number(o.widthCm)||90);
+  if(height)height.value=Math.round(Number(o.heightCm)||(o.type==='door'?205:120));
+  if(side)side.value=o.openingSide||'inside';
+  if(face)face.value=o.wallFace||'inside';
+
+  if(swingRow)swingRow.classList.toggle('hidden',o.type!=='door');
+  if(sillRow)sillRow.classList.toggle('hidden',o.type!=='window');
+  if(sill)sill.value=Math.round(Number(o.sillHeightCm)||90);
 }
+
+function ensureOpeningDefaults(o){
+  if(!o||(o.type!=='door'&&o.type!=='window'))return;
+  if(!Number.isFinite(Number(o.widthCm)))o.widthCm=o.type==='door'?90:100;
+  if(!Number.isFinite(Number(o.depthCm)))o.depthCm=15;
+  if(!Number.isFinite(Number(o.heightCm)))o.heightCm=o.type==='door'?205:120;
+  if(o.type==='window'&&!Number.isFinite(Number(o.sillHeightCm)))o.sillHeightCm=90;
+  if(o.openingDirection!=='left'&&o.openingDirection!=='right')o.openingDirection='right';
+  if(o.openingSide!=='inside'&&o.openingSide!=='outside')o.openingSide='inside';
+  if(o.wallFace!=='inside'&&o.wallFace!=='outside')o.wallFace='inside';
+}
+
+function assignWallPlacementMeta(o,placed){
+  if(!o||!placed)return;
+  if(placed.wallId)o.wallId=placed.wallId;
+  if(Number.isFinite(Number(placed.wallInteriorSign)))o.wallInteriorSign=Number(placed.wallInteriorSign);
+}
+
+function reSnapOpeningToWall(o){
+  if(!o||(o.type!=='door'&&o.type!=='window'))return;
+  const near=nearestWallForObject({x:Number(o.x)||0,y:Number(o.y)||0});
+  if(!near)return;
+  const placed=snapObjectToWall(o,near.point.x,near.point.y);
+  o.x=placed.x;o.y=placed.y;o.rotation=placed.rotation;
+  assignWallPlacementMeta(o,placed);
+}
+
 function changeOpeningDirection(){
   const o=selectedObject();
   if(!o||(o.type!=='door'&&o.type!=='window'))return;
@@ -824,7 +872,55 @@ function changeOpeningDirection(){
   o.openingDirection=v;
   drawFloorplan();
   updateSelectedInfo();
+  if(fp3DMode)refresh3D();
 }
+
+function changeOpeningSide(){
+  const o=selectedObject();
+  if(!o||o.type!=='door')return;
+  const v=$('fpOpeningSide')?.value;
+  if(v!=='inside'&&v!=='outside')return;
+  pushHistory();
+  o.openingSide=v;
+  drawFloorplan();
+  updateSelectedInfo();
+  if(fp3DMode)refresh3D();
+}
+
+function changeOpeningWallFace(){
+  const o=selectedObject();
+  if(!o||(o.type!=='door'&&o.type!=='window'))return;
+  const v=$('fpWallFace')?.value;
+  if(v!=='inside'&&v!=='outside')return;
+  pushHistory();
+  o.wallFace=v;
+  reSnapOpeningToWall(o);
+  drawFloorplan();
+  updateSelectedInfo();
+  if(fp3DMode)refresh3D();
+}
+
+function changeOpeningDimensions(){
+  const o=selectedObject();
+  if(!o||(o.type!=='door'&&o.type!=='window'))return;
+
+  const width=Math.max(20,Math.min(500,Number($('fpOpeningWidth')?.value)||Number(o.widthCm)||90));
+  const height=Math.max(20,Math.min(400,Number($('fpOpeningHeight')?.value)||Number(o.heightCm)||(o.type==='door'?205:120)));
+
+  pushHistory();
+  o.widthCm=width;
+  o.heightCm=height;
+
+  if(o.type==='window'){
+    o.sillHeightCm=Math.max(0,Math.min(300,Number($('fpWindowSillHeight')?.value)||0));
+  }
+
+  reSnapOpeningToWall(o);
+  drawFloorplan();
+  updateSelectedInfo();
+  if(fp3DMode)refresh3D();
+}
+
 function wallAngleDeg(o){
   if(!o||o.type!=='wall')return 0;
   let deg=Math.atan2(Number(o.y2)-Number(o.y1),Number(o.x2)-Number(o.x1))*180/Math.PI;
@@ -1917,12 +2013,17 @@ function floorStart(ev){
     const newObj={
       id:uidObj(),type:fpTool,x,y,rotation:0,scale:1,
       widthCm:d[0],depthCm:d[1],layer:layerForType(fpTool),
-      openingDirection:(fpTool==='door'||fpTool==='window')?'right':undefined
+      heightCm:fpTool==='door'?205:(fpTool==='window'?120:undefined),
+      sillHeightCm:fpTool==='window'?90:undefined,
+      openingDirection:(fpTool==='door'||fpTool==='window')?'right':undefined,
+      openingSide:fpTool==='door'?'inside':undefined,
+      wallFace:(fpTool==='door'||fpTool==='window')?'inside':undefined
     };
     const placed=constrainObjectPlacement(newObj,x,y);
     newObj.x=placed.x;
     newObj.y=placed.y;
     newObj.rotation=placed.rotation;
+    assignWallPlacementMeta(newObj,placed);
     fpObjects.push(newObj);
   }
   drawFloorplan();
@@ -1992,6 +2093,7 @@ function floorMove(ev){
       o.x=placed.x;
       o.y=placed.y;
       o.rotation=placed.rotation;
+      assignWallPlacementMeta(o,placed);
     }
     drawFloorplan();
     updateSelectedInfo();
@@ -2192,7 +2294,9 @@ function objectFitsRoom(o,x,y,rotation){
 }
 
 function snapObjectToWall(o,x,y){
-  if(!fpObjectWallSnap || o.type==='text')return {x,y,rotation:o.rotation||0,snapped:false};
+  if(!fpObjectWallSnap || o.type==='text'){
+    return {x,y,rotation:o.rotation||0,snapped:false};
+  }
 
   const near=nearestWallForObject({x,y});
   if(!near)return {x,y,rotation:o.rotation||0,snapped:false};
@@ -2202,56 +2306,82 @@ function snapObjectToWall(o,x,y){
   const dy=Number(w.y2)-Number(w.y1);
   const wallLen=Math.hypot(dx,dy)||1;
   const ux=dx/wallLen,uy=dy/wallLen;
-  let nx=-uy,ny=ux;
+
+  // Left normal of wall direction.
+  const baseNx=-uy,baseNy=ux;
+  let nx=baseNx,ny=baseNy;
 
   const wallAngle=Math.atan2(dy,dx)*180/Math.PI;
   const poly=getRoomPolygon();
   const roomC=polygonCentroid(poly);
-
-  // Pick normal pointing toward the room interior.
   const mid={
     x:(Number(w.x1)+Number(w.x2))/2,
     y:(Number(w.y1)+Number(w.y2))/2
   };
+
+  // nx/ny = normal pointing INTO the room.
   const toCenter={x:roomC.x-mid.x,y:roomC.y-mid.y};
   if(nx*toCenter.x+ny*toCenter.y<0){nx=-nx;ny=-ny}
 
-  // Door/window belongs exactly on wall axis.
+  const interiorSign=(nx*baseNx+ny*baseNy)>=0?1:-1;
+
+  // Tür/Fenster: anchor to selected wall FACE.
   if(o.type==='door'||o.type==='window'){
+    ensureOpeningDefaults(o);
+
     const q=near.point;
+    const wallThickness=Math.max(1,Number(w.thickness||15));
+    const face=o.wallFace||'inside';
+
+    // Stored wall line is the room-side INNER FACE.
+    // Outside face lies one full wall thickness opposite the inward normal.
+    const faceOffset=face==='outside' ? -wallThickness : 0;
+
     return {
-      x:snap(q.x),
-      y:snap(q.y),
+      x:Math.round((q.x+nx*faceOffset)*10)/10,
+      y:Math.round((q.y+ny*faceOffset)*10)/10,
       rotation:wallAngle,
       snapped:true,
-      wallId:w.id
+      wallId:w.id,
+      wallInteriorSign:interiorSign
     };
   }
 
-  // Only snap furniture/sanitary when near enough to a wall.
   const snapDistance=Math.max(55,Number(o.depthCm||40)*(o.scale||1)*.75);
   if(near.distance>snapDistance){
     return {x,y,rotation:o.rotation||0,snapped:false};
   }
 
-  // Object depth is perpendicular to wall after rotation.
+  // Furniture / sanitary object: back edge is EXACTLY on the inner wall face.
+  // No grid rounding is applied after wall snapping.
   const depth=Math.max(1,Number(o.depthCm||40)*(o.scale||1));
-  const wallThickness=Number(w.thickness||15);
-  const offset=depth/2 + wallThickness/2 + 1;
+  const offset=depth/2;
 
   const sx=near.point.x+nx*offset;
   const sy=near.point.y+ny*offset;
   let rotation=wallAngle;
 
-  // Try wall-parallel orientation first.
   if(objectFitsRoom(o,sx,sy,rotation)){
-    return {x:snap(sx),y:snap(sy),rotation,snapped:true,wallId:w.id};
+    return {
+      x:Math.round(sx*100)/100,
+      y:Math.round(sy*100)/100,
+      rotation,
+      snapped:true,
+      wallId:w.id,
+      wallInteriorSign:interiorSign
+    };
   }
 
-  // If width/depth orientation makes it invalid, try perpendicular orientation.
   rotation=wallAngle+90;
   if(objectFitsRoom(o,sx,sy,rotation)){
-    return {x:snap(sx),y:snap(sy),rotation,snapped:true,wallId:w.id};
+    return {
+      x:Math.round(sx*100)/100,
+      y:Math.round(sy*100)/100,
+      rotation,
+      snapped:true,
+      wallId:w.id,
+      wallInteriorSign:interiorSign
+    };
   }
 
   return {x,y,rotation:o.rotation||0,snapped:false};
@@ -2264,7 +2394,9 @@ function constrainObjectPlacement(o,x,y){
   const candidate={
     x:snapped.x,
     y:snapped.y,
-    rotation:snapped.rotation
+    rotation:snapped.rotation,
+    wallId:snapped.wallId,
+    wallInteriorSign:snapped.wallInteriorSign
   };
 
   if(objectFitsRoom(o,candidate.x,candidate.y,candidate.rotation)){
@@ -2325,6 +2457,7 @@ function setSelectedPosition(){
     o.x=placed.x;
     o.y=placed.y;
     o.rotation=placed.rotation;
+    assignWallPlacementMeta(o,placed);
   }
 
   drawFloorplan();
@@ -2390,6 +2523,15 @@ function setSelectedDimensions(){
     if(wi)wi.value=String(oldW);
     if(di)di.value=String(oldD);
     return;
+  }
+
+  if(o.wallId && o.type!=='door' && o.type!=='window'){
+    const near=nearestWallForObject({x:o.x,y:o.y});
+    if(near){
+      const placed=snapObjectToWall(o,near.point.x,near.point.y);
+      o.x=placed.x;o.y=placed.y;o.rotation=placed.rotation;
+      assignWallPlacementMeta(o,placed);
+    }
   }
 
   save();
@@ -3404,34 +3546,65 @@ function drawFpObject(o,preview=false){
   fpCtx.translate(-ox,-oy);
 
   if(o.type==='door'){
-    fpCtx.lineWidth=5;
-    const dir=o.openingDirection||'right';
-    if(dir==='right'){
-      fpCtx.beginPath();fpCtx.moveTo(o.x-45,o.y);fpCtx.lineTo(o.x+45,o.y);fpCtx.stroke();
-      fpCtx.beginPath();fpCtx.arc(o.x-45,o.y,90,0,-Math.PI/2,true);fpCtx.stroke();
-    }else{
-      fpCtx.beginPath();fpCtx.moveTo(o.x+45,o.y);fpCtx.lineTo(o.x-45,o.y);fpCtx.stroke();
-      fpCtx.beginPath();fpCtx.arc(o.x+45,o.y,90,Math.PI,Math.PI*1.5,false);fpCtx.stroke();
-    }
-
-  }else if(o.type==='window'){
     fpCtx.lineWidth=4;
-    fpCtx.strokeRect(o.x-55,o.y-10,110,20);
     const dir=o.openingDirection||'right';
-    fpCtx.beginPath();fpCtx.moveTo(o.x-45,o.y);fpCtx.lineTo(o.x+45,o.y);fpCtx.stroke();
+    const interiorSign=Number(o.wallInteriorSign)||1;
+    const desiredSide=(o.openingSide||'inside')==='inside'?interiorSign:-interiorSign;
+    const width=Math.max(30,Number(o.widthCm||90));
+    const half=width/2;
+
+    // wall opening / threshold
+    fpCtx.beginPath();
+    fpCtx.moveTo(o.x-half,o.y);
+    fpCtx.lineTo(o.x+half,o.y);
+    fpCtx.stroke();
+
+    const hingeX=dir==='right'?o.x-half:o.x+half;
+    const freeX=dir==='right'?o.x+half:o.x-half;
+    const freeY=o.y+desiredSide*width;
+
+    // door leaf at 90° design representation
+    fpCtx.beginPath();
+    fpCtx.moveTo(hingeX,o.y);
+    fpCtx.lineTo(freeX,o.y);
+    fpCtx.stroke();
+
+    // swing arc on selected side
     fpCtx.beginPath();
     if(dir==='right'){
-      fpCtx.moveTo(o.x-45,o.y);fpCtx.lineTo(o.x+35,o.y-42);fpCtx.lineTo(o.x+35,o.y+42);
+      fpCtx.arc(hingeX,o.y,width,0,desiredSide>0?Math.PI/2:-Math.PI/2,desiredSide<0);
     }else{
-      fpCtx.moveTo(o.x+45,o.y);fpCtx.lineTo(o.x-35,o.y-42);fpCtx.lineTo(o.x-35,o.y+42);
+      fpCtx.arc(hingeX,o.y,width,Math.PI,desiredSide>0?Math.PI/2:Math.PI*1.5,desiredSide>0);
     }
     fpCtx.stroke();
 
+  }else if(o.type==='window'){
+    const ww=Math.max(30,Number(o.widthCm||100));
+    const half=ww/2;
+    const frameDepth=Math.max(10,Number(o.depthCm||15));
+    fpCtx.lineWidth=3;
+
+    // double frame line, architectural window symbol
+    fpCtx.strokeRect(o.x-half,o.y-frameDepth/2,ww,frameDepth);
+    fpCtx.beginPath();
+    fpCtx.moveTo(o.x-half,o.y);
+    fpCtx.lineTo(o.x+half,o.y);
+    fpCtx.stroke();
+
+    fpCtx.lineWidth=2;
+    fpCtx.beginPath();
+    fpCtx.moveTo(o.x-half+5,o.y-frameDepth/2+3);
+    fpCtx.lineTo(o.x+half-5,o.y+frameDepth/2-3);
+    fpCtx.moveTo(o.x-half+5,o.y+frameDepth/2-3);
+    fpCtx.lineTo(o.x+half-5,o.y-frameDepth/2+3);
+    fpCtx.stroke();
+
   }else if(o.type==='wc'){
-    fpCtx.lineWidth=4;
-    fpCtx.beginPath();fpCtx.ellipse(o.x,o.y+15,34,44,0,0,Math.PI*2);fpCtx.stroke();
-    fpCtx.strokeRect(o.x-32,o.y-45,64,28);
-    fpCtx.font='bold 18px Arial';fpCtx.textAlign='center';fpCtx.fillText('WC',o.x,o.y+21);
+    fpCtx.lineWidth=3;
+    fpCtx.beginPath();fpCtx.roundRect(o.x-30,o.y-47,60,28,7);fpCtx.stroke();
+    fpCtx.beginPath();fpCtx.ellipse(o.x,o.y+8,30,43,0,0,Math.PI*2);fpCtx.stroke();
+    fpCtx.beginPath();fpCtx.ellipse(o.x,o.y+8,22,33,0,0,Math.PI*2);fpCtx.stroke();
+    fpCtx.beginPath();fpCtx.arc(o.x,o.y+13,5,0,Math.PI*2);fpCtx.stroke();
 
   }else if(o.type==='shower'){
     fpCtx.lineWidth=4;
@@ -4024,6 +4197,17 @@ function initFloorplanControls(){
   const openingDirection=$('fpOpeningDirection');
   if(openingDirection)openingDirection.onchange=changeOpeningDirection;
 
+  const openingSide=$('fpOpeningSide');
+  if(openingSide)openingSide.onchange=changeOpeningSide;
+
+  const wallFace=$('fpWallFace');
+  if(wallFace)wallFace.onchange=changeOpeningWallFace;
+
+  ['fpOpeningWidth','fpOpeningHeight','fpWindowSillHeight'].forEach(id=>{
+    const input=$(id);
+    if(input)input.onchange=changeOpeningDimensions;
+  });
+
   const floorTilePanelBtn=$('fpFloorTilePanelBtn');if(floorTilePanelBtn)floorTilePanelBtn.onclick=()=>{const p=$('fpFloorTilePanel');if(p){p.classList.toggle('hidden');if(!p.classList.contains('hidden'))updateFloorTilePanel();}};
   const floorTileClose=$('fpFloorTileClose');if(floorTileClose)floorTileClose.onclick=()=>$('fpFloorTilePanel')?.classList.add('hidden');
   const floorTileApply=$('fpFloorTileApply');if(floorTileApply)floorTileApply.onclick=applyFloorTileConfig;
@@ -4387,8 +4571,11 @@ render();
 ------------------------------------------------------------------------ */
 function fpV192EnsureDoorDefaults(o){
   if(!o || o.type!=='door') return;
-  if(!Number.isFinite(Number(o.heightCm))) o.heightCm=200;
+  if(!Number.isFinite(Number(o.heightCm))) o.heightCm=205;
+  if(!Number.isFinite(Number(o.widthCm))) o.widthCm=90;
   if(!Number.isFinite(Number(o.width))) o.width=90;
+  if(o.openingSide!=='inside'&&o.openingSide!=='outside')o.openingSide='inside';
+  if(o.wallFace!=='inside'&&o.wallFace!=='outside')o.wallFace='inside';
 }
 
 function fpV192DoorHeightField(o){

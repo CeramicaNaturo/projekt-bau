@@ -765,27 +765,29 @@ function realisticWC(o){
   const ceramic=CERAMIC(), chrome=CHROME();
   const w=m(o.widthCm||40),d=m(o.depthCm||70);
 
-  // floor foot + rounded bowl
-  addBox(g,w*.70,.16,d*.42,0,.10,d*.10,ceramic);
-  addSphere(g,w*.42,.18,d*.32,0,.29,d*.05,ceramic);
+  // concealed-style rounded bowl
+  addSphere(g,w*.43,.20,d*.36,0,.30,d*.04,ceramic);
+  addBox(g,w*.72,.18,d*.35,0,.12,d*.08,ceramic);
 
   // seat ring
   const ring=new THREE.Mesh(
-    new THREE.TorusGeometry(Math.min(w,d)*.30,.022,14,42),
-    mat(0xf0f0ee,.30,0)
+    new THREE.TorusGeometry(Math.min(w,d)*.295,.020,16,48),
+    mat(0xf7f6f2,.24,0)
   );
-  ring.scale.z=1.24;
+  ring.scale.z=1.25;
   ring.rotation.x=Math.PI/2;
-  ring.position.set(0,.43,d*.03);
+  ring.position.set(0,.44,d*.035);
   g.add(ring);
 
-  // cistern against wall side
-  addBox(g,w*.92,.50,d*.22,0,.55,-d*.34,ceramic);
-  addCylinder(g,.016,.016,.018,w*.18,.81,-d*.455,chrome,16);
+  // cistern / rear block
+  addBox(g,w*.88,.47,d*.20,0,.55,-d*.36,ceramic);
+  addCylinder(g,.014,.014,.018,w*.18,.79,-d*.465,chrome,18);
+
+  // soft floor shadow plate
+  addBox(g,w*.68,.025,d*.42,0,.025,d*.03,mat(0xd8d8d5,.80,0));
 
   return finishObject(g,o);
 }
-
 function realisticShower(o){
   const g=new THREE.Group();
   const w=m(o.widthCm||90),d=m(o.depthCm||90);
@@ -1042,8 +1044,9 @@ function objectMesh(o){
       const px=f.x1+f.dx*hit.t;
       const pz=f.z1+f.dz*hit.t;
 
-      // sit exactly at the inner wall edge, no wall box behind it
-      g.position.set(px,0,pz);
+      // Inner face = stored wall line. Outer face = one full wall thickness outward.
+      const faceShift=(o.wallFace||'inside')==='outside'?f.th:0;
+      g.position.set(px+f.nx*faceShift,0,pz+f.nz*faceShift);
       g.rotation.y=f.angle;
       return g;
     }
@@ -1053,26 +1056,40 @@ function objectMesh(o){
   if(type==='window'){
     const g=new THREE.Group();
     const w=m(o.widthCm||100);
-    const h=Math.max(.5,m(o.heightCm||120));
-    const sill=Math.max(.2,m(o.sillHeightCm||90));
-    const frame=mat(0xf0f2f4,.30,.12);
+    const h=Math.max(.3,m(o.heightCm||120));
+    const sill=Math.max(0,m(o.sillHeightCm||90));
+    const frame=mat(0xe8ebed,.34,.10);
+    const dark=mat(0x34383d,.28,.40);
 
-    addBox(g,w,.045,.07,0,sill,0,frame);
-    addBox(g,w,.045,.07,0,sill+h,0,frame);
-    addBox(g,.045,h,.07,-w/2,sill+h/2,0,frame);
-    addBox(g,.045,h,.07, w/2,sill+h/2,0,frame);
-    addBox(g,.025,h*.96,.020,0,sill+h/2,0,glassMat());
-    addBox(g,.025,h,.045,0,sill+h/2,0,frame);
+    // frame
+    addBox(g,w,.055,.085,0,sill,0,frame);
+    addBox(g,w,.055,.085,0,sill+h,0,frame);
+    addBox(g,.055,h,.085,-w/2,sill+h/2,0,frame);
+    addBox(g,.055,h,.085, w/2,sill+h/2,0,frame);
+
+    // center mullion
+    addBox(g,.035,h,.060,0,sill+h/2,0,frame);
+
+    // two glass panes
+    addBox(g,w*.47,h*.93,.018,-w*.245,sill+h/2,0,glassMat());
+    addBox(g,w*.47,h*.93,.018, w*.245,sill+h/2,0,glassMat());
+
+    // small handle
+    addBox(g,.018,.12,.025,w*.04,sill+h*.52,.045,dark);
 
     const hit=nearestWallForOpening3D(o,currentData?.objects||[]);
     if(hit){
       const ww=hit.wall;
       const f=wallFrame3D(ww,currentData?.objects||[]);
-      g.position.set(f.x1+f.dx*hit.t,0,f.z1+f.dz*hit.t);
+      const faceShift=(o.wallFace||'inside')==='outside'?f.th:0;
+      g.position.set(
+        f.x1+f.dx*hit.t+f.nx*faceShift,
+        0,
+        f.z1+f.dz*hit.t+f.nz*faceShift
+      );
       g.rotation.y=f.angle;
       return g;
     }
-
     return finishObject(g,o);
   }
   if(type==='wc')return realisticWC(o);

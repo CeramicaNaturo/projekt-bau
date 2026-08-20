@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=1925">
+<link rel="stylesheet" href="styles.css?v=2100">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer"><strong>Version 2.0.1 PRO</strong></div>
+  <div class="cad-sidebar-footer"><strong>Version 2.1.0 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.0.1 PRO</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.1.0 PRO</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -553,13 +553,44 @@
         <div id="fpOpeningPanel" class="cad-inspector-section opening-panel hidden">
           <h4>ÖFFNUNG</h4>
           <div class="opening-title" id="fpOpeningTitle">Tür / Fenster</div>
-          <label>Öffnungsrichtung
+
+          <div class="fp-opening-grid">
+            <label>Breite (cm)
+              <input id="fpOpeningWidth" type="number" min="20" max="500" step="1">
+            </label>
+            <label>Höhe (cm)
+              <input id="fpOpeningHeight" type="number" min="20" max="400" step="1">
+            </label>
+          </div>
+
+          <label>Anschlag
             <select id="fpOpeningDirection">
               <option value="right">Rechts</option>
               <option value="left">Links</option>
             </select>
           </label>
-          <div class="opening-help">Links/Rechts ändert den Anschlag direkt im Grundriss.</div>
+
+          <label id="fpDoorSwingRow">Tür öffnet
+            <select id="fpOpeningSide">
+              <option value="inside">Nach innen</option>
+              <option value="outside">Nach aussen</option>
+            </select>
+          </label>
+
+          <label>Position in der Wand
+            <select id="fpWallFace">
+              <option value="inside">Innenseite</option>
+              <option value="outside">Aussenseite</option>
+            </select>
+          </label>
+
+          <label id="fpWindowSillRow" class="hidden">Brüstungshöhe (cm)
+            <input id="fpWindowSillHeight" type="number" min="0" max="300" step="1">
+          </label>
+
+          <div class="opening-help">
+            Tür/Fenster bleiben automatisch an der gewählten Wandfläche ausgerichtet.
+          </div>
         </div>
 
         <div class="cad-inspector-section cad-edit-properties">
@@ -729,9 +760,9 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=2001"></script>
+<script type="module" src="three_viewer.js?v=2100"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=2001"></script>
-<script src="pro_core.js?v=2001"></script>
+<script src="app.js?v=2100"></script>
+<script src="pro_core.js?v=2100"></script>
 </body>
 </html>

@@ -2843,3 +2843,28 @@ label[for="fpShowPositions"]{
 .fp-pro-toast{position:fixed;left:50%;bottom:48px;z-index:9999;transform:translate(-50%,10px);opacity:0;pointer-events:none;padding:9px 14px;border-radius:9px;background:#0f172a;color:#fff;font-size:11px;font-weight:750;box-shadow:0 10px 30px rgba(15,23,42,.24);transition:.18s}.fp-pro-toast.show{opacity:1;transform:translate(-50%,0)}
 .fp-appbar{background:rgba(255,255,255,.98)!important;border-bottom:1px solid #dce4ee!important}.fp-top-controls{background:#fbfcfe!important;border-bottom:1px solid #e1e8f0!important}.fp-room-strip{background:#fff!important;border-bottom:1px solid #e4eaf1!important}.fp-tool.active{box-shadow:inset 3px 0 0 #2563eb!important}
 @media (pointer:coarse){.fp-pro-statusbar{gap:10px;font-size:9px;height:30px;flex-basis:30px}.fp-autosave-badge,#fpProExport{display:none}}
+
+/* v2.1.0 – professionelle Öffnungen */
+.fp-opening-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.opening-panel label{
+  display:grid;
+  gap:4px;
+  margin-top:8px;
+}
+.opening-panel input,
+.opening-panel select{
+  min-height:34px;
+}
+.opening-help{
+  margin-top:9px;
+  padding:8px 9px;
+  border-radius:8px;
+  background:#f8fafc;
+  color:#64748b;
+  font-size:10px;
+  line-height:1.35;
+}

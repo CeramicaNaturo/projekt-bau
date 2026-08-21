@@ -1,16 +1,9 @@
-Projekt Bau v2.3.0 PRO
+Projekt Bau v2.3.1 PRO
 
-NEU: NISCHE
-- Objektpalette: Nische
-- Breite frei einstellbar
-- Höhe frei einstellbar
-- Tiefe frei einstellbar
-- Unterkante ab Boden frei einstellbar
-- Nische kann im Grundriss verschoben und an eine Wand gefangen werden
-- 2D technische Darstellung
-- 3D Darstellung mit Vertiefung, Rückwand und Laibungen
-- Masse werden im Projekt gespeichert und können später wieder geändert werden
-
-Enthält weiterhin v2.2.0:
-- Flieseneinteilung per Drag
-- Spiegel
+- Spiegel ve Nische butonları alt Objektpalette içinde açıkça görünür.
+- İki buton mavi çerçeve ile vurgulanır.
+- WANDOBJEKTE başlığı eklendi.
+- Spiegel: Breite, Höhe, Unterkante ab Boden ayarlanabilir.
+- Nische: Breite, Höhe, Tiefe, Unterkante ab Boden ayarlanabilir.
+- Spiegel/Nische duvara sıfır boşlukla snap olur.
+- Nische eklemek için: Nische butonu -> duvara tıkla -> Auswählen -> sağ panelde ölçüleri ayarla.

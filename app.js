@@ -2399,7 +2399,8 @@ function snapObjectToWall(o,x,y){
     };
   }
 
-  const snapDistance=Math.max(55,Number(o.depthCm||40)*(o.scale||1)*.75);
+  const isWallMounted=(o.type==='mirror'||o.type==='niche');
+  const snapDistance=isWallMounted?120:Math.max(55,Number(o.depthCm||40)*(o.scale||1)*.75);
   if(near.distance>snapDistance){
     return {x,y,rotation:o.rotation||0,snapped:false};
   }
@@ -2407,13 +2408,13 @@ function snapObjectToWall(o,x,y){
   // Furniture / sanitary object: back edge is EXACTLY on the inner wall face.
   // No grid rounding is applied after wall snapping.
   const depth=Math.max(1,Number(o.depthCm||40)*(o.scale||1));
-  const offset=depth/2;
+  const offset=(o.type==='mirror'||o.type==='niche')?0:depth/2;
 
   const sx=near.point.x+nx*offset;
   const sy=near.point.y+ny*offset;
   let rotation=wallAngle;
 
-  if(objectFitsRoom(o,sx,sy,rotation)){
+  if(isWallMounted || objectFitsRoom(o,sx,sy,rotation)){
     return {
       x:Math.round(sx*100)/100,
       y:Math.round(sy*100)/100,
@@ -2592,6 +2593,44 @@ function setSelectedDimensions(){
   if(fp3DMode)refresh3D();
 }
 
+
+function fpEnsureMirrorInspector(o){
+  let box=document.getElementById('fpMirrorProperties');
+  const host=document.getElementById('fpSelectionProperties') ||
+             document.getElementById('fpProperties') ||
+             document.querySelector('.fp-properties') ||
+             document.querySelector('.cad-inspector');
+  if(!o || o.type!=='mirror'){
+    if(box)box.remove();
+    return;
+  }
+  if(!host)return;
+  if(!box){
+    box=document.createElement('div');
+    box.id='fpMirrorProperties';
+    box.className='cad-inspector-section fp-mirror-properties';
+    box.innerHTML=`
+      <h4>SPIEGEL</h4>
+      <label>Breite (cm)<input id="fpMirrorWidth" type="number" min="10" step="1"></label>
+      <label>Höhe (cm)<input id="fpMirrorHeight" type="number" min="10" step="1"></label>
+      <label>Unterkante ab Boden (cm)<input id="fpMirrorBottom" type="number" min="0" step="1"></label>`;
+    host.appendChild(box);
+  }
+  const bind=(id,key,min)=>{
+    const el=document.getElementById(id); if(!el)return;
+    el.value=String(Number(o[key]??0));
+    el.onchange=()=>{
+      pushHistory();
+      o[key]=Math.max(min,Number(el.value)||min);
+      save(); drawFloorplan(); updateSelectedInfo();
+      if(fp3DMode)refresh3D();
+    };
+  };
+  bind('fpMirrorWidth','widthCm',10);
+  bind('fpMirrorHeight','heightCm',10);
+  bind('fpMirrorBottom','mountHeightCm',0);
+}
+
 function fpEnsureNicheInspector(o){
   let box=document.getElementById('fpNicheProperties');
   const host=document.getElementById('fpSelectionProperties') ||
@@ -2632,7 +2671,7 @@ function fpEnsureNicheInspector(o){
 }
 
 function updateSelectedInfo(){
-  setTimeout(()=>fpEnsureNicheInspector(selectedObject()),0);
+  setTimeout(()=>{const current=selectedObject();fpEnsureNicheInspector(current);fpEnsureMirrorInspector(current);},0);
   const el=$('fpSelectedInfo');if(!el)return;
   const o=fpObjects.find(x=>x.id===fpSelectedId);
   if(!o){el.textContent='Keine Auswahl';refreshOpeningPanel();updateWallQuickPanel();return}

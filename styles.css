@@ -2914,3 +2914,8 @@ label[for="fpShowPositions"]{
 .fp-abdichtung-actions{display:flex;gap:8px;margin:11px 0}.fp-abdichtung-actions button{flex:1}.fp-seal-summary{display:grid;grid-template-columns:1fr 1fr;gap:7px}.fp-seal-kpi{display:grid;gap:2px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;background:#f8fafc}.fp-seal-kpi span{font-size:9px;color:#64748b}.fp-seal-kpi strong{font-size:15px;color:#0f172a}
 .fp-seal-materials{margin-top:11px;border:1px solid #dce4ed;border-radius:10px;overflow:hidden}.fp-seal-material-head{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;background:#0f172a;color:#fff}.fp-seal-material-head span{font-size:9px;opacity:.75}.fp-seal-material-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:9px 10px;border-top:1px solid #e7ecf1}.fp-seal-material-row:first-of-type{border-top:0}.fp-seal-material-row>div{display:grid;gap:2px}.fp-seal-material-row b{font-size:10px}.fp-seal-material-row small,.fp-seal-material-row span{font-size:9px;color:#64748b}.fp-seal-material-row>div:last-child{text-align:right}.fp-seal-material-row>div:last-child strong{font-size:12px}.fp-abdichtung-note{margin-top:10px;padding:9px;border-radius:8px;background:#f8fafc;color:#64748b;font-size:9px;line-height:1.4}
 @media(max-width:900px){.fp-abdichtung-panel{left:62px;top:135px;width:min(390px,calc(100vw - 76px));max-height:calc(100vh - 205px)}.fp-abdichtung-settings{grid-template-columns:1fr}.fp-abdichtung-check{grid-column:auto!important}}
+
+.fp-seal-detail-note{
+  margin:8px 0 12px;padding:9px 10px;border:1px solid #bfdbfe;border-radius:8px;
+  background:#eff6ff;color:#1e3a8a;font-size:10px;line-height:1.4
+}

@@ -694,6 +694,17 @@
           <label>Tiefe (cm)
             <input id="fpObjectDepth" type="number" min="1" step="1">
           </label>
+          <div id="fpWalkInShowerFields" class="hidden">
+            <label>Gefälle (%)
+              <input id="fpShowerSlope" type="number" min="0.5" max="5" step="0.1" value="2.0">
+            </label>
+            <label>Ablauf
+              <select id="fpShowerDrainType"><option value="line">Duschrinne</option><option value="point">Punktablauf</option></select>
+            </label>
+            <label>Gefällerichtung
+              <select id="fpShowerSlopeDirection"><option value="back">nach hinten</option><option value="front">nach vorne</option><option value="left">nach links</option><option value="right">nach rechts</option><option value="center">zum Mittelpunkt</option></select>
+            </label>
+          </div>
           <label>Position X (cm)
             <input id="fpObjectX" type="number" step="1">
           </label>
@@ -803,6 +814,7 @@
       <button data-add-object="niche" class="fp-feature-object"><b>▣</b><span>Nische</span></button>
       <button data-add-object="wc"><b>▱</b><span>WC</span></button>
       <button data-add-object="shower"><b>☒</b><span>Dusche</span></button>
+      <button data-add-object="walkInShower" class="fp-feature-object"><b>↘</b><span>Bodengleiche Dusche</span></button>
       <button data-add-object="bathtub"><b>▭</b><span>Badewanne</span></button>
       <button data-add-object="kitchenSink"><b>▣</b><span>Küche Spüle</span></button>
       <button data-add-object="stove"><b>▦</b><span>Herd</span></button>

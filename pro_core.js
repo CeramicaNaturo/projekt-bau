@@ -22,7 +22,7 @@ function persist(showToast=false){
 function scheduleSave(){if(!fpRecord)return;dirty=true;saveState('dirty','Nicht gespeichert');clearTimeout(timer);timer=setTimeout(()=>persist(false),900)}
 function toast(text){let n=document.querySelector('.fp-pro-toast');if(!n){n=document.createElement('div');n.className='fp-pro-toast';document.body.appendChild(n)}n.textContent=text;n.classList.add('show');clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove('show'),1700)}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function label(o){const m={wall:'Wand',door:'Tür',window:'Fenster',sink:'Waschbecken',wc:'WC',shower:'Dusche',bathtub:'Badewanne',drain:'Bodenablauf',table:'Tisch',chair:'Stuhl',sofa:'Sofa',bed:'Bett',cabinet:'Schrank'};return m[o?.type]||String(o?.type||'Objekt')}
+function label(o){const m={wall:'Wand',door:'Tür',window:'Fenster',sink:'Waschbecken',wc:'WC',shower:'Dusche',walkInShower:'Bodengleiche Dusche',bathtub:'Badewanne',drain:'Bodenablauf',table:'Tisch',chair:'Stuhl',sofa:'Sofa',bed:'Bett',cabinet:'Schrank'};return m[o?.type]||String(o?.type||'Objekt')}
 function segDist(px,py,x1,y1,x2,y2){const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy;if(l2<1e-9)return Math.hypot(px-x1,py-y1);const t=Math.max(0,Math.min(1,((px-x1)*dx+(py-y1)*dy)/l2));return Math.hypot(px-(x1+t*dx),py-(y1+t*dy))}
 function endpointKey(x,y,tol=2){return `${Math.round(Number(x)/tol)}:${Math.round(Number(y)/tol)}`}
 function analyze(){

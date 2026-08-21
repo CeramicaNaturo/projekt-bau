@@ -32,6 +32,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;',
 
 function walls(){return (fpObjects||[]).filter(o=>o.type==='wall')}
 function objs(type){return (fpObjects||[]).filter(o=>o.type===type)}
+function showers(){return (fpObjects||[]).filter(o=>o.type==='shower'||o.type==='walkInShower')}
 function floorArea(){try{return calculateFloorAreaM2(fpObjects||[])||0}catch(_){return 0}}
 function roomHeightCm(){return Math.max(100,Number(fpRecord?.roomHeightM||2.4)*100)}
 function wallLen(w){return Math.hypot(cm(w.x2)-cm(w.x1),cm(w.y2)-cm(w.y1))}
@@ -59,12 +60,13 @@ function nearestDrainTo(o){
 function detectShowerType(){
   const c=cfg();
   if(c?.showerType && c.showerType!=='auto')return c.showerType;
-  const showers=objs('shower');
-  if(!showers.length)return 'none';
-  return showers.some(s=>nearestDrainTo(s)?.d<140)?'levelOpen':'tray';
+  const ss=showers();
+  if(!ss.length)return 'none';
+  if(ss.some(s=>s.type==='walkInShower'))return 'levelOpen';
+  return ss.some(s=>nearestDrainTo(s)?.d<140)?'levelOpen':'tray';
 }
 function detectExample(){
-  const hasBath=objs('bathtub').length>0,hasShower=objs('shower').length>0;
+  const hasBath=objs('bathtub').length>0,hasShower=showers().length>0;
   const st=detectShowerType();
   const n=roomName();
   if(/küche/.test(n) && objs('kitchenSink').length && objs('stove').length)return {nr:9,label:'Gewerbliche Küche'};
@@ -111,7 +113,7 @@ function addWetZone(map,o,kind){
 }
 function wallRects(){
   const map=baseWallRects();
-  objs('shower').forEach(o=>addWetZone(map,o,'shower'));
+  showers().forEach(o=>addWetZone(map,o,'shower'));
   objs('bathtub').forEach(o=>addWetZone(map,o,'bath'));
   return map;
 }
@@ -188,7 +190,7 @@ function zargenBandM(){
 }
 function wetRoom(){
   const n=roomName();
-  return /bad|dusche|wc|wellness|garderobe|küche|wäsch/.test(n)||objs('shower').length||objs('bathtub').length||objs('drain').length;
+  return /bad|dusche|wc|wellness|garderobe|küche|wäsch/.test(n)||showers().length||objs('bathtub').length||objs('drain').length;
 }
 
 function analyze(){

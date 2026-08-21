@@ -557,7 +557,7 @@ function restoreObjects(arr){fpObjects=JSON.parse(JSON.stringify(arr));fpSelecte
 function layerForType(type){
   if(type==='wall')return 'walls';
   if(type==='door'||type==='window'||type==='niche')return 'openings';
-  if(['wc','shower','bathtub','sink','drain','kitchenSink','mirror'].includes(type))return 'sanitary';
+  if(['wc','shower','walkInShower','bathtub','sink','drain','kitchenSink','mirror'].includes(type))return 'sanitary';
   if(['stove','fridge','washingMachine','table','chair','sofa','bed','cabinet','plant'].includes(type))return 'furniture';
   return 'notes';
 }
@@ -2040,7 +2040,7 @@ function floorStart(ev){
     }
   }else{
     const dims={
-      door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],
+      door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],walkInShower:[100,100],
       bathtub:[180,80],sink:[60,50],drain:[15,15],
       kitchenSink:[60,60],stove:[60,60],fridge:[60,65],washingMachine:[60,65],
       table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45],mirror:[80,5],niche:[60,12]
@@ -2054,7 +2054,10 @@ function floorStart(ev){
       sillHeightCm:fpTool==='window'?90:undefined,
       openingDirection:(fpTool==='door'||fpTool==='window')?'right':undefined,
       openingSide:fpTool==='door'?'inside':undefined,
-      wallFace:(fpTool==='door'||fpTool==='window')?'inside':undefined
+      wallFace:(fpTool==='door'||fpTool==='window')?'inside':undefined,
+      slopePct:fpTool==='walkInShower'?2.0:undefined,
+      drainType:fpTool==='walkInShower'?'line':undefined,
+      slopeDirection:fpTool==='walkInShower'?'back':undefined
     };
     const placed=constrainObjectPlacement(newObj,x,y);
     newObj.x=placed.x;
@@ -2808,6 +2811,12 @@ function updateSelectedInfo(){
   const xInput=$('fpObjectX'),yInput=$('fpObjectY');
   if(xInput)xInput.value=String(posInputs.x);
   if(yInput)yInput.value=String(posInputs.y);
+  const wf=$('fpWalkInShowerFields');
+  if(wf)wf.classList.toggle('hidden',o.type!=='walkInShower');
+  if(o.type==='walkInShower'){
+    const sl=$('fpShowerSlope'),dt=$('fpShowerDrainType'),sd=$('fpShowerSlopeDirection');
+    if(sl)sl.value=String(Number(o.slopePct||2)); if(dt)dt.value=o.drainType||'line'; if(sd)sd.value=o.slopeDirection||'back';
+  }
   el.textContent=txt;
   updateCadInspector();
   updateWallEndpointFields();
@@ -3482,7 +3491,7 @@ function drawConnectedWallPreview(w){
 
 function fpDefaultObjectDimensions(type){
   const dims={
-    door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],
+    door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],walkInShower:[100,100],
     bathtub:[180,80],sink:[60,50],drain:[15,15],
     kitchenSink:[60,60],stove:[60,60],fridge:[60,65],washingMachine:[60,65],
     table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45],mirror:[80,5],niche:[60,12]
@@ -3848,6 +3857,23 @@ function drawFpObject(o,preview=false){
     fpCtx.beginPath();fpCtx.ellipse(o.x,o.y+8,30,43,0,0,Math.PI*2);fpCtx.stroke();
     fpCtx.beginPath();fpCtx.ellipse(o.x,o.y+8,22,33,0,0,Math.PI*2);fpCtx.stroke();
     fpCtx.beginPath();fpCtx.arc(o.x,o.y+13,5,0,Math.PI*2);fpCtx.stroke();
+
+  }else if(o.type==='walkInShower'){
+    const ww=Math.max(40,Number(o.widthCm||100)),dd=Math.max(40,Number(o.depthCm||100));
+    fpCtx.lineWidth=3;fpCtx.strokeStyle='#2563eb';
+    fpCtx.strokeRect(o.x-ww/2,o.y-dd/2,ww,dd);
+    fpCtx.fillStyle='rgba(37,99,235,.07)';fpCtx.fillRect(o.x-ww/2,o.y-dd/2,ww,dd);
+    fpCtx.strokeStyle='#64748b';fpCtx.lineWidth=2;
+    const dir=o.slopeDirection||'back';
+    const targets={back:[o.x,o.y-dd/2+12],front:[o.x,o.y+dd/2-12],left:[o.x-ww/2+12,o.y],right:[o.x+ww/2-12,o.y],center:[o.x,o.y]};
+    const t=targets[dir]||targets.back;
+    for(const q of [[o.x-ww*.32,o.y-dd*.32],[o.x+ww*.32,o.y-dd*.32],[o.x-ww*.32,o.y+dd*.32],[o.x+ww*.32,o.y+dd*.32]]){
+      fpCtx.beginPath();fpCtx.moveTo(q[0],q[1]);fpCtx.lineTo(t[0],t[1]);fpCtx.stroke();
+    }
+    fpCtx.fillStyle='#111827';
+    if((o.drainType||'line')==='line'){fpCtx.fillRect(o.x-ww*.32,(dir==='front'?o.y+dd/2-16:o.y-dd/2+12)-2,ww*.64,4)}
+    else {fpCtx.fillRect(t[0]-6,t[1]-6,12,12)}
+    fpCtx.font='13px Arial';fpCtx.textAlign='center';fpCtx.fillText(`Gefälle ${Number(o.slopePct||2).toFixed(1)}%`,o.x,o.y+5);
 
   }else if(o.type==='shower'){
     fpCtx.lineWidth=4;
@@ -4551,6 +4577,10 @@ function initFloorplanControls(){
   const objectDepth=$('fpObjectDepth');
   if(objectWidth)objectWidth.onchange=setSelectedDimensions;
   if(objectDepth)objectDepth.onchange=setSelectedDimensions;
+  const showerSlope=$('fpShowerSlope'),showerDrain=$('fpShowerDrainType'),showerDir=$('fpShowerSlopeDirection');
+  const applyWalkIn=()=>{const o=selectedObject();if(!o||o.type!=='walkInShower')return;pushHistory();o.slopePct=Math.max(.5,Math.min(5,Number(showerSlope?.value||2)));o.drainType=showerDrain?.value||'line';o.slopeDirection=showerDir?.value||'back';save();drawFloorplan();refresh3D();updateSelectedInfo();};
+  if(showerSlope)showerSlope.onchange=applyWalkIn;if(showerDrain)showerDrain.onchange=applyWalkIn;if(showerDir)showerDir.onchange=applyWalkIn;
+
 
   const wallLength=$('fpWallLength');
   const wallAngle=$('fpWallAngle');

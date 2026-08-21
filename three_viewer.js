@@ -658,7 +658,7 @@ function floorMesh(objects, material){
 
 function objectDefaultDims3D(type){
   const dims={
-    door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],
+    door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],walkInShower:[100,100],
     bathtub:[180,80],sink:[60,50],drain:[15,15],
     kitchenSink:[60,60],stove:[60,60],fridge:[60,65],washingMachine:[60,65],
     table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45]
@@ -829,6 +829,25 @@ function realisticWC(o){
 
   return finishObject(g,o);
 }
+function realisticWalkInShower(o){
+  const g=new THREE.Group(), w=m(o.widthCm||100), d=m(o.depthCm||100), slope=Math.max(.5,Math.min(5,Number(o.slopePct||2)))/100;
+  const drop=Math.max(.006,Math.min(.05,(o.slopeDirection==='left'||o.slopeDirection==='right'?w:d)*slope));
+  const dir=o.slopeDirection||'back';
+  const yFL=(dir==='front'||dir==='left')?drop:0, yFR=(dir==='front'||dir==='right')?drop:0, yBL=(dir==='back'||dir==='left')?drop:0, yBR=(dir==='back'||dir==='right')?drop:0;
+  const pos=new Float32Array([-w/2,yFL,d/2, w/2,yFR,d/2, -w/2,yBL,-d/2, w/2,yBR,-d/2]);
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setIndex([0,1,2,2,1,3]);geo.computeVertexNormals();
+  const floor=new THREE.Mesh(geo,mat(0xbfc2c5,.78,0));floor.position.y=.008;floor.receiveShadow=true;g.add(floor);
+  const chrome=CHROME();
+  if((o.drainType||'line')==='line'){
+    const z=dir==='front'?d/2-.07:-d/2+.07, x=dir==='left'?-w/2+.07:(dir==='right'?w/2-.07:0);
+    if(dir==='left'||dir==='right')addBox(g,.045,.012,d*.65,x,.018,0,chrome); else addBox(g,w*.65,.012,.045,0,.018,z,chrome);
+  }else addCylinder(g,.045,.045,.012,0,.018,0,chrome,24);
+  // frameless glass panel to make the walk-in shower visible without a tray
+  addBox(g,.012,1.95,d*.72,-w/2,.98,0,glassMat());
+  addCylinder(g,.010,.010,1.95,-w/2,.98,-d*.36,chrome,12);
+  return finishObject(g,o);
+}
+
 function realisticShower(o){
   const g=new THREE.Group();
   const w=m(o.widthCm||90),d=m(o.depthCm||90);
@@ -1135,6 +1154,7 @@ function objectMesh(o){
   }
   if(type==='wc')return realisticWC(o);
   if(type==='shower')return realisticShower(o);
+  if(type==='walkInShower')return realisticWalkInShower(o);
   if(type==='bathtub')return realisticBathtub(o);
   if(type==='sink')return realisticSink(o);
   if(type==='mirror')return realisticMirror(o);

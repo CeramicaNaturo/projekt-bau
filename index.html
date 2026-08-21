@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=2300">
+<link rel="stylesheet" href="styles.css?v=2400">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer"><strong>Version 2.3.0 PRO</strong></div>
+  <div class="cad-sidebar-footer"><strong>Version 2.4.0 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.3.0 PRO</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.4.0 PRO</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -381,6 +381,61 @@
       <div id="fpFloorTileInfo" class="fp-floor-tile-info">Noch keine Bodenfliesen-Einteilung.</div>
     </aside>
 
+    <aside id="fpAbdichtungPanel" class="fp-abdichtung-panel hidden">
+      <div class="fp-abdichtung-head">
+        <div>
+          <small>SIA 271/1 · INNENRAUMABDICHTUNG</small>
+          <strong>Automatische Abdichtungsplanung</strong>
+        </div>
+        <button id="fpAbdichtungClose" type="button">×</button>
+      </div>
+
+      <div id="fpAbdichtungDetected" class="fp-abdichtung-detected"></div>
+
+      <div class="fp-abdichtung-settings">
+        <label>Anwendungsuntergruppe
+          <select id="fpSealClass">
+            <option value="auto">Automatisch erkennen</option>
+            <option value="A4.1">A4.1 · mässig</option>
+            <option value="A4.2">A4.2 · hoch</option>
+            <option value="A4.3">A4.3 · sehr hoch</option>
+          </select>
+        </label>
+        <label>Duschsituation
+          <select id="fpSealShowerType">
+            <option value="auto">Automatisch erkennen</option>
+            <option value="tray">Duschwanne</option>
+            <option value="levelOpen">Bodeneben · offen</option>
+            <option value="levelClosed">Bodeneben · geschlossen</option>
+          </select>
+        </label>
+        <label>Abdichtungssystem
+          <select id="fpSealSystem">
+            <option value="membraneW">SikaCeram Sealing Membrane W</option>
+            <option value="membraneA">SikaCeram Sealing Membrane A</option>
+          </select>
+        </label>
+        <label>Verschnitt / Reserve (%)
+          <input id="fpSealWaste" type="number" min="0" max="50" step="1" value="10">
+        </label>
+        <label>Zusätzliche Wandmanschetten (St.)
+          <input id="fpSealWallCollars" type="number" min="0" max="100" step="1" value="0">
+        </label>
+        <label class="fp-abdichtung-check"><input id="fpSealOverlay" type="checkbox" checked> Abdichtungsflächen im 2D-Plan anzeigen</label>
+      </div>
+
+      <div class="fp-abdichtung-actions">
+        <button id="fpSealRecalculate" type="button" class="primary">Automatisch berechnen</button>
+        <button id="fpSealSaveMaterial" type="button" class="secondary">Materialliste speichern</button>
+      </div>
+
+      <div id="fpSealSummary" class="fp-seal-summary"></div>
+      <div id="fpSealMaterials" class="fp-seal-materials"></div>
+      <div class="fp-abdichtung-note">
+        Automatische Ermittlung nach den im Projekt hinterlegten Geometrien. Vor Ausführung sind Untergrund, Detailanschlüsse und aktuelles Produktdatenblatt zu prüfen.
+      </div>
+    </aside>
+
     <button id="fpFloorTilePanelBtn" class="fp-floor-tile-left-fallback" type="button" title="Bodenfliesen einteilen"><span>▦</span><small>Bodenfliesen</small></button>
 <div class="fp-editor-grid">
       <aside class="fp-left-tools">
@@ -392,6 +447,7 @@
         <button class="fp-tool" data-tool="sink"><b>◇</b><span>Objekte</span></button>
         <button class="fp-tool" data-tool="text"><b>T</b><span>Text</span></button>
         <button class="fp-tool" data-tool="tileOrigin"><b>✚</b><span>Fliesenstart</span></button>
+        <button id="fpAbdichtungTool" class="fp-tool fp-abdichtung-tool" type="button"><b>▧</b><span>Abdichtung</span></button>
 
         <div class="fp-tool-separator"></div>
         <button id="fpUndo" class="fp-mini-tool" title="Rückgängig">↶</button>
@@ -788,9 +844,10 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=2300"></script>
+<script type="module" src="three_viewer.js?v=2400"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=2300"></script>
-<script src="pro_core.js?v=2300"></script>
+<script src="app.js?v=2400"></script>
+<script src="pro_core.js?v=2400"></script>
+<script src="abdichtung_core.js?v=2400"></script>
 </body>
 </html>

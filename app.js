@@ -3147,6 +3147,7 @@ function drawFloorplan(preview=null){
 
     // IMPORTANT: draw each object independently, so one malformed object cannot hide the whole plan.
     try{drawFloorTiles2D()}catch(e){console.error('Bodenfliesen 2D',e)}
+    try{window.ProjectBauAbdichtung?.drawOverlay?.()}catch(e){console.error('Abdichtung Overlay',e)}
 
     (fpObjects||[]).forEach(o=>{
       try{
@@ -3285,6 +3286,7 @@ function drawFloorplan(preview=null){
     try{updateCadInspector()}catch(e){console.error(e)}
     try{drawCadRulers()}catch(e){console.error(e)}
     try{refresh3D()}catch(e){console.error(e)}
+    try{window.ProjectBauAbdichtung?.planChanged?.()}catch(e){console.error(e)}
   }
 }
 

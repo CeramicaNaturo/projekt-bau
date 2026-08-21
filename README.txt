@@ -1,25 +1,31 @@
-Projekt Bau v2.3.2 PRO
+Projekt Bau v2.4.0 PRO · SIA 271/1 Abdichtungsplanung
 
-SPIEGEL / NISCHE ÖLÇÜ VE CURSOR DÜZELTMESİ
+AUTOMATISCHE ERKENNUNG
+- Erkennt Badewanne, Dusche, Bodenablauf, Fliesenflächen und Raumbezeichnung.
+- Ordnet automatisch ein SIA-271/1-Beispiel zu (z.B. Badewanne, Duschwanne, bodenebene Dusche, Kombinationen, gewerbliche Küche).
+- A4.1 / A4.2 / A4.3 wird automatisch vorgeschlagen und kann manuell überschrieben werden.
 
-Nische seçildiğinde sağ panel:
-- Breite
-- Höhe
-- Tiefe
-- Unterkante ab Boden
+ABDICHTUNGSFLÄCHEN
+- Wasserbeanspruchter Boden wird als durchgehende Abdichtungsfläche gerechnet.
+- Vorhandene Wand-Fliesenflächen werden als Abdichtungsflächen übernommen.
+- Dusche und Badewanne erzeugen zusätzliche raumhohe Nasszonen an den nächstliegenden Wänden.
+- Nasszonen werden seitlich um 30 cm erweitert.
+- 2D-Overlay: Boden gelb, Wand-Abdichtungsbereiche türkis.
 
-Spiegel seçildiğinde sağ panel:
-- Breite
-- Höhe
-- Unterkante ab Boden
+AUTOMATISCHE MATERIALERMITTLUNG
+- Abdichtungsbahn m² und Rollen
+- SikaCeram Sealing Fix kg und 7.8-kg-Gebinde
+- Sika SealTape F laufende Meter und 25-m-Rollen
+- Innen-/Aussenecken und Gebinde
+- Bodenmanschetten aus platzierten Bodenabläufen
+- Wandmanschetten als zusätzliche manuelle Stückzahl
+- Wannen-/Duschrandband als geometrische Schätzung
+- Reserve/Verschnitt einstellbar
 
-CURSOR İLE YERLEŞTİRME
-- Auswählen modunda Spiegel veya Nische'yi tutup sürükle.
-- Obje cursor'u takip ederek yalnız bağlı olduğu duvar boyunca hareket eder.
-- Duvar yüzeyinden kopmaz.
-- Grid'e yuvarlanmaz; ince konum ayarı yapılabilir.
-- Objenin yarısı duvarın uç noktasından dışarı taşamaz.
-- İlk ekleme sırasında da duvar konumu grid'e zorlanmaz.
-- Ölçü değiştirildiğinde obje aynı duvara tekrar sıfır boşlukla oturur.
+Hinterlegte Produktbasis:
+- SikaCeram Sealing Membrane W/A: 1.00 m breit, 30-m-Rolle
+- SikaCeram Sealing Fix: ca. 0.75 kg/m², Gebinde 7.8 kg
+- Sika SealTape F: 25-m-Rolle; Formteile gemäss Lieferform
 
-Sürüm: 2.3.2 PRO
+WICHTIG
+Die automatische Planung ist eine geometrische Projektierungshilfe. Untergrund, Detailanschlüsse, Wasserbeanspruchung und aktuelle Produktdatenblätter sind vor Ausführung fachlich zu prüfen.

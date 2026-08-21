@@ -9,7 +9,10 @@ const PRODUCT={
   membraneW:{name:'SikaCeram® Sealing Membrane W',rollM:30,widthM:1},
   membraneA:{name:'SikaCeram® Sealing Membrane A',rollM:30,widthM:1},
   sealingFix:{name:'SikaCeram® Sealing Fix',kgPerM2:.75,packKg:7.8},
-  sealTape:{name:'Sika® SealTape F',rollM:25,widthMm:120,cornerPack:20,wallCollarPack:20,floorCollarPack:10}
+  sealTape:{name:'Sika® SealTape F',rollM:25,widthMm:120,cornerPack:20,wallCollarPack:20,floorCollarPack:10},
+  slopeRail:{name:'Gefällskeilschiene',stockM:2.0},
+  geberitFlange:{name:'Geberit Dichtflansch'},
+  geberitChannel:{name:'Geberit Duschrinne'}
 };
 
 function cfg(){
@@ -193,6 +196,27 @@ function wetRoom(){
   return /bad|dusche|wc|wellness|garderobe|küche|wäsch/.test(n)||showers().length||objs('bathtub').length||objs('drain').length;
 }
 
+function walkInShowers(){return (fpObjects||[]).filter(o=>o.type==='walkInShower')}
+function walkInExtras(){
+  const showers=walkInShowers();
+  let railM=0;
+  const channels=[];
+  for(const o of showers){
+    const w=Math.max(30,cm(o.widthCm||100));
+    const d=Math.max(30,cm(o.depthCm||100));
+    const dir=o.slopeDirection||'back';
+    // For a one-direction fall, two side wedge rails run along the fall direction.
+    // For centre fall we calculate four edge segments.
+    if(dir==='center') railM+=(2*w+2*d)/100;
+    else if(dir==='left'||dir==='right') railM+=2*w/100;
+    else railM+=2*d/100;
+    // Geberit channel follows the low edge; default length is the width perpendicular to fall.
+    const channelCm=(dir==='left'||dir==='right')?d:w;
+    channels.push(Math.round(channelCm));
+  }
+  return {count:showers.length,railM,channels};
+}
+
 function analyze(){
   const c=cfg(); if(!c)return null;
   const cls=detectClass(),example=detectExample(),rectMap=wallRects();
@@ -210,14 +234,18 @@ function analyze(){
   const tapeNeed=(perimeter+vertical+zargen)*(1+waste);
   const system=PRODUCT[c.system]||PRODUCT.membraneW;
   const fixKg=total*PRODUCT.sealingFix.kgPerM2*(1+waste);
-  const result={cls,example,showerType:detectShowerType(),floorArea:floor,wallArea,totalArea:total,perimeter,verticalTape:vertical,zargenBand:zargen,corners,floorCollars,wallCollars,wastePct:c.wastePct,rectMap,materials:[
+  const walk=walkInExtras();
+  const result={cls,example,showerType:detectShowerType(),floorArea:floor,wallArea,totalArea:total,perimeter,verticalTape:vertical,zargenBand:zargen,corners,floorCollars,wallCollars,wastePct:c.wastePct,walkIn:walk,rectMap,materials:[
     {name:system.name,qty:membraneNeed,unit:'m²',packs:ceil(membraneNeed/(system.rollM*system.widthM)),pack:`Rolle ${system.rollM} m × ${system.widthM.toFixed(2)} m`},
     {name:PRODUCT.sealingFix.name,qty:fixKg,unit:'kg',packs:ceil(fixKg/PRODUCT.sealingFix.packKg),pack:`Gebinde ${PRODUCT.sealingFix.packKg} kg`},
     {name:PRODUCT.sealTape.name+' · Dichtband',qty:tapeNeed,unit:'m',packs:ceil(tapeNeed/PRODUCT.sealTape.rollM),pack:`Rolle ${PRODUCT.sealTape.rollM} m`},
     {name:PRODUCT.sealTape.name+' · Innenecke',qty:corners.inner,unit:'St.',packs:ceil(corners.inner/PRODUCT.sealTape.cornerPack),pack:`Schachtel ${PRODUCT.sealTape.cornerPack} St.`},
     {name:PRODUCT.sealTape.name+' · Aussenecke',qty:corners.outer,unit:'St.',packs:ceil(corners.outer/PRODUCT.sealTape.cornerPack),pack:`Schachtel ${PRODUCT.sealTape.cornerPack} St.`},
     {name:PRODUCT.sealTape.name+' · Bodenmanschette',qty:floorCollars,unit:'St.',packs:ceil(floorCollars/PRODUCT.sealTape.floorCollarPack),pack:`Schachtel ${PRODUCT.sealTape.floorCollarPack} St.`},
-    {name:PRODUCT.sealTape.name+' · Wandmanschette',qty:wallCollars,unit:'St.',packs:ceil(wallCollars/PRODUCT.sealTape.wallCollarPack),pack:`Schachtel ${PRODUCT.sealTape.wallCollarPack} St.`}
+    {name:PRODUCT.sealTape.name+' · Wandmanschette',qty:wallCollars,unit:'St.',packs:ceil(wallCollars/PRODUCT.sealTape.wallCollarPack),pack:`Schachtel ${PRODUCT.sealTape.wallCollarPack} St.`},
+    {name:PRODUCT.slopeRail.name,qty:walk.railM*(1+waste),unit:'m',packs:ceil((walk.railM*(1+waste))/PRODUCT.slopeRail.stockM),pack:`Stangen à ${PRODUCT.slopeRail.stockM.toFixed(2)} m`},
+    {name:PRODUCT.geberitFlange.name,qty:walk.count,unit:'St.',packs:walk.count,pack:'1 St. pro bodengleicher Dusche'},
+    {name:PRODUCT.geberitChannel.name,qty:walk.count,unit:'St.',packs:walk.count,pack:walk.channels.length?`Länge automatisch: ${walk.channels.map(x=>x+' cm').join(' / ')}`:'–'}
   ]};
   lastAnalysis=result;
   if(fpRecord){fpRecord.abdichtung.lastAnalysis={...result,rectMap:undefined,materials:result.materials};fpRecord.abdichtung.updatedAt=new Date().toISOString()}
@@ -235,7 +263,8 @@ function render(){
     <div class="fp-seal-kpi"><span>Gesamtfläche</span><strong>${fmt(r.totalArea)} m²</strong></div>
     <div class="fp-seal-kpi"><span>Boden-Wand Dichtband</span><strong>${fmt(r.perimeter)} m</strong></div>
     <div class="fp-seal-kpi"><span>Vertikale Dichtbänder</span><strong>${fmt(r.verticalTape)} m</strong></div>
-    <div class="fp-seal-kpi"><span>Wannen-/Duschrandband</span><strong>${fmt(r.zargenBand)} m</strong></div>`;
+    <div class="fp-seal-kpi"><span>Wannen-/Duschrandband</span><strong>${fmt(r.zargenBand)} m</strong></div>
+    ${r.walkIn?.count?`<div class="fp-seal-kpi"><span>Bodengleiche Duschen</span><strong>${r.walkIn.count} St.</strong></div>`:''}`;
   if(mats)mats.innerHTML=`<div class="fp-seal-material-head"><strong>Automatischer Materialbedarf</strong><span>inkl. ${fmt(r.wastePct,0)} % Reserve</span></div>`+
     r.materials.filter(x=>x.qty>0).map(x=>`<div class="fp-seal-material-row"><div><b>${esc(x.name)}</b><small>${esc(x.pack)}</small></div><div><strong>${fmt(x.qty,x.unit==='St.'?0:2)} ${x.unit}</strong><span>${x.packs} Gebinde</span></div></div>`).join('');
 }
@@ -269,6 +298,55 @@ function saveMaterial(){
   const b=$('fpSealSaveMaterial');if(b){const old=b.textContent;b.textContent='Gespeichert ✓';setTimeout(()=>b.textContent=old,1400)}
 }
 
+function pdfSafe(s){return String(s??'').replace(/[®]/g,'').replace(/[–—]/g,'-')}
+function projectMaterialRows(){
+  const rows=[];
+  const r=analyze();
+  if(r) r.materials.filter(x=>Number(x.qty)>0).forEach(x=>rows.push({group:'Abdichtung / Dusche',name:x.name,qty:`${fmt(x.qty,x.unit==='St.'?0:2)} ${x.unit}`,pack:x.pack||'',packs:x.packs?String(x.packs):''}));
+  const tiles=fpProject?.tileMaterials||[];
+  tiles.forEach(x=>{
+    const name=[x.brand,x.model].filter(Boolean).join(' ')||'Fliesenmaterial';
+    const detail=[x.format,x.color,x.surface].filter(Boolean).join(' · ');
+    const qty=x.quantity?String(x.quantity):'';
+    rows.push({group:'Fliesen / Projektmaterial',name,qty,pack:detail,packs:x.article?`Art. ${x.article}`:''});
+  });
+  return rows;
+}
+function exportMaterialPdf(){
+  if(!window.jspdf?.jsPDF){alert('PDF-Modul ist nicht geladen.');return}
+  const rows=projectMaterialRows();
+  if(!rows.length){alert('Keine Materialien vorhanden.');return}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+  const pw=210,margin=15,rowH=9;
+  let y=18,page=1,lastGroup='';
+  const room=fpRecord?.name||'Grundriss';
+  const project=fpProject?.name||'Projekt Bau';
+  function header(){
+    doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text('Projekt Bau - Materialliste',margin,y);y+=7;
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(pdfSafe(project),margin,y);doc.text(pdfSafe(room),pw-margin,y,{align:'right'});y+=5;
+    doc.setDrawColor(210);doc.line(margin,y,pw-margin,y);y+=7;
+  }
+  function pageBreak(need=18){if(y+need>282){doc.addPage();page++;y=18;lastGroup='';header()}}
+  header();
+  for(const row of rows){
+    pageBreak(22);
+    if(row.group!==lastGroup){
+      y+=2;doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(35,55,75);doc.text(pdfSafe(row.group),margin,y);y+=6;lastGroup=row.group;
+    }
+    doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(9);
+    const nameLines=doc.splitTextToSize(pdfSafe(row.name),85);doc.text(nameLines,margin,y);
+    doc.setFont('helvetica','normal');doc.text(pdfSafe(row.qty),118,y);
+    if(row.packs)doc.text(pdfSafe(row.packs),pw-margin,y,{align:'right'});
+    const details=doc.splitTextToSize(pdfSafe(row.pack),75);if(details.length){doc.setFontSize(7.5);doc.setTextColor(90);doc.text(details,margin,y+4)}
+    y+=Math.max(rowH,4+details.length*3.2,nameLines.length*4.2+3);
+    doc.setDrawColor(235);doc.line(margin,y-2,pw-margin,y-2);
+  }
+  y+=4;pageBreak(20);doc.setFontSize(7.5);doc.setTextColor(100);doc.text('Automatisch aus Projektgeometrie und hinterlegten Materialdaten erzeugt.',margin,y);
+  const filename=`Materialliste_${String(room).replace(/[^a-zA-Z0-9_-]+/g,'_')}.pdf`;
+  doc.save(filename);
+}
+
 function drawOverlay(){
   const c=cfg();if(!c?.overlay)return;
   const r=lastAnalysis||analyze();if(!r||!fpCtx)return;
@@ -291,10 +369,10 @@ function drawOverlay(){
 }
 function planChanged(){clearTimeout(debounce);debounce=setTimeout(()=>{if(!$('fpAbdichtungPanel')?.classList.contains('hidden'))render();else lastAnalysis=null},300)}
 function install(){
-  $('fpAbdichtungTool')?.addEventListener('click',open);$('fpAbdichtungClose')?.addEventListener('click',close);$('fpSealRecalculate')?.addEventListener('click',()=>{readControls();render()});$('fpSealSaveMaterial')?.addEventListener('click',saveMaterial);
+  $('fpAbdichtungTool')?.addEventListener('click',open);$('fpAbdichtungClose')?.addEventListener('click',close);$('fpSealRecalculate')?.addEventListener('click',()=>{readControls();render()});$('fpSealSaveMaterial')?.addEventListener('click',saveMaterial);$('fpSealMaterialPdf')?.addEventListener('click',exportMaterialPdf);
   ['fpSealClass','fpSealShowerType','fpSealSystem','fpSealWaste','fpSealWallCollars','fpSealOverlay'].forEach(id=>$(id)?.addEventListener('change',readControls));
   setInterval(()=>{if(fpRecord&&!$('fpAbdichtungPanel')?.classList.contains('hidden'))render()},1500);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
-window.ProjectBauAbdichtung={open,analyze,render,drawOverlay,planChanged};
+window.ProjectBauAbdichtung={open,analyze,render,drawOverlay,planChanged,exportMaterialPdf};
 })();

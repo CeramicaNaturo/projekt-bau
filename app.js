@@ -2029,7 +2029,9 @@ function floorStart(ev){
   }
 
   pushHistory();
-  const x=snap(p.x),y=snap(p.y);
+  const wallMountedTool=(fpTool==='mirror'||fpTool==='niche');
+  const x=wallMountedTool?Number(p.x):snap(p.x);
+  const y=wallMountedTool?Number(p.y):snap(p.y);
 
   if(fpTool==='text'){
     const text=prompt('Beschriftung eingeben:','');
@@ -2125,6 +2127,16 @@ function floorMove(ev){
         o.y1=snap(orig.y1+dy);
         o.x2=snap(orig.x2+dx);
         o.y2=snap(orig.y2+dy);
+      }
+    }else if(o.type==='mirror'||o.type==='niche'){
+      // v2.3.2: wall-mounted object follows cursor along the wall,
+      // never detaches and is not rounded to the CAD grid.
+      const placed=projectWallObjectAlongWall(o,{x:p.x,y:p.y});
+      if(placed){
+        o.x=placed.x;
+        o.y=placed.y;
+        o.rotation=placed.rotation;
+        assignWallPlacementMeta(o,placed);
       }
     }else{
       const desiredX=snap(orig.x+dx);
@@ -2594,6 +2606,98 @@ function setSelectedDimensions(){
 }
 
 
+
+function refreshWallObjectPanel(){
+  const o=selectedObject();
+  const panel=$('fpWallObjectPanel');
+  const title=$('fpWallObjectTitle');
+  const width=$('fpWallObjectWidth');
+  const height=$('fpWallObjectHeight');
+  const depth=$('fpWallObjectDepth');
+  const bottom=$('fpWallObjectBottom');
+  const depthRow=$('fpWallObjectDepthRow');
+
+  const active=!!o && (o.type==='mirror'||o.type==='niche');
+  if(panel)panel.classList.toggle('hidden',!active);
+  if(!active)return;
+
+  fpEnsureWallObjectDefaults(o);
+
+  if(title)title.textContent=o.type==='mirror'?'SPIEGEL':'NISCHE';
+  if(width)width.value=String(Math.round(Number(o.widthCm)||80));
+  if(height)height.value=String(Math.round(Number(o.heightCm)||80));
+  if(depth)depth.value=String(Math.round(Number(o.depthCm)||(o.type==='mirror'?5:12)));
+  if(bottom)bottom.value=String(Math.round(Number(o.mountHeightCm)||0));
+  if(depthRow)depthRow.classList.toggle('hidden',o.type==='mirror');
+}
+
+function applyWallObjectPanel(){
+  const o=selectedObject();
+  if(!o || (o.type!=='mirror'&&o.type!=='niche'))return;
+
+  const width=Math.max(10,Math.min(500,Number($('fpWallObjectWidth')?.value)||Number(o.widthCm)||80));
+  const height=Math.max(10,Math.min(400,Number($('fpWallObjectHeight')?.value)||Number(o.heightCm)||80));
+  const depth=Math.max(1,Math.min(100,Number($('fpWallObjectDepth')?.value)||Number(o.depthCm)||(o.type==='mirror'?5:12)));
+  const bottom=Math.max(0,Math.min(300,Number($('fpWallObjectBottom')?.value)||0));
+
+  pushHistory();
+  o.widthCm=width;
+  o.heightCm=height;
+  if(o.type==='niche')o.depthCm=depth;
+  o.mountHeightCm=bottom;
+
+  // Keep selected wall object exactly attached after size edits.
+  const near=nearestWallForObject({x:o.x,y:o.y});
+  if(near){
+    const placed=snapObjectToWall(o,near.point.x,near.point.y);
+    o.x=placed.x;
+    o.y=placed.y;
+    o.rotation=placed.rotation;
+    assignWallPlacementMeta(o,placed);
+  }
+
+  save();
+  drawFloorplan();
+  updateSelectedInfo();
+  if(fp3DMode)refresh3D();
+}
+
+function projectWallObjectAlongWall(o,pointer){
+  if(!o || (o.type!=='mirror'&&o.type!=='niche'))return null;
+
+  let wall=null;
+
+  if(o.wallId){
+    wall=(fpObjects||[]).find(w=>w.type==='wall'&&w.id===o.wallId)||null;
+  }
+
+  if(!wall){
+    const near=nearestWallForObject(pointer);
+    wall=near?.wall||null;
+  }
+
+  if(!wall)return null;
+
+  const a={x:Number(wall.x1),y:Number(wall.y1)};
+  const b={x:Number(wall.x2),y:Number(wall.y2)};
+  const q=nearestPointOnSegment(pointer,a,b);
+
+  const placed=snapObjectToWall(o,q.x,q.y);
+
+  // Prevent half of wall-mounted object from crossing the wall endpoint.
+  const len=Math.hypot(b.x-a.x,b.y-a.y)||1;
+  const half=Math.max(0,Number(o.widthCm||60)*(o.scale||1)/2);
+  const minT=Math.min(.49,half/len);
+  const maxT=Math.max(.51,1-minT);
+  const clampedT=Math.max(minT,Math.min(maxT,q.t));
+
+  const cx=a.x+(b.x-a.x)*clampedT;
+  const cy=a.y+(b.y-a.y)*clampedT;
+  const final=snapObjectToWall(o,cx,cy);
+
+  return {...final,wallId:wall.id};
+}
+
 function fpEnsureMirrorInspector(o){
   let box=document.getElementById('fpMirrorProperties');
   const host=document.getElementById('fpSelectionProperties') ||
@@ -2671,7 +2775,12 @@ function fpEnsureNicheInspector(o){
 }
 
 function updateSelectedInfo(){
-  setTimeout(()=>{const current=selectedObject();fpEnsureNicheInspector(current);fpEnsureMirrorInspector(current);},0);
+  setTimeout(()=>{
+    const current=selectedObject();
+    fpEnsureNicheInspector(current);
+    fpEnsureMirrorInspector(current);
+    refreshWallObjectPanel();
+  },0);
   const el=$('fpSelectedInfo');if(!el)return;
   const o=fpObjects.find(x=>x.id===fpSelectedId);
   if(!o){el.textContent='Keine Auswahl';refreshOpeningPanel();updateWallQuickPanel();return}
@@ -4368,6 +4477,11 @@ function initFloorplanControls(){
   ['fpOpeningWidth','fpOpeningHeight','fpWindowSillHeight'].forEach(id=>{
     const input=$(id);
     if(input)input.onchange=changeOpeningDimensions;
+  });
+
+  ['fpWallObjectWidth','fpWallObjectHeight','fpWallObjectDepth','fpWallObjectBottom'].forEach(id=>{
+    const input=$(id);
+    if(input)input.onchange=applyWallObjectPanel;
   });
 
   const floorTilePanelBtn=$('fpFloorTilePanelBtn');if(floorTilePanelBtn)floorTilePanelBtn.onclick=()=>{const p=$('fpFloorTilePanel');if(p){p.classList.toggle('hidden');if(!p.classList.contains('hidden'))updateFloorTilePanel();}};

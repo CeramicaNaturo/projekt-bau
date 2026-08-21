@@ -1,9 +1,25 @@
-Projekt Bau v2.3.1 PRO
+Projekt Bau v2.3.2 PRO
 
-- Spiegel ve Nische butonları alt Objektpalette içinde açıkça görünür.
-- İki buton mavi çerçeve ile vurgulanır.
-- WANDOBJEKTE başlığı eklendi.
-- Spiegel: Breite, Höhe, Unterkante ab Boden ayarlanabilir.
-- Nische: Breite, Höhe, Tiefe, Unterkante ab Boden ayarlanabilir.
-- Spiegel/Nische duvara sıfır boşlukla snap olur.
-- Nische eklemek için: Nische butonu -> duvara tıkla -> Auswählen -> sağ panelde ölçüleri ayarla.
+SPIEGEL / NISCHE ÖLÇÜ VE CURSOR DÜZELTMESİ
+
+Nische seçildiğinde sağ panel:
+- Breite
+- Höhe
+- Tiefe
+- Unterkante ab Boden
+
+Spiegel seçildiğinde sağ panel:
+- Breite
+- Höhe
+- Unterkante ab Boden
+
+CURSOR İLE YERLEŞTİRME
+- Auswählen modunda Spiegel veya Nische'yi tutup sürükle.
+- Obje cursor'u takip ederek yalnız bağlı olduğu duvar boyunca hareket eder.
+- Duvar yüzeyinden kopmaz.
+- Grid'e yuvarlanmaz; ince konum ayarı yapılabilir.
+- Objenin yarısı duvarın uç noktasından dışarı taşamaz.
+- İlk ekleme sırasında da duvar konumu grid'e zorlanmaz.
+- Ölçü değiştirildiğinde obje aynı duvara tekrar sıfır boşlukla oturur.
+
+Sürüm: 2.3.2 PRO

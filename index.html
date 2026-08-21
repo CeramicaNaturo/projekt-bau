@@ -550,6 +550,31 @@
           <div class="cad-property"><span>Drehung</span><b id="cadPropRotation">–</b></div>
         </div>
 
+        <div id="fpWallObjectPanel" class="cad-inspector-section fp-wall-object-panel hidden">
+          <h4 id="fpWallObjectTitle">WANDOBJEKT</h4>
+
+          <div class="fp-opening-grid">
+            <label>Breite (cm)
+              <input id="fpWallObjectWidth" type="number" min="10" max="500" step="1">
+            </label>
+            <label>Höhe (cm)
+              <input id="fpWallObjectHeight" type="number" min="10" max="400" step="1">
+            </label>
+          </div>
+
+          <label id="fpWallObjectDepthRow">Tiefe (cm)
+            <input id="fpWallObjectDepth" type="number" min="1" max="100" step="1">
+          </label>
+
+          <label>Unterkante ab Boden (cm)
+            <input id="fpWallObjectBottom" type="number" min="0" max="300" step="1">
+          </label>
+
+          <div class="opening-help">
+            Mit Auswählen direkt an der Wand entlang ziehen. Das Objekt bleibt automatisch auf der Wandfläche.
+          </div>
+        </div>
+
         <div id="fpOpeningPanel" class="cad-inspector-section opening-panel hidden">
           <h4>ÖFFNUNG</h4>
           <div class="opening-title" id="fpOpeningTitle">Tür / Fenster</div>

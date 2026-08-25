@@ -1,15 +1,20 @@
-Projekt Bau PRO v2.7.0
+Projekt Bau v2.7.1 PRO
 
-Basis: v2.6.2 CAD Layout Fix.
-Layout/CAD-Geometrie wurde nicht umgebaut.
+DÜZELTİLDİ:
+- Sol alt sürüm etiketi v2.7.1 PRO.
+- Dashboard v2.7.1 PRO.
+- Cache projekt-bau-v2710.
+- Eski projeler için otomatik veri kurtarma.
 
-Neu/verbessert:
-- Fotodokumentation direkt einem Projektbereich/Raum zuordnen
-- Bearbeitete Fotos werden in area.photos gespeichert und erscheinen im bestehenden PDF-Bericht
-- Fotoeditor: Freihand, Linie, Pfeil, Rechteck, Kreis, Text, Bildkorrektur, Drehen, Undo/Redo, JPG/PDF
-- Nische/Spiegel: vorhandene Breite/Höhe/Tiefe/Unterkante-Inspektoren bleiben erhalten
-- Abdichtungslogik: Nischen-Innen/Aussen-Dichtband und Ecken, Türen/Fenster, Innen-/Aussenecken, bodengleiche Dusche, Gefällsdichtecken
-- Weber-Systemmaterialien bleiben Grundlage; Geberit Dichtflansch/Rinne für bodengleiche Dusche bleiben systembedingt Geberit
-- Cache/Service Worker auf v2700 angehoben
+PROJE KURTARMA:
+- projekt-bau-v03, projekt-bau-v02, projekt-bau-v01 ve diğer Projekt Bau localStorage kayıtları taranır.
+- En fazla proje/alan içeren geçerli kayıt seçilir.
+- Eski kayıt silinmez.
+- Ana anahtara sadece kopyalanır.
+- Boş veri mevcut dolu proje verisinin üzerine yazamaz.
+- reset.html localStorage temizlemez.
 
-Nach Upload auf GitHub Pages einmal reset.html öffnen.
+Geliştirici konsolunda:
+ProjectBauRecovery.scan()
+ProjectBauRecovery.recover()
+komutları ile kayıtlar kontrol edilebilir.

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=2700">
+<link rel="stylesheet" href="styles.css?v=2710">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer"><strong>Version 2.6.2 PRO</strong></div>
+  <div class="cad-sidebar-footer"><strong>Version 2.7.1 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.7.0 PRO</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.7.1 PRO</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -273,7 +273,7 @@
     <header class="fp-appbar pro-main-header">
   <div class="pro-brand">
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.7.0 PRO</span>
+    <span class="pro-version">v2.7.1 PRO</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -912,12 +912,12 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=2700"></script>
+<script type="module" src="three_viewer.js?v=2710"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=2700"></script>
-<script src="pro_core.js?v=2700"></script>
-<script src="abdichtung_core.js?v=2700"></script>
-<script src="photo_editor.js?v=2700"></script>
+<script src="app.js?v=2710"></script>
+<script src="pro_core.js?v=2710"></script>
+<script src="abdichtung_core.js?v=2710"></script>
+<script src="photo_editor.js?v=2710"></script>
 
 <script>
 (async()=>{
@@ -926,9 +926,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw.js?v=2700')) await reg.unregister();
+      if(url && !url.includes('sw.js?v=2710')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw.js?v=2700',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw.js?v=2710',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

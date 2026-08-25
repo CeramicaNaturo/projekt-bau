@@ -1,17 +1,82 @@
 
 const K3='projekt-bau-v03',K2='projekt-bau-v02';
+
+function pbValidState(v){
+  return !!v && typeof v==='object' && Array.isArray(v.projects);
+}
+function pbProjectScore(v){
+  if(!pbValidState(v))return -1;
+  let score=v.projects.length*1000000;
+  for(const p of v.projects){
+    score+=(Array.isArray(p?.areas)?p.areas.length:0)*1000;
+    score+=(Array.isArray(p?.photos)?p.photos.length:0)*10;
+  }
+  return score;
+}
+function pbReadStorageState(key){
+  try{
+    const raw=localStorage.getItem(key);
+    if(!raw)return null;
+    const data=JSON.parse(raw);
+    return pbValidState(data)?data:null;
+  }catch(_){return null}
+}
+function loadState(){
+  const candidates=[];
+  const preferred=[K3,K2,'projekt-bau-v01','projekt-bau','ProjektBau'];
+
+  for(const key of preferred){
+    const data=pbReadStorageState(key);
+    if(data)candidates.push({key,data,score:pbProjectScore(data)});
+  }
+
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const key=localStorage.key(i);
+      if(!key || !/projekt.?bau/i.test(key))continue;
+      if(candidates.some(x=>x.key===key))continue;
+      const data=pbReadStorageState(key);
+      if(data)candidates.push({key,data,score:pbProjectScore(data)});
+    }
+  }catch(_){}
+
+  candidates.sort((x,y)=>y.score-x.score);
+  const chosen=candidates[0];
+
+  if(chosen){
+    try{
+      const current=pbReadStorageState(K3);
+      if(!current || pbProjectScore(chosen.data)>pbProjectScore(current)){
+        localStorage.setItem(K3,JSON.stringify(chosen.data));
+      }
+      localStorage.setItem('projekt-bau-last-recovery-source',chosen.key);
+    }catch(_){}
+    return chosen.data;
+  }
+
+  return {projects:[]};
+}
+
 let S=loadState(),A=null;
 const $=x=>document.getElementById(x),u=()=>crypto.randomUUID?crypto.randomUUID():Date.now()+Math.random().toString(36);
 
-function loadState(){
-  try{
-    const v3=localStorage.getItem(K3); if(v3) return JSON.parse(v3);
-    const v2=localStorage.getItem(K2); if(v2){ const s=JSON.parse(v2); localStorage.setItem(K3,JSON.stringify(s)); return s; }
-  }catch(e){}
-  return {projects:[]};
-}
 function save(){
-  try{ const objs=(typeof fpObjects!=='undefined'&&Array.isArray(fpObjects))?fpObjects:[]; objs.forEach(fpV192EnsureDoorDefaults); }catch(e){}localStorage.setItem(K3,JSON.stringify(S));render()}
+  try{
+    const stored=pbReadStorageState(K3);
+    if((S?.projects?.length||0)===0 && (stored?.projects?.length||0)>0){
+      S=stored;
+    }else{
+      try{
+        const objs=(typeof fpObjects!=='undefined'&&Array.isArray(fpObjects))?fpObjects:[];
+        objs.forEach(fpV192EnsureDoorDefaults);
+      }catch(_){}
+      localStorage.setItem(K3,JSON.stringify(S));
+    }
+  }catch(e){
+    console.error('Projekt Bau Speichern',e);
+  }
+  render();
+}
 function cur(){return S.projects.find(p=>p.id===A)}
 function formatCHF(value){
   const n=Number(value); if(!Number.isFinite(n)) return '-';
@@ -5078,3 +5143,22 @@ window.ProjectBauProLayout={refresh};
   });
   window.ProjectBauMaterialDrawer={open:()=>toggleMaterialDrawer(true),close:()=>toggleMaterialDrawer(false),toggle:()=>toggleMaterialDrawer()};
 })();
+
+window.ProjectBauRecovery={
+  scan(){
+    const out=[];
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        const key=localStorage.key(i);
+        if(!key||!/projekt.?bau/i.test(key))continue;
+        const data=pbReadStorageState(key);
+        if(data)out.push({key,projects:data.projects.length,score:pbProjectScore(data)});
+      }
+    }catch(_){}
+    return out.sort((x,y)=>y.score-x.score);
+  },
+  recover(){
+    S=loadState();A=null;render();
+    return Array.isArray(S?.projects)?S.projects.length:0;
+  }
+};

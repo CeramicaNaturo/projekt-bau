@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=2440">
+<link rel="stylesheet" href="styles.css?v=2500">
 </head>
 <body class="cad-app">
 
@@ -270,29 +270,41 @@
 
 <div id="floorplanModal" class="modal hidden cad-fullscreen-modal">
   <div class="modal-card floorplan-modal-card">
-    <header class="fp-appbar">
-      <div class="fp-appbar-left">
-        <button id="closeFloorplan" class="icon-button" title="Zurück">⌂</button>
-        <strong>Grundriss bearbeiten</strong>
-        <span class="fp-pro-chip">CAD PRO</span>
-        <span id="floorplanEditorTitle" class="fp-plan-select">Grundriss</span>
-        <span id="fpAutosaveBadge" class="fp-autosave-badge" data-state="saved">Gespeichert</span>
-      </div>
-      <div class="fp-appbar-actions">
-        <button id="fpToggleInspector" class="secondary fp-tablet-only" title="Eigenschaften ein-/ausblenden">Eigenschaften</button>
-        <div class="fp-view-switch">
-          <button id="fpView2D" class="secondary active">2D CAD</button>
-          <button id="fpView3D" class="secondary">3D</button>
-        </div>
-        <button id="fpProValidate" class="secondary" title="Grundriss technisch prüfen">Prüfen</button>
-        <button id="fpProExport" class="secondary" title="Grundriss als JSON exportieren">Plan exportieren</button>
-        <button id="fpSave" class="primary">Speichern</button>
-        <button id="fp2DPdfButton" class="secondary" title="2D-Grundriss direkt als PDF">2D als PDF</button>
-        <button id="fpPdfButton" class="secondary">PDF-Bericht erstellen</button>
-      </div>
-    </header>
+    <header class="fp-appbar pro-main-header">
+  <div class="pro-brand">
+    <span class="pro-brand-title">Projekt Bau PRO</span>
+    <span class="pro-version">v2.5.0 PRO</span>
+  </div>
+  <nav class="pro-main-nav">
+    <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
+    <button type="button" class="pro-nav-item active">▦ <span>Grundriss</span></button>
+    <button type="button" class="pro-nav-item" id="fpHeader3D">▣ <span>3D</span></button>
+    <button type="button" class="pro-nav-item">◇ <span>Materialien</span></button>
+    <button type="button" class="pro-nav-item">▤ <span>Berichte</span></button>
+  </nav>
+  <div class="pro-header-actions">
+    <button class="pro-header-icon" id="fpUndoHeader" title="Rückgängig">↶</button>
+    <button class="pro-header-icon" id="fpRedoHeader" title="Wiederholen">↷</button>
+    <button class="pro-header-icon" title="Hilfe">?</button>
+    <button id="fpSavePrimary" class="pro-primary">Speichern</button>
+  </div>
+</header>
 
-    <div class="fp-top-controls">
+<div class="pro-subheader">
+  <div class="pro-subheader-left">
+    <strong>Grundriss bearbeiten</strong>
+    <span id="floorplanEditorTitle" class="pro-project-pill">Grundriss</span>
+  </div>
+  <div class="pro-mode-tabs">
+    <button type="button" class="pro-mode-tab active" data-mode="2d">2D CAD</button>
+    <button type="button" class="pro-mode-tab" data-mode="3d">3D Ansicht</button>
+    <button type="button" class="pro-mode-tab pro-mode-seal" id="fpAbdichtungToolTop">▲ Abdichtung</button>
+    <button type="button" class="pro-mode-tab" id="fpModeFliesen">◆ Fliesen</button>
+    <button type="button" class="pro-mode-tab" id="fpModeSanitaer">◉ Sanitär</button>
+  </div>
+</div>
+
+<div class="fp-top-controls">
       <label>Raster
         <select id="fpGridSize">
           <option value="5" selected>5 cm</option>
@@ -631,7 +643,12 @@
           </div>
         </div>
 
-        <div id="fpOpeningPanel" class="cad-inspector-section opening-panel hidden">
+        <section class="cad-inspector-section pro-auto-seal-box">
+  <h4>ABDICHTUNGSBERECHNUNG (AUTOMATISCH)</h4>
+  <div id="fpProAutoSealSummary" class="pro-auto-seal-summary"></div>
+  <button id="fpProMaterialPdf" type="button" class="pro-pdf-button">▤ Materialliste als PDF exportieren</button>
+</section>
+<div id="fpOpeningPanel" class="cad-inspector-section opening-panel hidden">
           <h4>ÖFFNUNG</h4>
           <div class="opening-title" id="fpOpeningTitle">Tür / Fenster</div>
 
@@ -833,7 +850,25 @@
       <button data-add-object="drain"><b>⊠</b><span>Bodenablauf</span></button>
     </div>
 
-    <div id="fpProStatusbar" class="fp-pro-statusbar">
+    <section id="fpProLowerWorkspace" class="pro-lower-workspace">
+  <div class="pro-material-workspace">
+    <div class="pro-tabbar">
+      <button class="pro-bottom-tab active">MATERIALLISTE ABDICHTUNG</button>
+      <button class="pro-bottom-tab">PROJEKTMATERIALIEN</button>
+    </div>
+    <div id="fpProMaterialTable" class="pro-material-table"></div>
+  </div>
+  <aside class="pro-detail-card">
+    <div class="pro-detail-head">
+      <strong id="fpProDetailTitle">DETAIL</strong>
+      <button type="button" id="fpProDetailCollapse">⌃</button>
+    </div>
+    <div id="fpProDetailContent" class="pro-detail-content">
+      <div class="pro-detail-empty">Nische oder bodengleiche Dusche auswählen.</div>
+    </div>
+  </aside>
+</section>
+<div id="fpProStatusbar" class="fp-pro-statusbar">
       <div><span class="fp-status-dot"></span><strong>CAD PRO</strong></div>
       <div id="fpProToolStatus">Werkzeug: Auswählen</div>
       <div id="fpProSnapStatus">Fang: 1 cm</div>
@@ -860,10 +895,10 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=2440"></script>
+<script type="module" src="three_viewer.js?v=2500"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=2440"></script>
-<script src="pro_core.js?v=2440"></script>
-<script src="abdichtung_core.js?v=2440"></script>
+<script src="app.js?v=2500"></script>
+<script src="pro_core.js?v=2500"></script>
+<script src="abdichtung_core.js?v=2500"></script>
 </body>
 </html>

@@ -31,6 +31,7 @@ const PRODUCT={
     name:'weber DEC aussen',
     pack:25
   },
+  slopeCorner:{name:'weber DEG Gefällsdichtecke',pack:10},
   collar:{
     name:'weber DM 150',
     pack:10
@@ -237,8 +238,8 @@ function openingDetails(rectMap){
       nicheOuterCorners+=4;
       nicheInnerCorners+=4;
 
-      // Additional niche internal corner Dichtband: four back edges.
-      openingTapeM+=2*(op.width+op.height)/100;
+      // Nische: Dichtband is required at both front/mouth and rear/internal perimeter.
+      openingTapeM+=4*(op.width+op.height)/100;
     }
 
     items.push({type:o.type,wallId:w.id,rect:op,overlapCm2:overlap,ratio});
@@ -336,6 +337,21 @@ function penetrations(){
 }
 
 /* ---------------- WALK-IN EXTRAS ---------------- */
+
+function slopeCornerDetails(){
+  const list=objs('walkInShower'),items=[];
+  for(const o of list){
+    const pct=Math.max(.1,cm(o.slopePct)||2);
+    const dir=o.slopeDirection||'back';
+    const runCm=(dir==='left'||dir==='right')?Math.max(30,cm(o.widthCm)||100):Math.max(30,cm(o.depthCm)||100);
+    const riseMm=runCm*10*(pct/100);
+    const options=[20,28,36];
+    let size=options.reduce((best,v)=>Math.abs(v-riseMm)<Math.abs(best-riseMm)?v:best,20);
+    items.push({objectId:o.id,sizeMm:size,left:1,right:1,count:2,runCm,pct});
+  }
+  return {count:items.reduce((n,x)=>n+x.count,0),items};
+}
+
 function walkInExtras(){
   const list=objs('walkInShower');
   let railM=0;const channels=[];
@@ -364,13 +380,15 @@ function analyze(){
   const total=floor+netWallArea;
 
   const roomCorners=polygonCornerTypes();
+  const replacedBySlope=Math.min(roomCorners.inner,slopeCorners.count);
   const corners={
-    roomInner:roomCorners.inner,
+    roomInner:Math.max(0,roomCorners.inner-replacedBySlope),
     roomOuter:roomCorners.outer,
     nicheInner:openings.nicheInnerCorners,
     nicheOuter:openings.nicheOuterCorners,
-    inner:roomCorners.inner+openings.nicheInnerCorners,
-    outer:roomCorners.outer+openings.nicheOuterCorners
+    inner:Math.max(0,roomCorners.inner-replacedBySlope)+openings.nicheInnerCorners,
+    outer:roomCorners.outer+openings.nicheOuterCorners,
+    replacedBySlope
   };
 
   const perimeter=wetRoom()?perimeterM():0;
@@ -379,6 +397,7 @@ function analyze(){
   const tapeBase=perimeter+vertical+zargen+openings.openingTapeM;
   const pen=penetrations();
   const walk=walkInExtras();
+  const slopeCorners=slopeCornerDetails();
 
   const waste=Math.max(0,Number(c.wastePct)||0)/100;
   const membraneNeed=total*(1+waste);
@@ -396,6 +415,7 @@ function analyze(){
     {brand:'Weber',name:PRODUCT.tape.name+' · Dichtband',qty:tapeNeed,unit:'m',packs:ceil(tapeNeed/PRODUCT.tape.rollM),pack:`Rolle ${PRODUCT.tape.rollM} m`},
     {brand:'Weber',name:PRODUCT.cornerInner.name,qty:corners.inner,unit:'St.',packs:ceil(corners.inner/PRODUCT.cornerInner.pack),pack:`Karton ${PRODUCT.cornerInner.pack} St.`},
     {brand:'Weber',name:PRODUCT.cornerOuter.name,qty:corners.outer,unit:'St.',packs:ceil(corners.outer/PRODUCT.cornerOuter.pack),pack:`Karton ${PRODUCT.cornerOuter.pack} St.`},
+    {brand:'Weber',name:PRODUCT.slopeCorner.name,qty:slopeCorners.count,unit:'St.',packs:ceil(slopeCorners.count/PRODUCT.slopeCorner.pack),pack:slopeCorners.items.length?`L+R · ${slopeCorners.items.map(x=>x.sizeMm+' mm').join(' / ')}`:'–'},
     {brand:'Weber',name:PRODUCT.collar.name+' · Boden',qty:pen.floor,unit:'St.',packs:ceil(pen.floor/PRODUCT.collar.pack),pack:`Karton ${PRODUCT.collar.pack} St.`},
     {brand:'Weber',name:PRODUCT.collar.name+' · Wand',qty:pen.wall,unit:'St.',packs:ceil(pen.wall/PRODUCT.collar.pack),pack:`Karton ${PRODUCT.collar.pack} St.`},
     {brand:'Weber',name:PRODUCT.cutProtection.name,qty:cutProtection,unit:'m',packs:ceil(cutProtection/PRODUCT.cutProtection.rollM),pack:`Rolle ${PRODUCT.cutProtection.rollM} m`},
@@ -425,6 +445,7 @@ function analyze(){
     openings,
     penetrations:pen,
     walkIn:walk,
+    slopeCorners,
     wastePct:c.wastePct,
     rectMap,
     materials

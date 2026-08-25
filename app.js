@@ -4975,3 +4975,78 @@ document.addEventListener('click',(ev)=>{
     },0);
   }
 },true);
+
+
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const fmt=(v,d=2)=>{try{return new Intl.NumberFormat('de-CH',{minimumFractionDigits:d,maximumFractionDigits:d}).format(Number(v)||0)}catch(_){return (Number(v)||0).toFixed(d)}};
+
+function renderMaterials(){
+  const host=$('fpProMaterialTable');if(!host)return;
+  let r=null;try{r=window.ProjectBauAbdichtung?.analyze?.()}catch(_){}
+  const rows=(r?.materials||[]).filter(x=>Number(x.qty)>0);
+  if(!rows.length){host.innerHTML='<div class="pro-detail-empty" style="padding:16px">Noch keine Materialberechnung.</div>';return}
+  host.innerHTML=`<table class="pro-material-grid"><thead><tr><th>Pos.</th><th>Material</th><th>Hersteller</th><th>Menge</th><th>Einheit</th><th>Gebinde</th><th>Bedarf</th><th>Hinweis</th></tr></thead><tbody>`+
+  rows.map((x,i)=>`<tr class="${/Gefällsdichtecke|Dichtflansch|Duschrinne/i.test(x.name)?'row-special':''}"><td>${i+1}</td><td><strong>${esc(x.name)}</strong></td><td>${esc(x.brand||'Weber')}</td><td>${fmt(x.qty,x.unit==='St.'?0:2)}</td><td>${esc(x.unit||'')}</td><td>${esc(x.pack||'')}</td><td>${Number(x.packs)||0}</td><td>${hint(x.name)}</td></tr>`).join('')+
+  `</tbody></table>`;
+}
+function hint(n){n=String(n||'');if(/grund/i.test(n))return'Grundierung';if(/DB 120|Dichtband/i.test(n))return'Anschluss- und Fugenband';if(/DEC innen/i.test(n))return'Innenecken';if(/DEC aussen/i.test(n))return'Aussenecken';if(/DEG|Gefällsdichtecke/i.test(n))return'Gefälle-/Wandanschluss';if(/DM 150/i.test(n))return'Manschette';if(/Dichtflansch/i.test(n))return'Bodengleiche Dusche';if(/Duschrinne/i.test(n))return'Rinnenablauf';return''}
+
+function renderSummary(){
+  const host=$('fpProAutoSealSummary');if(!host)return;
+  let r=null;try{r=window.ProjectBauAbdichtung?.analyze?.()}catch(_){}
+  if(!r){host.innerHTML='<div class="pro-detail-empty">Keine Berechnung.</div>';return}
+  const values=[
+    ['Abdichtung Bodenfläche',`${fmt(r.floorArea)} m²`],
+    ['Abdichtung Wandfläche',`${fmt(r.wallArea)} m²`],
+    ['Dichtband gesamt',`${fmt(r.tapeTotal||0)} m`],
+    ['Innenecken (DEC innen)',`${r.corners?.inner||0} St.`],
+    ['Aussenecken (DEC aussen)',`${r.corners?.outer||0} St.`],
+    ['Gefällsdichtecken (DEG)',`${r.slopeCorners?.count||0} St.`],
+    ['Manschetten',`${(r.penetrations?.floor||0)+(r.penetrations?.wall||0)} St.`],
+    ['Nischen',`${r.openings?.nicheCount||0} St.`]
+  ];
+  host.innerHTML=values.map(v=>`<div class="pro-auto-kpi"><span>${v[0]}</span><strong>${v[1]}</strong></div>`).join('');
+}
+function renderDetail(){
+  const title=$('fpProDetailTitle'),host=$('fpProDetailContent');if(!title||!host)return;
+  const o=typeof selectedObject==='function'?selectedObject():null;
+  if(!o){title.textContent='DETAIL';host.innerHTML='<div class="pro-detail-empty">Nische oder bodengleiche Dusche auswählen.</div>';return}
+  if(o.type==='niche'){
+    const w=Number(o.widthCm)||60,h=Number(o.heightCm)||40,d=Number(o.depthCm)||10,p=2*(w+h)/100;
+    title.textContent=`NISCHE · ${Math.round(w)} × ${Math.round(h)} × ${Math.round(d)} cm`;
+    host.innerHTML=`<div class="pro-niche-detail"><div class="pro-niche-diagram"></div><div>
+      <div class="pro-detail-row"><span>Dichtband innen</span><strong>${fmt(p)} m</strong></div>
+      <div class="pro-detail-row"><span>Dichtband aussen</span><strong>${fmt(p)} m</strong></div>
+      <div class="pro-detail-row"><span>Innenecken (DEC innen)</span><strong>4 St.</strong></div>
+      <div class="pro-detail-row"><span>Aussenecken (DEC aussen)</span><strong>4 St.</strong></div>
+      <div class="pro-detail-total"><strong>Dichtband Nische gesamt</strong><br>${fmt(p*2)} m</div>
+    </div></div>`;return;
+  }
+  if(o.type==='walkInShower'){
+    title.textContent='BODENGLEICHE DUSCHE';
+    host.innerHTML=`<div class="pro-detail-row"><span>Breite</span><strong>${Math.round(Number(o.widthCm)||100)} cm</strong></div>
+    <div class="pro-detail-row"><span>Tiefe</span><strong>${Math.round(Number(o.depthCm)||100)} cm</strong></div>
+    <div class="pro-detail-row"><span>Gefälle</span><strong>${fmt(Number(o.slopePct)||2,1)} %</strong></div>
+    <div class="pro-detail-row"><span>Rinnenlänge</span><strong>${Math.round(Number(o.channelLengthCm)||Number(o.widthCm)||90)} cm</strong></div>`;return;
+  }
+  title.textContent='DETAIL';host.innerHTML=`<div class="pro-detail-row"><span>Objekt</span><strong>${esc(o.type||'')}</strong></div>`;
+}
+function refresh(){renderMaterials();renderSummary();renderDetail()}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelector('[data-mode="2d"]')?.addEventListener('click',()=>setFloorplanView?.('2d'));
+  document.querySelector('[data-mode="3d"]')?.addEventListener('click',()=>setFloorplanView?.('3d'));
+  $('fpHeader3D')?.addEventListener('click',()=>setFloorplanView?.('3d'));
+  $('fpSavePrimary')?.addEventListener('click',()=>window.ProjectBauPro?.save?.());
+  $('fpUndoHeader')?.addEventListener('click',()=>typeof undoFloorplan==='function'&&undoFloorplan());
+  $('fpRedoHeader')?.addEventListener('click',()=>typeof redoFloorplan==='function'&&redoFloorplan());
+  $('fpProMaterialPdf')?.addEventListener('click',()=>window.ProjectBauAbdichtung?.exportMaterialPdf?.());
+  $('fpAbdichtungToolTop')?.addEventListener('click',()=>window.ProjectBauAbdichtung?.open?.());
+  document.addEventListener('click',()=>setTimeout(refresh,120),true);
+  document.addEventListener('change',()=>setTimeout(refresh,120),true);
+  setInterval(refresh,1600);setTimeout(refresh,500);
+});
+window.ProjectBauProLayout={refresh};
+})();

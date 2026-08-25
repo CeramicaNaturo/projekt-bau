@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=2500">
+<link rel="stylesheet" href="styles.css?v=2600">
 </head>
 <body class="cad-app">
 
@@ -273,13 +273,14 @@
     <header class="fp-appbar pro-main-header">
   <div class="pro-brand">
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.5.0 PRO</span>
+    <span class="pro-version">v2.6.0 PRO</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
     <button type="button" class="pro-nav-item active">▦ <span>Grundriss</span></button>
     <button type="button" class="pro-nav-item" id="fpHeader3D">▣ <span>3D</span></button>
     <button type="button" class="pro-nav-item">◇ <span>Materialien</span></button>
+    <button type="button" class="pro-nav-item" id="fpPhotoDocOpen">▧ <span>Fotodokumentation</span></button>
     <button type="button" class="pro-nav-item">▤ <span>Berichte</span></button>
   </nav>
   <div class="pro-header-actions">
@@ -887,6 +888,22 @@
     </aside>
   </div>
 </div>
+<div id="photoDocModal" class="photo-doc-modal hidden" aria-hidden="true">
+  <div class="photo-doc-shell">
+    <header class="photo-doc-header"><div><strong>Fotodokumentation</strong><span> Foto bearbeiten, markieren und dokumentieren</span></div><div class="photo-doc-actions"><button id="photoUndo">↶</button><button id="photoRedo">↷</button><button id="photoReset">Original</button><button id="photoSave" class="pro-primary">Im Projekt speichern</button><button id="photoClose">✕</button></div></header>
+    <div class="photo-doc-body">
+      <aside class="photo-tools">
+        <label class="photo-upload">＋ Foto öffnen<input id="photoInput" type="file" accept="image/*" capture="environment"></label>
+        <button data-photo-tool="select" class="active">↖ Auswahl</button><button data-photo-tool="pen">✎ Freihand</button><button data-photo-tool="line">╱ Linie</button><button data-photo-tool="arrow">➜ Pfeil</button><button data-photo-tool="rect">□ Rechteck</button><button data-photo-tool="ellipse">○ Kreis</button><button data-photo-tool="text">T Text</button>
+        <hr><label>Farbe<input id="photoColor" type="color" value="#ef4444"></label><label>Linienstärke<input id="photoWidth" type="range" min="1" max="18" value="4"></label><label>Textgrösse<input id="photoFontSize" type="range" min="12" max="72" value="28"></label>
+        <hr><button id="photoRotateLeft">↶ 90°</button><button id="photoRotateRight">↷ 90°</button><button id="photoCropToggle">⌗ Zuschneiden</button><button id="photoDeleteSelected">⌫ Markierung löschen</button>
+      </aside>
+      <main class="photo-stage-wrap"><div id="photoEmpty" class="photo-empty"><strong>Foto öffnen</strong><span>Kamera oder Galerie verwenden.</span></div><canvas id="photoCanvas"></canvas></main>
+      <aside class="photo-inspector"><h4>BILDKORREKTUR</h4><label>Helligkeit <span id="photoBrightnessVal">100%</span><input id="photoBrightness" type="range" min="50" max="150" value="100"></label><label>Kontrast <span id="photoContrastVal">100%</span><input id="photoContrast" type="range" min="50" max="150" value="100"></label><label>Sättigung <span id="photoSaturationVal">100%</span><input id="photoSaturation" type="range" min="0" max="180" value="100"></label><label>Schärfe <span id="photoSharpnessVal">0</span><input id="photoSharpness" type="range" min="0" max="3" step="1" value="0"></label><h4>FOTOINFORMATION</h4><label>Titel<input id="photoTitle" type="text" placeholder="z. B. Dusche – Abdichtung"></label><label>Notiz<textarea id="photoNote" rows="5" placeholder="Bemerkung für Baudokumentation"></textarea></label><button id="photoExportJpg">JPG exportieren</button><button id="photoExportPdf">PDF erstellen</button><h4>PROJEKTFOTOS</h4><div id="photoGallery" class="photo-gallery"></div></aside>
+    </div>
+  </div>
+</div>
+
 <script type="importmap">
 {
   "imports": {
@@ -895,10 +912,11 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=2500"></script>
+<script type="module" src="three_viewer.js?v=2600"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=2500"></script>
-<script src="pro_core.js?v=2500"></script>
-<script src="abdichtung_core.js?v=2500"></script>
+<script src="app.js?v=2600"></script>
+<script src="pro_core.js?v=2600"></script>
+<script src="abdichtung_core.js?v=2600"></script>
+<script src="photo_editor.js?v=2600"></script>
 </body>
 </html>

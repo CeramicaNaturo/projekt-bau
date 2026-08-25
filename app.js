@@ -5052,7 +5052,7 @@ window.ProjectBauProLayout={refresh};
 })();
 
 
-/* v2.6.2 layout regression fix */
+/* v2.7.0 layout regression fix */
 (()=>{
   const byId=id=>document.getElementById(id);
   function toggleMaterialDrawer(force){

@@ -1,5 +1,5 @@
-const CACHE='projekt-bau-v2400';
-const ASSETS=['./','./index.html?v=2420','./styles.css?v=2600','./app.js?v=2600','./abdichtung_core.js?v=2600','./manifest.webmanifest','./three_viewer.js?v=2600'];
+const CACHE='projekt-bau-v2610';
+const ASSETS=['./','./index.html?v=2610','./styles.css?v=2610','./app.js?v=2610','./pro_core.js?v=2610','./abdichtung_core.js?v=2610','./photo_editor.js?v=2610','./manifest.webmanifest','./three_viewer.js?v=2610'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(

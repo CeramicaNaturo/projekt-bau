@@ -2942,3 +2942,164 @@ label[for="fpShowPositions"]{
 @media(pointer:coarse){.pro-main-header{grid-template-columns:210px 1fr auto!important;padding:0 10px!important}.pro-brand-title{font-size:16px}.pro-nav-item{padding:0 8px;font-size:10px}.pro-subheader{grid-template-columns:280px 1fr 0}.fp-left-toolbar{width:92px!important;flex-basis:92px!important}.fp-properties-panel,.fp-right-panel{width:330px!important;flex-basis:330px!important}.pro-lower-workspace{height:230px;flex-basis:230px}}
 /* v2.6.0 PRO Fotodokumentation */
 .photo-doc-modal{position:fixed;inset:0;z-index:100000;background:#eef2f7;display:flex}.photo-doc-modal.hidden{display:none}.photo-doc-shell{width:100%;height:100%;display:flex;flex-direction:column;background:#f8fafc;color:#0f172a}.photo-doc-header{height:58px;flex:0 0 58px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#fff;border-bottom:1px solid #dce4ee}.photo-doc-header strong{font-size:17px}.photo-doc-header span{margin-left:10px;font-size:11px;color:#64748b}.photo-doc-actions{display:flex;gap:6px}.photo-doc-actions button,.photo-tools button,.photo-inspector button{min-height:34px;border:1px solid #dbe3ed;background:#fff;border-radius:7px;padding:0 10px;font-weight:700;color:#334155}.photo-doc-body{min-height:0;flex:1;display:grid;grid-template-columns:150px minmax(0,1fr) 310px}.photo-tools,.photo-inspector{background:#fff;padding:10px;overflow:auto}.photo-tools{border-right:1px solid #dce4ee;display:flex;flex-direction:column;gap:6px}.photo-tools button.active{background:#eff6ff;border-color:#60a5fa;color:#1d4ed8}.photo-tools hr{border:0;border-top:1px solid #e5e7eb;width:100%}.photo-tools label,.photo-inspector label{display:flex;flex-direction:column;gap:5px;font-size:10px;color:#475569}.photo-upload{display:flex!important;align-items:center;justify-content:center;min-height:42px;border-radius:7px;background:#2563eb;color:#fff!important;font-weight:800;cursor:pointer}.photo-upload input{display:none}.photo-stage-wrap{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background-color:#e9eef5;background-image:linear-gradient(45deg,#dfe6ef 25%,transparent 25%),linear-gradient(-45deg,#dfe6ef 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dfe6ef 75%),linear-gradient(-45deg,transparent 75%,#dfe6ef 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}.photo-stage-wrap canvas{max-width:calc(100% - 40px);max-height:calc(100% - 40px);box-shadow:0 12px 35px #0003;background:#fff;touch-action:none}.photo-empty{position:absolute;display:flex;flex-direction:column;align-items:center;gap:7px;color:#64748b}.photo-empty strong{font-size:18px}.photo-inspector{border-left:1px solid #dce4ee}.photo-inspector h4{font-size:10px;margin:7px 0 10px;border-bottom:1px solid #e5e7eb;padding-bottom:7px}.photo-inspector input[type=text],.photo-inspector textarea{border:1px solid #cbd5e1;border-radius:6px;padding:8px;font:inherit}.photo-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.photo-thumb{position:relative;border:2px solid transparent;border-radius:6px;overflow:hidden;background:#f1f5f9;cursor:pointer}.photo-thumb img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}.photo-thumb.active{border-color:#2563eb}.photo-thumb small{display:block;padding:4px;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}@media(max-width:900px){.photo-doc-body{grid-template-columns:105px minmax(0,1fr) 230px}.photo-tools{padding:6px}.photo-inspector{padding:7px}}
+
+/* ============================================================
+   Projekt Bau PRO v2.6.2 – CAD HEIGHT / PALETTE REGRESSION FIX
+   ============================================================ */
+.cad-fullscreen-modal .floorplan-modal-card{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100dvh!important;
+  max-width:none!important;
+  max-height:none!important;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:
+    52px
+    48px
+    auto
+    40px
+    minmax(260px,1fr)
+    92px
+    34px!important;
+  overflow:hidden!important;
+  padding:0!important;
+  background:#fff!important;
+}
+
+/* Explicit row assignment: no browser auto-grid rows may steal CAD height. */
+.floorplan-modal-card>.pro-main-header{grid-row:1!important;min-height:0!important}
+.floorplan-modal-card>.pro-subheader{grid-row:2!important;min-height:0!important}
+.floorplan-modal-card>.fp-top-controls{grid-row:3!important;min-height:0!important;max-height:78px!important;overflow-x:auto!important;overflow-y:hidden!important}
+.floorplan-modal-card>.fp-room-strip{grid-row:4!important;min-height:40px!important;height:40px!important}
+.floorplan-modal-card>.fp-editor-grid{grid-row:5!important;min-height:0!important;height:auto!important;overflow:hidden!important}
+.floorplan-modal-card>.cad-object-palette{grid-row:6!important}
+.floorplan-modal-card>#fpProStatusbar{grid-row:7!important}
+
+/* Main 2D/3D editor must always own the remaining height. */
+.floorplan-modal-card .fp-editor-grid{
+  display:grid!important;
+  grid-template-columns:74px minmax(0,1fr) 350px!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  height:100%!important;
+  overflow:hidden!important;
+}
+.floorplan-modal-card .cad-floorplan-workspace{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.floorplan-modal-card #fp2DWorkspace,
+.floorplan-modal-card #fp3DWorkspace{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+}
+.floorplan-modal-card #fp2DWorkspace{
+  grid-template-rows:22px minmax(0,1fr) 22px!important;
+}
+.floorplan-modal-card #fp2DWorkspace .cad-canvas-inner,
+.floorplan-modal-card #fp2DWorkspace .floorplan-canvas-wrap,
+.floorplan-modal-card #floorplanCanvas{
+  min-height:0!important;
+  height:100%!important;
+  max-height:none!important;
+}
+.floorplan-modal-card .floorplan-canvas-wrap{
+  overflow:hidden!important;
+}
+
+/* Object library is ONE horizontal strip. Never wrap into a second row. */
+.floorplan-modal-card>.cad-object-palette{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  gap:7px!important;
+  height:92px!important;
+  min-height:92px!important;
+  max-height:92px!important;
+  padding:8px 10px!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  white-space:nowrap!important;
+  background:#fff!important;
+  border-top:1px solid #dce4ee!important;
+}
+.floorplan-modal-card>.cad-object-palette .fp-wall-object-label{
+  flex:0 0 150px!important;
+  width:150px!important;
+  min-width:150px!important;
+  align-self:stretch!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  gap:3px!important;
+  padding:0 8px!important;
+  border-right:1px solid #e5e7eb!important;
+}
+.floorplan-modal-card>.cad-object-palette button{
+  flex:0 0 82px!important;
+  width:82px!important;
+  min-width:82px!important;
+  height:72px!important;
+  min-height:72px!important;
+  max-height:72px!important;
+}
+
+/* Material list is a DRAWER overlay. It no longer participates in CSS grid. */
+.floorplan-modal-card>.pro-lower-workspace{
+  position:absolute!important;
+  z-index:700!important;
+  left:74px!important;
+  right:350px!important;
+  bottom:34px!important;
+  width:auto!important;
+  height:min(300px,42vh)!important;
+  min-height:210px!important;
+  max-height:42vh!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,2.15fr) minmax(300px,1fr)!important;
+  background:#fff!important;
+  border:1px solid #cbd5e1!important;
+  border-bottom:0!important;
+  border-radius:10px 10px 0 0!important;
+  box-shadow:0 -12px 35px rgba(15,23,42,.14)!important;
+  overflow:hidden!important;
+}
+.floorplan-modal-card>.pro-lower-workspace.hidden{display:none!important}
+.pro-lower-workspace .pro-material-table{height:calc(100% - 38px)!important;overflow:auto!important}
+.pro-lower-workspace .pro-detail-card{height:100%!important;overflow:auto!important}
+
+/* Inspector and left toolbar stay full-height beside the drawing. */
+.floorplan-modal-card .fp-left-tools{min-height:0!important;height:100%!important;overflow-y:auto!important}
+.floorplan-modal-card .cad-inspector{min-height:0!important;height:100%!important;overflow-y:auto!important}
+
+/* Prevent the professional top bars from growing. */
+.floorplan-modal-card .pro-main-header{height:52px!important;min-height:52px!important;max-height:52px!important}
+.floorplan-modal-card .pro-subheader{height:48px!important;min-height:48px!important;max-height:48px!important}
+
+@media (max-height:760px){
+  .cad-fullscreen-modal .floorplan-modal-card{
+    grid-template-rows:48px 44px 58px 36px minmax(220px,1fr) 78px 30px!important;
+  }
+  .floorplan-modal-card .pro-main-header{height:48px!important;min-height:48px!important;max-height:48px!important}
+  .floorplan-modal-card .pro-subheader{height:44px!important;min-height:44px!important;max-height:44px!important}
+  .floorplan-modal-card>.fp-room-strip{height:36px!important;min-height:36px!important}
+  .floorplan-modal-card>.cad-object-palette{height:78px!important;min-height:78px!important;max-height:78px!important;padding:5px 8px!important}
+  .floorplan-modal-card>.cad-object-palette button{height:64px!important;min-height:64px!important;max-height:64px!important}
+  .floorplan-modal-card>.pro-lower-workspace{height:min(260px,46vh)!important;bottom:30px!important}
+}
+
+@media (pointer:coarse){
+  .cad-fullscreen-modal .floorplan-modal-card{
+    grid-template-columns:1fr!important;
+  }
+  .floorplan-modal-card .fp-editor-grid{
+    grid-template-columns:64px minmax(0,1fr) 320px!important;
+  }
+  .floorplan-modal-card>.pro-lower-workspace{left:64px!important;right:320px!important}
+}

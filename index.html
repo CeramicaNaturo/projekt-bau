@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=2610">
+<link rel="stylesheet" href="styles.css?v=2620">
 </head>
 <body class="cad-app">
 
@@ -51,7 +51,7 @@
     <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
-  <div class="cad-sidebar-footer"><strong>Version 2.6.1 PRO</strong></div>
+  <div class="cad-sidebar-footer"><strong>Version 2.6.2 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -67,7 +67,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.6.1 PRO</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.6.2 PRO</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -273,13 +273,13 @@
     <header class="fp-appbar pro-main-header">
   <div class="pro-brand">
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.6.1 PRO</span>
+    <span class="pro-version">v2.6.2 PRO</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
     <button type="button" class="pro-nav-item active">▦ <span>Grundriss</span></button>
     <button type="button" class="pro-nav-item" id="fpHeader3D">▣ <span>3D</span></button>
-    <button type="button" class="pro-nav-item">◇ <span>Materialien</span></button>
+    <button type="button" class="pro-nav-item" id="fpHeaderMaterials">◇ <span>Materialien</span></button>
     <button type="button" class="pro-nav-item" id="fpPhotoDocOpen">▧ <span>Fotodokumentation</span></button>
     <button type="button" class="pro-nav-item">▤ <span>Berichte</span></button>
   </nav>
@@ -851,7 +851,7 @@
       <button data-add-object="drain"><b>⊠</b><span>Bodenablauf</span></button>
     </div>
 
-    <section id="fpProLowerWorkspace" class="pro-lower-workspace">
+    <section id="fpProLowerWorkspace" class="pro-lower-workspace hidden">
   <div class="pro-material-workspace">
     <div class="pro-tabbar">
       <button class="pro-bottom-tab active">MATERIALLISTE ABDICHTUNG</button>
@@ -862,7 +862,7 @@
   <aside class="pro-detail-card">
     <div class="pro-detail-head">
       <strong id="fpProDetailTitle">DETAIL</strong>
-      <button type="button" id="fpProDetailCollapse">⌃</button>
+      <button type="button" id="fpProDetailCollapse" title="Materialliste schliessen">✕</button>
     </div>
     <div id="fpProDetailContent" class="pro-detail-content">
       <div class="pro-detail-empty">Nische oder bodengleiche Dusche auswählen.</div>
@@ -912,12 +912,12 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=2610"></script>
+<script type="module" src="three_viewer.js?v=2620"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app.js?v=2610"></script>
-<script src="pro_core.js?v=2610"></script>
-<script src="abdichtung_core.js?v=2610"></script>
-<script src="photo_editor.js?v=2610"></script>
+<script src="app.js?v=2620"></script>
+<script src="pro_core.js?v=2620"></script>
+<script src="abdichtung_core.js?v=2620"></script>
+<script src="photo_editor.js?v=2620"></script>
 
 <script>
 (async()=>{
@@ -926,9 +926,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw.js?v=2610')) await reg.unregister();
+      if(url && !url.includes('sw.js?v=2620')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw.js?v=2610',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw.js?v=2620',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

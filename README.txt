@@ -1,24 +1,14 @@
-Projekt Bau PRO v2.6.1 – Cache / Version Fix
+Projekt Bau PRO v2.6.2 – CAD Layout Fix
 
 DÜZELTİLDİ
-- Dashboard sol alt sürüm: Version 2.6.1 PRO
-- Dashboard üst bilgi: v2.6.1 PRO
-- Eski projekt-bau-v2400 Service Worker cache kaldırıldı
-- Yeni cache: projekt-bau-v2610
-- index.html artık v=2610 ile çağrılır
-- styles/app/3D/pro/abdichtung/photo editor dosyaları v=2610 cache-busting kullanır
-- Program açılırken eski Service Worker kaydı otomatik kaldırılır ve sw.js?v=2610 yeniden kaydedilir
-- reset.html tam cache temizliği sonrası index.html?v=2610&nocache=... açar
+- CAD çalışma alanının yatay şerit halinde çökmesi düzeltildi.
+- Grid satırları açıkça tanımlandı; browser auto-grid artık canvas yüksekliğini çalamaz.
+- Obje paleti yeniden tek yatay satırdır; wrap olmaz.
+- Materialliste artık grid satırı değil, gerektiğinde açılan alt drawer panelidir.
+- Materialien üst menüsünden açılır, X ile kapanır.
+- Canvas kalan tüm yüksekliği otomatik kullanır.
+- Sağ Eigenschaften paneli ve sol toolbar tam yükseklikte kalır.
+- Tablet / düşük ekran yüksekliği için ayrı responsive satır ölçüleri vardır.
+- v2.6.1 cache fix, Fotodokumentation, Abdichtung, Nische, Spiegel ve bodengleiche Dusche korunur.
 
-Projekt Bau PRO v2.5.0
-
-- Profesyonel referans layout: üst ürün navigasyonu, mod sekmeleri, sol CAD toolbar, sağ Eigenschaften/Abdichtung özeti.
-- Alt bölümde canlı Abdichtung Materialliste tablosu.
-- Sağ altta Nische / bodengleiche Dusche detay kartı.
-- Materialliste PDF butonu sağ panelde.
-- Nische: Dichtband iç ve dış çevresi ayrı hesaplanır.
-- Nische: 4 DEC innen + 4 DEC aussen.
-- Bodengleiche Dusche: Weber DEG Gefällsdichtecke L/R otomatik.
-- DEG 20/28/36 mm, Gefälle uzunluğu ve yüzdesine göre seçilir.
-- DEG ile değiştirilen özel köşeler DEC innen hesabında çift sayılmaz.
-- Mevcut Weber + Geberit malzeme motoru korunur.
+Sürüm: v2.6.2 PRO

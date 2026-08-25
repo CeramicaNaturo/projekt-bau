@@ -5050,3 +5050,31 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 window.ProjectBauProLayout={refresh};
 })();
+
+
+/* v2.6.2 layout regression fix */
+(()=>{
+  const byId=id=>document.getElementById(id);
+  function toggleMaterialDrawer(force){
+    const drawer=byId('fpProLowerWorkspace');
+    if(!drawer)return;
+    const open=typeof force==='boolean'?force:drawer.classList.contains('hidden');
+    drawer.classList.toggle('hidden',!open);
+    if(open){
+      try{window.ProjectBauProLayout?.refresh?.()}catch(_){ }
+    }
+    requestAnimationFrame(()=>{
+      try{if(!fp3DMode)fitFloorplan2D?.();else window.ProjectBau3D?.fitView?.()}catch(_){ }
+    });
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    byId('fpHeaderMaterials')?.addEventListener('click',()=>toggleMaterialDrawer());
+    byId('fpProDetailCollapse')?.addEventListener('click',()=>toggleMaterialDrawer(false));
+    // The material drawer must never be open on initial CAD load.
+    byId('fpProLowerWorkspace')?.classList.add('hidden');
+    // Re-fit after fonts/layout have settled.
+    setTimeout(()=>{try{fitFloorplan2D?.()}catch(_){ }},250);
+    setTimeout(()=>{try{fitFloorplan2D?.()}catch(_){ }},850);
+  });
+  window.ProjectBauMaterialDrawer={open:()=>toggleMaterialDrawer(true),close:()=>toggleMaterialDrawer(false),toggle:()=>toggleMaterialDrawer()};
+})();

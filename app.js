@@ -3522,7 +3522,7 @@ function drawFloorplan(preview=null){
     try{drawFloorTiles2D()}catch(e){console.error('Bodenfliesen 2D',e)}
     try{window.ProjectBauAbdichtung?.drawOverlay?.()}catch(e){console.error('Abdichtung Overlay',e)}
 
-    // v2.8.2: Walls are always rendered first. This prevents sanitary/furniture
+    // v2.8.3: Walls are always rendered first. This prevents sanitary/furniture
     // objects or old object ordering from hiding the room construction.
     (fpObjects||[]).filter(o=>o?.type==='wall').forEach(o=>{
       try{
@@ -4129,7 +4129,7 @@ function drawFpObject(o,preview=false){
   fpCtx.lineJoin='miter';
 
   if(o.type==='wall'){
-    // v2.8.2: authoritative robust wall pass.
+    // v2.8.3: authoritative robust wall pass.
     // Thick shifted stroke guarantees visibility on legacy/tablet projects.
     drawWallHard(o,'#111827',1);
 
@@ -5594,9 +5594,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 
-/* v2.8.0 – authoritative runtime version stamp */
+/* v2.8.3 – authoritative runtime version stamp */
 (()=>{
-  const VERSION='2.8.0 PRO';
+  const VERSION='2.8.3 PRO';
   function stampVersion(){
     document.querySelectorAll(
       '.cad-sidebar-footer strong,.pro-version,[data-app-version],#appVersion,.app-version'
@@ -5622,7 +5622,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 
-/* v2.8.2 – safety autosave */
+/* v2.8.3 – safety autosave */
 (()=>{
   let lastAutoSave=0;
   const safeAutoSave=()=>{

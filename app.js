@@ -5392,3 +5392,20 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 
+
+
+/* v2.7.9 – authoritative runtime version stamp */
+(()=>{
+  const VERSION='2.7.9 PRO';
+  function stampVersion(){
+    document.querySelectorAll(
+      '.cad-sidebar-footer strong,.pro-version,[data-app-version],#appVersion,.app-version'
+    ).forEach(el=>{
+      if(el)el.textContent=el.classList?.contains('pro-version') ? `v${VERSION}` : `Version ${VERSION}`;
+    });
+    document.documentElement.dataset.projektBauVersion=VERSION;
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',stampVersion);
+  else stampVersion();
+  setTimeout(stampVersion,250);
+})();

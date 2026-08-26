@@ -1835,7 +1835,9 @@ function renderFloorplans(project){
     const card=document.createElement('div');card.className='floorplan-card';
     card.innerHTML=`<div class="floorplan-card-title">${esc(fp.name||'Grundriss')}</div>
       <div class="muted" style="margin-bottom:8px">${fp.floorAreaM2!=null?`Bodenfläche: ${formatCHNumber(fp.floorAreaM2,2)} m²`:''}${fp.roomHeightM?`${fp.floorAreaM2!=null?' · ':''}Raumhöhe: ${formatCHNumber(fp.roomHeightM,2)} m`:''}</div>
-      ${fp.image?`<img src="${fp.image}" alt="${esc(fp.name||'Grundriss')}">`:''}<div class="floorplan-card-actions"><button class="secondary editFp">Bearbeiten</button><button class="danger delFp">Löschen</button></div>`;
+      ${fp.image?`<img src="${fp.image}" alt="${esc(fp.name||'Grundriss')}">`:''}
+      ${Array.isArray(fp.objects)&&fp.objects.some(o=>o?.type==='wall')&&!fp.updatedAt?`<div class="muted" style="font-size:9px;margin:4px 0">Vorschau wird beim nächsten Speichern aktualisiert.</div>`:''}
+      <div class="floorplan-card-actions"><button class="secondary editFp">Bearbeiten</button><button class="danger delFp">Löschen</button></div>`;
     card.querySelector('.editFp').onclick=()=>openFloorplan(project,fp);
     card.querySelector('.delFp').onclick=()=>{if(confirm('Grundriss wirklich löschen?')){project.floorplans=project.floorplans.filter(x=>x.id!==fp.id);save()}};
     list.appendChild(card);
@@ -2026,7 +2028,16 @@ function openFloorplan(project,record){
   fpRepairLegacyWalls(fpObjects);
   refreshWallLetters();
   fpGrid=record.grid||5;fpFineStep=record.fineStep||1;fpWallThickness=record.wallThickness||15;
-  fp3DMode=false;fp3DOptions=record.threeDOptions||{floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpLastWallEnd=null;fpZoom=1;fpActiveLayer=record.activeLayer||'walls';fpLayerVisibility=record.layerVisibility||{walls:true,openings:true,sanitary:true,furniture:true,notes:true};
+  fp3DMode=false;fp3DOptions=record.threeDOptions||{floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpLastWallEnd=null;fpZoom=1;fpActiveLayer=record.activeLayer||'walls';fpLayerVisibility={
+    walls:true,
+    openings:true,
+    sanitary:true,
+    furniture:true,
+    notes:true,
+    ...(record.layerVisibility||{})
+  };
+  // Construction walls must never disappear merely because an older record saved the layer disabled.
+  fpLayerVisibility.walls=true;
   const roomHeight=$('fpRoomHeight');if(roomHeight)roomHeight.value=record.roomHeightM??'';
   const tileX=$('fpTileOriginX'),tileY=$('fpTileOriginY'),tileRot=$('fpTileRotation');
   if(tileX)tileX.value=fp3DOptions.tileOriginX??0;
@@ -3511,7 +3522,7 @@ function drawFloorplan(preview=null){
     try{drawFloorTiles2D()}catch(e){console.error('Bodenfliesen 2D',e)}
     try{window.ProjectBauAbdichtung?.drawOverlay?.()}catch(e){console.error('Abdichtung Overlay',e)}
 
-    // v2.8.1: Walls are always rendered first. This prevents sanitary/furniture
+    // v2.8.2: Walls are always rendered first. This prevents sanitary/furniture
     // objects or old object ordering from hiding the room construction.
     (fpObjects||[]).filter(o=>o?.type==='wall').forEach(o=>{
       try{
@@ -3536,18 +3547,10 @@ function drawFloorplan(preview=null){
     try{
       const z=Math.max(.2,Number(fpZoom)||1);
       fpCtx.save();
-      fpCtx.strokeStyle='#111827';
-      fpCtx.lineCap='square';
-      fpCtx.lineJoin='miter';
       (fpObjects||[]).filter(o=>o?.type==='wall' && isLayerVisible(o)).forEach(w=>{
-        fpNormalizeLegacyWall(w);
-        const x1=Number(w.x1),y1=Number(w.y1),x2=Number(w.x2),y2=Number(w.y2);
-        if(![x1,y1,x2,y2].every(Number.isFinite))return;
-        fpCtx.lineWidth=Math.max(2.2/z,2.2);
-        fpCtx.beginPath();
-        fpCtx.moveTo(x1,y1);
-        fpCtx.lineTo(x2,y2);
-        fpCtx.stroke();
+        // Repeat the complete wall body on the final layer.
+        // This intentionally prioritizes readable construction geometry.
+        drawWallHard(w,'#111827',1);
       });
       fpCtx.restore();
     }catch(e){console.error('Wandkontur Endpass',e)}
@@ -3758,6 +3761,46 @@ function wallBodyPolygon(w){
     {x:x2+out.nx*t,y:y2+out.ny*t},
     {x:x1+out.nx*t,y:y1+out.ny*t}
   ];
+}
+
+
+function drawWallHard(w,color='#111827',alpha=1){
+  if(!w)return;
+  fpNormalizeLegacyWall(w);
+
+  const x1=Number(w.x1),y1=Number(w.y1),x2=Number(w.x2),y2=Number(w.y2);
+  if(![x1,y1,x2,y2].every(Number.isFinite))return;
+
+  const dx=x2-x1,dy=y2-y1;
+  const len=Math.hypot(dx,dy);
+  if(!(len>.1))return;
+
+  const thickness=Math.max(2,Number(w.thickness||fpWallThickness||15));
+
+  // Try to keep the stored line as Innenkante.
+  let nx=-dy/len, ny=dx/len;
+  try{
+    const n=wallOutsideNormal(w);
+    if(n && Number.isFinite(n.nx) && Number.isFinite(n.ny)){
+      nx=n.nx; ny=n.ny;
+    }
+  }catch(_){}
+
+  const shift=thickness/2;
+  const ax=x1+nx*shift, ay=y1+ny*shift;
+  const bx=x2+nx*shift, by=y2+ny*shift;
+
+  fpCtx.save();
+  fpCtx.globalAlpha=alpha;
+  fpCtx.strokeStyle=color;
+  fpCtx.lineWidth=thickness;
+  fpCtx.lineCap='square';
+  fpCtx.lineJoin='miter';
+  fpCtx.beginPath();
+  fpCtx.moveTo(ax,ay);
+  fpCtx.lineTo(bx,by);
+  fpCtx.stroke();
+  fpCtx.restore();
 }
 
 function drawWallBody(w,color='#111827',alpha=1){
@@ -4086,10 +4129,9 @@ function drawFpObject(o,preview=false){
   fpCtx.lineJoin='miter';
 
   if(o.type==='wall'){
-    // v1.9.14:
-    // Wand = echtes Polygon. Die gespeicherte Linie ist die Innenkante,
-    // die komplette Wandstärke wächst nur nach aussen.
-    drawWallBody(o,'#111827',1);
+    // v2.8.2: authoritative robust wall pass.
+    // Thick shifted stroke guarantees visibility on legacy/tablet projects.
+    drawWallHard(o,'#111827',1);
 
     if(!preview){
       const mx=(o.x1+o.x2)/2,my=(o.y1+o.y2)/2;
@@ -5578,3 +5620,21 @@ document.addEventListener('DOMContentLoaded',()=>{
     },{passive:false});
   }
 });
+
+
+/* v2.8.2 – safety autosave */
+(()=>{
+  let lastAutoSave=0;
+  const safeAutoSave=()=>{
+    if(!fpRecord)return;
+    const now=Date.now();
+    if(now-lastAutoSave<800)return;
+    lastAutoSave=now;
+    try{saveCurrentFloorplan({reason:'lifecycle'})}catch(e){console.error('AutoSave lifecycle',e)}
+  };
+
+  window.addEventListener('pagehide',safeAutoSave);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='hidden')safeAutoSave();
+  });
+})();

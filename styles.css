@@ -3339,3 +3339,6 @@ button:active{transform:translateY(1px)}
 @media(pointer:coarse){
   .pro-home-button{min-height:42px;padding:0 12px;font-size:11px}
 }
+
+/* v2.8.2 */
+.floorplan-card img{background:#fff}

@@ -1,5 +1,5 @@
-const CACHE='projekt-bau-v2810';
-const ASSETS=['./','./index.html?v=2810','./styles.css?v=2810','./app.js?v=2810','./pro_core.js?v=2810','./abdichtung_core.js?v=2810','./photo_editor.js?v=2810','./manifest.webmanifest','./three_viewer.js?v=2810'];
+const CACHE='projekt-bau-v2820';
+const ASSETS=['./','./index.html?v=2820','./styles.css?v=2820','./app.js?v=2820','./pro_core.js?v=2820','./abdichtung_core.js?v=2820','./photo_editor.js?v=2820','./manifest.webmanifest','./three_viewer.js?v=2820'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
@@ -33,7 +33,7 @@ self.addEventListener('fetch',event=>{
 self.addEventListener('activate',event=>{
   event.waitUntil((async()=>{
     const keys=await caches.keys();
-    await Promise.all(keys.filter(k=>k.startsWith('projekt-bau-v')&&k!=='projekt-bau-v2810').map(k=>caches.delete(k)));
+    await Promise.all(keys.filter(k=>k.startsWith('projekt-bau-v')&&k!=='projekt-bau-v2820').map(k=>caches.delete(k)));
     await self.clients.claim();
   })());
 });

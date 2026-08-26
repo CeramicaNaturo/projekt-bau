@@ -1,29 +1,19 @@
-Projekt Bau v2.7.3 PRO – Projekt Recovery + 2D PDF + CAD Fix
+Projekt Bau v2.7.4 PRO – 2D INTERACTION + PDF FIX
 
-PROJEKTE
-- Program sadece tek localStorage anahtarını seçmez.
-- localStorage ve sessionStorage içindeki bütün JSON kayıtları tarar.
-- İçinde projects[] bulunan bütün geçerli veritabanlarını bulur.
-- Projeler ID veya proje adı/adres/müşteri kombinasyonuna göre birleştirilir.
-- Aynı projenin daha zengin kopyasındaki Areas, Floorplans, Photos ve TileMaterials korunur.
-- Eski browser kayıtları silinmez.
-- Dashboard sol menüde "Projekte wiederherstellen" butonu vardır.
-- Boş state mevcut projelerin üzerine yazamaz.
-
-2D PDF
-- Grundriss ekranında görünür "2D als PDF" butonu.
-- A4 Landscape PDF.
-- Sadece gerçek Grundriss + dış ölçü zincirleri PDF'e alınır.
-- Grid, seçim noktaları ve X/Y koordinatları PDF'de gösterilmez.
-- PDF adı: Grundriss_<Planname>.pdf
-- Export bittikten sonra ekrandaki zoom/grid/seçim durumu eski haline gelir.
-
-2D CAD
-- v2.6.2 çalışan CAD çekirdeği korunur.
-- Canvas'ın ince yatay şeride çökmesini engelleyen min-height/flex güvenliği eklendi.
-- Sağ Eigenschaften ve sol Werkzeug alanları korunur.
+DÜZELTİLDİ
+- 2D canvas dokunma/fare/kalem olayları tek PointerEvent sistemi üzerinden çalışır.
+- Canvas açık şekilde pointer-events:auto / touch-action:none kullanır.
+- Ruler ve bilgi katmanları dokunmayı engellemez.
+- Obje hit-test gerçek width/depth/rotation değerlerine göre çalışır.
+- Duvar hit-test gerçek segmente mesafe üzerinden yapılır.
+- Grundriss açılırken eski seçim temizlenir.
+- Nesne ölçü etiketleri zoom büyüdükçe devleşmez; ekranda sabit okunabilir boyda kalır.
+- Kararsız ikinci wall-joint/miter çizim geçişi kaldırıldı.
+- Duvar gövdesi güvenli polygon renderer ile çizilir; kayıtlı çizgi Innenkante olarak korunur.
+- 2D als PDF artık popup açmaz; doğrudan Grundriss_<Planname>.pdf indirir.
+- PDF export sonunda editor zoom/grid/seçim durumu geri yüklenir.
+- Mevcut projeler ve localStorage recovery sistemi korunur.
 
 CACHE
-- Version 2.7.3 PRO
-- Service Worker cache: projekt-bau-v2720
-- reset.html localStorage içindeki projelere dokunmaz.
+- Version 2.7.4 PRO
+- projekt-bau-v2740

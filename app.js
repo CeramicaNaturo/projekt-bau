@@ -1920,7 +1920,7 @@ function openFloorplan(project,record){
   setTimeout(()=>{initTabletCadUi();if(fp3DMode)window.ProjectBau3D?.fitView?.();else fitFloorplan2D?.();},220);
   setTimeout(()=>{if(fp3DMode)window.ProjectBau3D?.fitView?.();else fitFloorplan2D?.();},180);
   setTimeout(()=>{if(!fp3DMode)fitFloorplan2D?.();},420);
-  setFloorTool('select');setFloorplanView('2d');drawFloorplan();updateSelectedInfo();requestAnimationFrame(()=>requestAnimationFrame(()=>{fitFloorplan2D();setTimeout(fitFloorplan2D,120)}));
+  setFloorTool('select');fpSelectedId=null;setFloorplanView('2d');drawFloorplan();updateSelectedInfo();requestAnimationFrame(()=>requestAnimationFrame(()=>{fitFloorplan2D();setTimeout(fitFloorplan2D,120)}));
 }
 function closeFloorplan(){$('floorplanModal').classList.add('hidden');fpProject=null;fpRecord=null}
 function setFloorTool(tool){
@@ -2030,17 +2030,34 @@ function endObjectRotation(){
 }
 
 function hitTest(p){
-  for(let i=fpObjects.length-1;i>=0;i--){
-    const o=fpObjects[i]; if(!isLayerVisible(o))continue;
-    if(o.type==='wall'){
-      const A={x:o.x1,y:o.y1},B={x:o.x2,y:o.y2};
-      const len=dist(A,B)||1;
-      const t=Math.max(0,Math.min(1,((p.x-A.x)*(B.x-A.x)+(p.y-A.y)*(B.y-A.y))/(len*len)));
-      const q={x:A.x+t*(B.x-A.x),y:A.y+t*(B.y-A.y)};
-      if(dist(p,q)<20)return o;
-    }else{
-      const hs=70*(o.scale||1);if(Math.abs(p.x-o.x)<hs&&Math.abs(p.y-o.y)<hs)return o;
-    }
+  const z=Math.max(.2,Number(fpZoom)||1);
+  const objects=[...(fpObjects||[])];
+
+  // Objects above walls: test in reverse drawing order.
+  for(let i=objects.length-1;i>=0;i--){
+    const o=objects[i];
+    if(typeof isLayerVisible==='function'&&!isLayerVisible(o))continue;
+    if(o.type==='wall')continue;
+    const scale=Number(o.scale||1);
+    const hw=Math.max(16/z,Number(o.widthCm||60)*scale/2);
+    const hd=Math.max(16/z,Number(o.depthCm||40)*scale/2);
+    const rad=-(Number(o.rotation||0))*Math.PI/180;
+    const dx=p.x-Number(o.x||0),dy=p.y-Number(o.y||0);
+    const lx=dx*Math.cos(rad)-dy*Math.sin(rad);
+    const ly=dx*Math.sin(rad)+dy*Math.cos(rad);
+    if(Math.abs(lx)<=hw+8/z && Math.abs(ly)<=hd+8/z)return o;
+  }
+
+  // Walls use a stable geometric distance test.
+  for(let i=objects.length-1;i>=0;i--){
+    const o=objects[i];
+    if(o.type!=='wall')continue;
+    const A={x:Number(o.x1),y:Number(o.y1)},B={x:Number(o.x2),y:Number(o.y2)};
+    const dx=B.x-A.x,dy=B.y-A.y,l2=dx*dx+dy*dy||1;
+    const t=Math.max(0,Math.min(1,((p.x-A.x)*dx+(p.y-A.y)*dy)/l2));
+    const q={x:A.x+t*dx,y:A.y+t*dy};
+    const tolerance=Math.max(Number(o.thickness||15)+8/z,16/z);
+    if(Math.hypot(p.x-q.x,p.y-q.y)<=tolerance)return o;
   }
   return null;
 }
@@ -3320,7 +3337,7 @@ function drawFloorplan(preview=null){
     });
 
     // Close perpendicular wall corners as one continuous L-shaped construction.
-    try{drawAllWallJoints()}catch(e){console.error('Wandverbindung',e)}
+    // v2.7.4: no separate miter wedge pass; safe wall polygons remain authoritative.
     try{fpDrawAllObjectDimensions()}catch(e){console.error('Objektmasse',e)}
 
     if(preview){
@@ -3453,22 +3470,24 @@ function drawFloorplan(preview=null){
 
 function drawMeasureText(text,x,y,angle=0){
   if(!fpShowMeasures)return;
+  const z=Math.max(.2,Number(fpZoom)||1);
   fpCtx.save();
   fpCtx.translate(x,y);
   fpCtx.rotate(angle);
 
-  fpCtx.font='bold 15px Arial';
+  const fontPx=14/z;
+  const pad=5/z;
+  const boxH=22/z;
+  fpCtx.font=`700 ${fontPx}px Arial`;
   fpCtx.textAlign='center';
   fpCtx.textBaseline='middle';
 
-  const pad=5;
   const w=fpCtx.measureText(text).width+pad*2;
-  fpCtx.fillStyle='rgba(255,255,255,.96)';
+  fpCtx.fillStyle='rgba(255,255,255,.97)';
   fpCtx.strokeStyle='#cbd5e1';
-  fpCtx.lineWidth=1;
-  fpCtx.fillRect(-w/2,-11,w,22);
-  fpCtx.strokeRect(-w/2,-11,w,22);
-
+  fpCtx.lineWidth=1/z;
+  fpCtx.fillRect(-w/2,-boxH/2,w,boxH);
+  fpCtx.strokeRect(-w/2,-boxH/2,w,boxH);
   fpCtx.fillStyle='#0f172a';
   fpCtx.fillText(text,0,0);
   fpCtx.restore();
@@ -3506,19 +3525,27 @@ function wallVisualWidth(w){
 
 function wallBodyPolygon(w){
   const x1=Number(w.x1),y1=Number(w.y1),x2=Number(w.x2),y2=Number(w.y2);
-  const out=wallOutsideNormal(w);
-  const t=wallVisualWidth(w);
+  const dx=x2-x1,dy=y2-y1;
+  const len=Math.hypot(dx,dy)||1;
+  const t=Math.max(1,Number(w?.thickness||15));
+
+  // Determine the outward normal without depending on wall-joint geometry.
+  let out=wallOutsideNormal(w);
+  if(!out || !Number.isFinite(out.nx) || !Number.isFinite(out.ny)){
+    out={nx:-dy/len,ny:dx/len};
+  }
 
   return [
-    {x:x1,y:y1},                    // inner start
-    {x:x2,y:y2},                    // inner end
-    {x:x2+out.nx*t,y:y2+out.ny*t}, // outer end
-    {x:x1+out.nx*t,y:y1+out.ny*t}  // outer start
+    {x:x1,y:y1},
+    {x:x2,y:y2},
+    {x:x2+out.nx*t,y:y2+out.ny*t},
+    {x:x1+out.nx*t,y:y1+out.ny*t}
   ];
 }
 
 function drawWallBody(w,color='#111827',alpha=1){
   const p=wallBodyPolygon(w);
+  if(!p.every(q=>Number.isFinite(q.x)&&Number.isFinite(q.y)))return;
   fpCtx.save();
   fpCtx.globalAlpha=alpha;
   fpCtx.fillStyle=color;
@@ -3528,47 +3555,6 @@ function drawWallBody(w,color='#111827',alpha=1){
   fpCtx.closePath();
   fpCtx.fill();
   fpCtx.restore();
-}
-
-function lineIntersectionInfinite(a1,a2,b1,b2){
-  const r={x:a2.x-a1.x,y:a2.y-a1.y};
-  const s={x:b2.x-b1.x,y:b2.y-b1.y};
-  const den=r.x*s.y-r.y*s.x;
-  if(Math.abs(den)<1e-9)return null;
-
-  const q={x:b1.x-a1.x,y:b1.y-a1.y};
-  const t=(q.x*s.y-q.y*s.x)/den;
-  return {x:a1.x+t*r.x,y:a1.y+t*r.y};
-}
-
-function wallOuterLine(w){
-  const out=wallOutsideNormal(w);
-  const t=wallVisualWidth(w);
-  return {
-    a:{x:Number(w.x1)+out.nx*t,y:Number(w.y1)+out.ny*t},
-    b:{x:Number(w.x2)+out.nx*t,y:Number(w.y2)+out.ny*t}
-  };
-}
-
-function wallOuterPointAtJoint(w,point){
-  const out=wallOutsideNormal(w);
-  const t=wallVisualWidth(w);
-  return {x:Number(point.x)+out.nx*t,y:Number(point.y)+out.ny*t};
-}
-
-function wallRenderLine(w){
-  const x1=Number(w.x1),y1=Number(w.y1),x2=Number(w.x2),y2=Number(w.y2);
-  const out=wallOutsideNormal(w);
-  const half=wallVisualWidth(w)/2;
-
-  // x1/y1 -> x2/y2 bleibt die Innenkante.
-  // Die sichtbare Wand wird nur nach aussen verschoben.
-  return {
-    x1:x1+out.nx*half,
-    y1:y1+out.ny*half,
-    x2:x2+out.nx*half,
-    y2:y2+out.ny*half
-  };
 }
 
 function drawWallJointAt(point, walls, color='#111827'){
@@ -4427,8 +4413,6 @@ function generateFloorplan2DPDF(){
     return;
   }
 
-  const pdfTab=window.open('about:blank','_blank');
-
   // Preserve the exact editor state.
   const state={
     zoom:fpZoom,
@@ -4560,19 +4544,11 @@ function generateFloorplan2DPDF(){
     doc.text(`Erstellt: ${date}`,margin,pageH-5);
     doc.text('Projekt Bau · Baudokumentation',pageW-margin,pageH-5,{align:'right'});
 
-    const blob=doc.output('blob');
-    const url=URL.createObjectURL(blob);
-
-    if(pdfTab){
-      pdfTab.location.replace(url);
-    }else{
-      window.open(url,'_blank');
-    }
-
-    setTimeout(()=>URL.revokeObjectURL(url),60000);
+    // Direct download: no popup, therefore works on Samsung Internet / Chrome tablets.
+    const safeName=String(planName||'Grundriss').replace(/[^a-zA-Z0-9_-]+/g,'_');
+    doc.save(`Grundriss_${safeName}.pdf`);
   }catch(err){
     console.error('2D Grundriss PDF',err);
-    if(pdfTab)pdfTab.close();
     alert('Der 2D-Grundriss konnte nicht als PDF erstellt werden.');
   }finally{
     // Restore the editor exactly as it was.
@@ -4995,32 +4971,39 @@ function initFloorplanCanvas(){
   if(!fpCanvas)return;
 
   fpCanvas.style.touchAction='none';
+  fpCanvas.style.pointerEvents='auto';
 
-  fpCanvas.onpointerdown=e=>{
-    if(e.button!==undefined && e.button!==0 && e.pointerType==='mouse')return;
+  let activePointer=null;
+
+  const down=e=>{
+    if(fp3DMode)return;
+    if(e.pointerType==='mouse' && e.button!==0)return;
+    activePointer=e.pointerId;
     try{fpCanvas.setPointerCapture(e.pointerId)}catch(_){}
+    e.preventDefault();
     floorStart(e);
   };
-
-  fpCanvas.onpointermove=e=>{
-    if(fpDrawing)floorMove(e);
+  const move=e=>{
+    if(fp3DMode)return;
+    if(activePointer!==null && e.pointerId!==activePointer)return;
+    if(fpDrawing){e.preventDefault();floorMove(e)}
   };
-
-  fpCanvas.onpointerup=e=>{
-    floorEnd(e);
-    try{fpCanvas.releasePointerCapture(e.pointerId)}catch(_){}
-  };
-
-  fpCanvas.onpointercancel=e=>{
-    if(fpDrawing){
-      fpDrawing=false;
-      fpStart=null;
-      fpPreview=null;
-      drawFloorplan();
+  const finish=e=>{
+    if(activePointer!==null && e.pointerId!==activePointer)return;
+    if(fpDrawing||fpWallMoveHold.wallId||fpDraggingFloorTileOrigin){
+      e.preventDefault();
+      floorEnd(e);
     }
     try{fpCanvas.releasePointerCapture(e.pointerId)}catch(_){}
+    activePointer=null;
   };
+
+  fpCanvas.onpointerdown=down;
+  fpCanvas.onpointermove=move;
+  fpCanvas.onpointerup=finish;
+  fpCanvas.onpointercancel=finish;
 }
+
 initCadShell();initTileTools();initTabletCadUi();initFloorplanControls();initFloorplanCanvas();initPinchZoom();initCadKeyboard();
 
 render();

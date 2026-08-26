@@ -3245,3 +3245,24 @@ label[for="fpShowPositions"]{
   #floorplanModal .cad-inspector{display:none!important}
   #floorplanModal>.floorplan-modal-card>.cad-object-palette{height:88px!important;min-height:88px!important;max-height:88px!important}
 }
+
+/* v2.7.4 – interactive CAD hardening */
+#floorplanModal #floorplanCanvas{
+  position:relative!important;
+  z-index:10!important;
+  pointer-events:auto!important;
+  touch-action:none!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+}
+#floorplanModal .cad-ruler-top,
+#floorplanModal .cad-ruler-left,
+#floorplanModal #fpSelectedInfo{
+  pointer-events:none!important;
+}
+#floorplanModal .floorplan-canvas-wrap{
+  position:relative!important;
+  z-index:1!important;
+}
+/* Selection handles stay readable without becoming huge at high zoom. */
+#floorplanModal .floorplan-canvas-wrap canvas{cursor:crosshair}

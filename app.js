@@ -752,7 +752,7 @@ function initTileTools(){
 let fp3DMode=false,fp3DOptions={floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};
 let fpProject=null,fpRecord=null,fpTool='select',fpObjects=[],fpUndoStack=[],fpRedoStack=[];
 let fpDrawing=false,fpStart=null,fpPreview=null,fpSelectedId=null,fpDragOffset=null,fpLastWallEnd=null,fpObjectRotateDrag=null,fpPinchState=null,fpPickingFloorTileOrigin=false,fpDraggingFloorTileOrigin=false,fpFloorTileDragStart=null,fpEditingWallTileAreaId=null;
-let fpWallMoveHold={timer:null,ready:false,wallId:null,start:null,moved:false};
+let fpWallMoveHold={timer:null,ready:false,wallId:null,start:null,moved:false,connected:[]};
 let fpZoom=1,fpViewOffsetX=0,fpViewOffsetY=0,fpLastRenderError='',fpObjectWallSnap=true,fpGrid=5,fpFineStep=1,fpWallThickness=15,fpSnapEnabled=true,fpShowGrid=true,fpShowPositions=true,fpShowMeasures=true,fpAngleSnap=true,fpActiveLayer='walls',fpPanStart=null,fpLayerVisibility={walls:true,openings:true,sanitary:true,furniture:true,notes:true},fpEndpointDrag=null;
 
 const fpCanvas=$('floorplanCanvas'),fpCtx=fpCanvas.getContext('2d');
@@ -2256,6 +2256,89 @@ function hitTest(p){
   }
   return null;
 }
+
+function fpWallConnectedSnapshot(w,tolerance=2){
+  if(!w)return [];
+  const out=[];
+  const endpoints=[
+    {key:'start',x:Number(w.x1),y:Number(w.y1)},
+    {key:'end',x:Number(w.x2),y:Number(w.y2)}
+  ];
+
+  for(const other of fpObjects){
+    if(!other || other.type!=='wall' || other.id===w.id)continue;
+    fpNormalizeLegacyWall?.(other);
+
+    for(const own of endpoints){
+      const candidates=[
+        {end:'start',x:Number(other.x1),y:Number(other.y1)},
+        {end:'end',x:Number(other.x2),y:Number(other.y2)}
+      ];
+      for(const c of candidates){
+        if(![own.x,own.y,c.x,c.y].every(Number.isFinite))continue;
+        if(Math.hypot(own.x-c.x,own.y-c.y)<=tolerance){
+          out.push({
+            wallId:other.id,
+            end:c.end,
+            ownEnd:own.key,
+            orig:{
+              x1:Number(other.x1),y1:Number(other.y1),
+              x2:Number(other.x2),y2:Number(other.y2)
+            }
+          });
+        }
+      }
+    }
+  }
+  return out;
+}
+
+function fpMoveConnectedWallEnds(snapshot,dx,dy){
+  if(!Array.isArray(snapshot))return;
+
+  for(const item of snapshot){
+    const w=fpObjects.find(x=>x.id===item.wallId && x.type==='wall');
+    if(!w || !item.orig)continue;
+
+    if(item.end==='start'){
+      w.x1=item.orig.x1+dx;
+      w.y1=item.orig.y1+dy;
+      w.x2=item.orig.x2;
+      w.y2=item.orig.y2;
+    }else{
+      w.x1=item.orig.x1;
+      w.y1=item.orig.y1;
+      w.x2=item.orig.x2+dx;
+      w.y2=item.orig.y2+dy;
+    }
+  }
+}
+
+function fpBeginHeldWallDrag(hit,startPoint){
+  if(!hit || hit.type!=='wall')return false;
+
+  const wall=fpObjects.find(x=>x.id===hit.id);
+  if(!wall)return false;
+
+  // History is taken only when the wall really becomes draggable,
+  // not for a simple selection tap.
+  pushHistory();
+
+  fpWallMoveHold.ready=true;
+  fpWallMoveHold.wallId=hit.id;
+  fpWallMoveHold.connected=fpWallConnectedSnapshot(wall);
+
+  fpDragOffset={
+    pStart:{x:startPoint.x,y:startPoint.y},
+    orig:JSON.parse(JSON.stringify(wall))
+  };
+
+  fpEndpointDrag=null;
+  fpCanvas.style.cursor='grabbing';
+  return true;
+}
+
+
 function floorStart(ev){
   if(!fpCanvas)return;
   if(fpPickingFloorTileOrigin){ev.preventDefault();const p=fpPoint(ev);setFloorTileOriginFromPoint(p,false);fpPickingFloorTileOrigin=false;updateFloorTilePanel();drawFloorplan();if(fp3DMode)refresh3D();return;}
@@ -2297,11 +2380,13 @@ function floorStart(ev){
 
     const hit=hitTest(p);
 
-  // v1.9.16: In Auswahl-Modus bewegt sich eine Wand nicht sofort.
-  // Kurzer Tap/Klick = nur auswählen. Erst nach 500 ms Halten darf gezogen werden.
+  // v2.8.4: Wall touch drag.
+  // Short tap = select only. Hold 500 ms = wall becomes draggable.
   if(fpTool==='select' && hit && hit.type==='wall'){
     fpSelectedId=hit.id;
     fpDragOffset=null;
+    fpEndpointDrag=null;
+    fpDrawing=true; // IMPORTANT: pointermove must continue during the hold period.
 
     if(fpWallMoveHold.timer)clearTimeout(fpWallMoveHold.timer);
     fpWallMoveHold={
@@ -2309,13 +2394,18 @@ function floorStart(ev){
       ready:false,
       wallId:hit.id,
       start:{x:p.x,y:p.y},
-      moved:false
+      moved:false,
+      connected:[]
     };
 
+    const wallId=hit.id;
+    const startPoint={x:p.x,y:p.y};
+
     fpWallMoveHold.timer=setTimeout(()=>{
-      if(fpWallMoveHold.wallId===hit.id){
-        fpWallMoveHold.ready=true;
-        fpDragOffset={x:p.x,y:p.y};
+      if(fpWallMoveHold.wallId===wallId && fpDrawing){
+        fpBeginHeldWallDrag(hit,startPoint);
+        drawFloorplan();
+        updateSelectedInfo();
       }
     },500);
 
@@ -2488,10 +2578,19 @@ function floorMove(ev){
         const ep=snapAnglePoint({x:orig.x1,y:orig.y1},{x:orig.x2+dx,y:orig.y2+dy});
         o.x1=orig.x1;o.y1=orig.y1;o.x2=ep.x;o.y2=ep.y;
       }else{
-        o.x1=snap(orig.x1+dx);
-        o.y1=snap(orig.y1+dy);
-        o.x2=snap(orig.x2+dx);
-        o.y2=snap(orig.y2+dy);
+        const targetDx=snap(orig.x1+dx)-orig.x1;
+        const targetDy=snap(orig.y1+dy)-orig.y1;
+
+        // Both endpoints move by exactly the same vector:
+        // wall length and angle remain unchanged.
+        o.x1=orig.x1+targetDx;
+        o.y1=orig.y1+targetDy;
+        o.x2=orig.x2+targetDx;
+        o.y2=orig.y2+targetDy;
+
+        // Keep room corners connected. Neighbouring wall endpoints that were
+        // attached to this wall follow the same movement vector.
+        fpMoveConnectedWallEnds(fpWallMoveHold.connected,targetDx,targetDy);
       }
     }else if(o.type==='mirror'||o.type==='niche'){
       // v2.3.2: wall-mounted object follows cursor along the wall,
@@ -2551,15 +2650,18 @@ function floorEnd(ev){
     return;
   }
 
+  const heldWallWasReady=!!fpWallMoveHold.ready;
+  const heldWallId=fpWallMoveHold.wallId;
+
   if(fpWallMoveHold.timer){
     clearTimeout(fpWallMoveHold.timer);
     fpWallMoveHold.timer=null;
   }
-  fpWallMoveHold.ready=false;
-  fpWallMoveHold.wallId=null;
-  fpWallMoveHold.start=null;
 
-  if(!fpDrawing)return;
+  if(!fpDrawing){
+    fpWallMoveHold={timer:null,ready:false,wallId:null,start:null,moved:false,connected:[]};
+    return;
+  }
   ev.preventDefault();
 
   if(fpTool==='pan'){
@@ -2571,6 +2673,26 @@ function floorEnd(ev){
     fpDragOffset=null;
     fpEndpointDrag=null;
     endObjectRotation();
+
+    if(heldWallWasReady && heldWallId){
+      try{
+        refreshWallLetters();
+        saveCurrentFloorplan?.({reason:'wall-drag'});
+      }catch(_){
+        try{save()}catch(__){}
+      }
+    }
+
+    fpWallMoveHold={
+      timer:null,
+      ready:false,
+      wallId:null,
+      start:null,
+      moved:false,
+      connected:[]
+    };
+
+    fpCanvas.style.cursor='';
     drawFloorplan();
     updateSelectedInfo();
     return;
@@ -3522,7 +3644,7 @@ function drawFloorplan(preview=null){
     try{drawFloorTiles2D()}catch(e){console.error('Bodenfliesen 2D',e)}
     try{window.ProjectBauAbdichtung?.drawOverlay?.()}catch(e){console.error('Abdichtung Overlay',e)}
 
-    // v2.8.3: Walls are always rendered first. This prevents sanitary/furniture
+    // v2.8.4: Walls are always rendered first. This prevents sanitary/furniture
     // objects or old object ordering from hiding the room construction.
     (fpObjects||[]).filter(o=>o?.type==='wall').forEach(o=>{
       try{
@@ -4129,7 +4251,7 @@ function drawFpObject(o,preview=false){
   fpCtx.lineJoin='miter';
 
   if(o.type==='wall'){
-    // v2.8.3: authoritative robust wall pass.
+    // v2.8.4: authoritative robust wall pass.
     // Thick shifted stroke guarantees visibility on legacy/tablet projects.
     drawWallHard(o,'#111827',1);
 
@@ -5594,9 +5716,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 
-/* v2.8.3 – authoritative runtime version stamp */
+/* v2.8.4 – authoritative runtime version stamp */
 (()=>{
-  const VERSION='2.8.3 PRO';
+  const VERSION='2.8.4 PRO';
   function stampVersion(){
     document.querySelectorAll(
       '.cad-sidebar-footer strong,.pro-version,[data-app-version],#appVersion,.app-version'
@@ -5622,7 +5744,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 
-/* v2.8.3 – safety autosave */
+/* v2.8.4 – safety autosave */
 (()=>{
   let lastAutoSave=0;
   const safeAutoSave=()=>{

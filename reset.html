@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Projekt Bau – Update v2.8.3 PRO</title>
+<title>Projekt Bau – Update v2.8.4 PRO</title>
 </head>
 <body style="font-family:Segoe UI,Arial;padding:32px">
-<h2>Projekt Bau wird auf v2.8.3 PRO aktualisiert…</h2>
+<h2>Projekt Bau wird auf v2.8.4 PRO aktualisiert…</h2>
 <p style="color:#166534;font-weight:700">Projekt- und Grundrissdaten bleiben erhalten.</p><p id="m">Cache und Service Worker werden vollständig gelöscht.</p>
 <script>
 (async()=>{
@@ -20,7 +20,7 @@
       const keys=await caches.keys();
       for(const key of keys){ try{ await caches.delete(key); }catch(_){} }
     }
-    if(msg)msg.textContent='Version 2.8.3 PRO wird jetzt geladen…';
+    if(msg)msg.textContent='Version 2.8.4 PRO wird jetzt geladen…';
   }catch(e){
     if(msg)msg.textContent='Cache-Aktualisierung abgeschlossen.';
   }

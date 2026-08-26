@@ -3342,3 +3342,13 @@ button:active{transform:translateY(1px)}
 
 /* v2.8.2 */
 .floorplan-card img{background:#fff}
+
+/* v2.8.4 – wall touch drag */
+#floorplanCanvas{
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+}
+@media(pointer:coarse){
+  #floorplanCanvas{touch-action:none}
+}

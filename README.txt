@@ -1,18 +1,21 @@
-Projekt Bau v2.8.4 PRO – Wall Touch Drag
+Projekt Bau v2.8.5 PRO – HARD UPDATE
 
-YENİ:
-- Auswahl modunda herhangi bir duvara dokun.
-- Kısa dokunma sadece duvarı seçer.
-- Parmağı 0.5 saniye duvarda tutunca sürükleme aktif olur.
-- Sonra parmağınla duvarı istediğin yere taşıyabilirsin.
-- Duvarın uzunluğu ve açısı korunur.
-- Başlangıç ve bitiş noktaları aynı hareket vektörüyle taşınır.
-- Duvara bağlı komşu duvarların ortak köşeleri de birlikte hareket eder;
-  Grundriss köşeleri kopmaz.
-- Parmağı bıraktığında Grundriss otomatik kaydedilir.
-- Mouse kullanımı korunur.
-- Undo geçmişi sadece gerçek sürükleme başladığında oluşturulur.
+NEDEN:
+v2.8.4 paketinin içi doğru olmasına rağmen cihaz v2.8.3 göstermeye devam ediyordu.
+Bu paket yalnız query string değiştirmez; asset dosya adlarını da değiştirir.
 
-CACHE:
-- Version 2.8.4 PRO
-- projekt-bau-v2840
+YENİ DOSYALAR:
+- app_v285.js
+- styles_v285.css
+- update-285.html
+
+UYGULAMA:
+1. ZIP içindeki TÜM dosyaları GitHub repo köküne yükleyin.
+2. Deployment tamamlandıktan sonra:
+   https://ceramicanaturo.github.io/projekt-bau/update-285.html
+   adresini açın.
+3. Bu sayfa Service Worker + Cache Storage temizler.
+4. localStorage/sessionStorage proje verileri silinmez.
+5. Uygulama v2.8.5 PRO olarak açılır.
+
+v2.8.4 duvar sürükleme özelliği korunmuştur.

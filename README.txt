@@ -1,4 +1,4 @@
-Projekt Bau v2.7.2 PRO – Projekt Recovery + 2D PDF + CAD Fix
+Projekt Bau v2.7.3 PRO – Projekt Recovery + 2D PDF + CAD Fix
 
 PROJEKTE
 - Program sadece tek localStorage anahtarını seçmez.
@@ -24,6 +24,6 @@ PROJEKTE
 - Sağ Eigenschaften ve sol Werkzeug alanları korunur.
 
 CACHE
-- Version 2.7.2 PRO
+- Version 2.7.3 PRO
 - Service Worker cache: projekt-bau-v2720
 - reset.html localStorage içindeki projelere dokunmaz.

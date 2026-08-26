@@ -1953,9 +1953,77 @@ function updateFloorRoomInfo(){
   if(h && fpRecord && document.activeElement!==h)h.value=fpRecord.roomHeightM??'';
 }
 
+
+function fpNormalizeLegacyWall(w){
+  if(!w || w.type!=='wall')return w;
+
+  const n=v=>{
+    const x=Number(v);
+    return Number.isFinite(x)?x:null;
+  };
+
+  let x1=n(w.x1), y1=n(w.y1), x2=n(w.x2), y2=n(w.y2);
+
+  // Older project variants used start/end field names.
+  if(x1===null)x1=n(w.startX ?? w.xStart ?? w.fromX);
+  if(y1===null)y1=n(w.startY ?? w.yStart ?? w.fromY);
+  if(x2===null)x2=n(w.endX   ?? w.xEnd   ?? w.toX);
+  if(y2===null)y2=n(w.endY   ?? w.yEnd   ?? w.toY);
+
+  // Older object-like wall representation: center/x/y + length + angle.
+  if([x1,y1,x2,y2].some(v=>v===null)){
+    const cx=n(w.x ?? w.cx ?? w.centerX);
+    const cy=n(w.y ?? w.cy ?? w.centerY);
+    const length=n(w.lengthCm ?? w.length ?? w.widthCm ?? w.width);
+    let angle=n(w.angleDeg ?? w.angle ?? w.rotation);
+
+    if(cx!==null && cy!==null && length!==null && length>0){
+      if(angle===null)angle=0;
+
+      // Rotation may be radians in some old records.
+      const rad=Math.abs(angle)<=Math.PI*2+0.01 ? angle : angle*Math.PI/180;
+      const dx=Math.cos(rad)*length/2;
+      const dy=Math.sin(rad)*length/2;
+
+      x1=cx-dx; y1=cy-dy;
+      x2=cx+dx; y2=cy+dy;
+    }
+  }
+
+  // If only start point + length/angle exists.
+  if(x1!==null && y1!==null && (x2===null || y2===null)){
+    const length=n(w.lengthCm ?? w.length ?? w.widthCm ?? w.width);
+    let angle=n(w.angleDeg ?? w.angle ?? w.rotation);
+    if(length!==null && length>0){
+      if(angle===null)angle=0;
+      const rad=Math.abs(angle)<=Math.PI*2+0.01 ? angle : angle*Math.PI/180;
+      x2=x1+Math.cos(rad)*length;
+      y2=y1+Math.sin(rad)*length;
+    }
+  }
+
+  if([x1,y1,x2,y2].every(Number.isFinite) && Math.hypot(x2-x1,y2-y1)>.1){
+    w.x1=x1; w.y1=y1; w.x2=x2; w.y2=y2;
+  }
+
+  const thickness=n(w.thickness ?? w.wallThickness ?? w.depthCm);
+  if(thickness!==null && thickness>0)w.thickness=thickness;
+  else if(!Number.isFinite(Number(w.thickness)))w.thickness=15;
+
+  return w;
+}
+
+function fpRepairLegacyWalls(objects){
+  if(!Array.isArray(objects))return objects;
+  objects.forEach(fpNormalizeLegacyWall);
+  return objects;
+}
+
+
 function openFloorplan(project,record){
   fpProject=project;fpRecord=record;
   fpObjects=Array.isArray(record.objects)?JSON.parse(JSON.stringify(record.objects)):[];
+  fpRepairLegacyWalls(fpObjects);
   refreshWallLetters();
   fpGrid=record.grid||5;fpFineStep=record.fineStep||1;fpWallThickness=record.wallThickness||15;
   fp3DMode=false;fp3DOptions=record.threeDOptions||{floorMaterialId:'',wallMaterialId:'',showCeiling:false,tileOriginX:0,tileOriginY:0,tileRotation:0};fpUndoStack=[];fpRedoStack=[];fpSelectedId=null;fpLastWallEnd=null;fpZoom=1;fpActiveLayer=record.activeLayer||'walls';fpLayerVisibility=record.layerVisibility||{walls:true,openings:true,sanitary:true,furniture:true,notes:true};
@@ -1984,6 +2052,60 @@ function openFloorplan(project,record){
   setTimeout(()=>{if(!fp3DMode)fitFloorplan2D?.();},420);
   setFloorTool('select');fpSelectedId=null;setFloorplanView('2d');drawFloorplan();updateSelectedInfo();requestAnimationFrame(()=>requestAnimationFrame(()=>{fitFloorplan2D();setTimeout(fitFloorplan2D,120)}));
 }
+
+function saveCurrentFloorplan(options={}){
+  if(!fpRecord)return false;
+
+  try{
+    fpRepairLegacyWalls(fpObjects);
+    drawFloorplan();
+
+    fpRecord.objects=cloneObjects();
+
+    try{
+      fpRecord.image=fpCanvas?.toDataURL?.('image/png')||fpRecord.image||'';
+    }catch(_){}
+
+    fpRecord.grid=fpGrid;
+    fpRecord.fineStep=fpFineStep;
+    fpRecord.wallThickness=fpWallThickness;
+    fpRecord.activeLayer=fpActiveLayer;
+    fpRecord.layerVisibility={...fpLayerVisibility};
+    fpRecord.threeDOptions={...fp3DOptions};
+    fpRecord.floorAreaM2=calculateFloorAreaM2(fpObjects);
+    fpRecord.updatedAt=new Date().toISOString();
+
+    // Save project database without changing the currently opened floorplan.
+    try{localStorage.setItem(K3,JSON.stringify(S))}catch(_){}
+    try{window.ProjectBauPro?.save?.()}catch(_){}
+
+    return true;
+  }catch(e){
+    console.error('Grundriss speichern',e);
+    return false;
+  }
+}
+
+function saveFloorplanAndGoHome(){
+  const ok=saveCurrentFloorplan({reason:'home'});
+  if(!ok){
+    alert('Grundriss konnte nicht gespeichert werden.');
+    return;
+  }
+
+  closeFloorplan();
+
+  // Return to the project/dashboard view and refresh it immediately.
+  try{
+    A=null;
+    render();
+    window.scrollTo({top:0,left:0,behavior:'auto'});
+  }catch(e){
+    console.error('Home Navigation',e);
+  }
+}
+
+
 function closeFloorplan(){$('floorplanModal').classList.add('hidden');fpProject=null;fpRecord=null}
 function setFloorTool(tool){
   endObjectRotation();
@@ -3389,7 +3511,19 @@ function drawFloorplan(preview=null){
     try{drawFloorTiles2D()}catch(e){console.error('Bodenfliesen 2D',e)}
     try{window.ProjectBauAbdichtung?.drawOverlay?.()}catch(e){console.error('Abdichtung Overlay',e)}
 
-    (fpObjects||[]).forEach(o=>{
+    // v2.8.1: Walls are always rendered first. This prevents sanitary/furniture
+    // objects or old object ordering from hiding the room construction.
+    (fpObjects||[]).filter(o=>o?.type==='wall').forEach(o=>{
+      try{
+        fpNormalizeLegacyWall(o);
+        if(typeof isLayerVisible==='function' && !isLayerVisible(o))return;
+        drawFpObject(o,false);
+      }catch(objectError){
+        console.error('2D Wand konnte nicht gezeichnet werden',o,objectError);
+      }
+    });
+
+    (fpObjects||[]).filter(o=>o?.type!=='wall').forEach(o=>{
       try{
         if(typeof isLayerVisible==='function' && !isLayerVisible(o))return;
         drawFpObject(o,false);
@@ -3397,6 +3531,26 @@ function drawFloorplan(preview=null){
         console.error('2D Objekt konnte nicht gezeichnet werden',o,objectError);
       }
     });
+
+    // Final wall-edge pass: keep every wall readable even when an object touches it.
+    try{
+      const z=Math.max(.2,Number(fpZoom)||1);
+      fpCtx.save();
+      fpCtx.strokeStyle='#111827';
+      fpCtx.lineCap='square';
+      fpCtx.lineJoin='miter';
+      (fpObjects||[]).filter(o=>o?.type==='wall' && isLayerVisible(o)).forEach(w=>{
+        fpNormalizeLegacyWall(w);
+        const x1=Number(w.x1),y1=Number(w.y1),x2=Number(w.x2),y2=Number(w.y2);
+        if(![x1,y1,x2,y2].every(Number.isFinite))return;
+        fpCtx.lineWidth=Math.max(2.2/z,2.2);
+        fpCtx.beginPath();
+        fpCtx.moveTo(x1,y1);
+        fpCtx.lineTo(x2,y2);
+        fpCtx.stroke();
+      });
+      fpCtx.restore();
+    }catch(e){console.error('Wandkontur Endpass',e)}
 
     // Close perpendicular wall corners as one continuous L-shaped construction.
     // v2.7.5: no separate miter wedge pass; safe wall polygons remain authoritative.
@@ -3592,7 +3746,8 @@ function wallBodyPolygon(w){
   const t=Math.max(1,Number(w?.thickness||15));
 
   // Determine the outward normal without depending on wall-joint geometry.
-  let out=wallOutsideNormal(w);
+  let out=null;
+  try{out=wallOutsideNormal(w)}catch(_){}
   if(!out || !Number.isFinite(out.nx) || !Number.isFinite(out.ny)){
     out={nx:-dy/len,ny:dx/len};
   }
@@ -4785,7 +4940,7 @@ function initFloorplanControls(){
   if(objY)objY.onchange=setSelectedPosition;
   $('fpDeleteSelected').onclick=deleteSelected;
   $('fpClear').onclick=()=>{if(confirm('Grundriss vollständig löschen?')){pushHistory();fpObjects=[];fpSelectedId=null;drawFloorplan();updateSelectedInfo()}};
-  const legacySave=$('fpSave');if(legacySave)legacySave.onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.fineStep=fpFineStep;fpRecord.wallThickness=fpWallThickness;fpRecord.activeLayer=fpActiveLayer;fpRecord.layerVisibility={...fpLayerVisibility};fpRecord.threeDOptions={...fp3DOptions};fpRecord.floorAreaM2=calculateFloorAreaM2(fpObjects);save();closeFloorplan()};
+  const legacySave=$('fpSave');if(legacySave)legacySave.onclick=()=>{if(saveCurrentFloorplan())closeFloorplan()};
   const roomHeightInput=$('fpRoomHeight');
   if(roomHeightInput)roomHeightInput.onchange=e=>{
     if(!fpRecord)return;
@@ -5348,9 +5503,17 @@ document.addEventListener('DOMContentLoaded',()=>{
         try{generateFloorplan2DPDF()}catch(err){console.error('2D PDF',err);alert('2D PDF konnte nicht erstellt werden.');}
         return;
       }
+      if(target.id==='fpHomeButton'){
+        ev.preventDefault();ev.stopPropagation();
+        try{saveFloorplanAndGoHome()}catch(err){console.error('Home',err);alert('Grundriss konnte nicht gespeichert werden.');}
+        return;
+      }
       if(target.id==='fpSavePrimary'){
-        ev.preventDefault();
-        try{window.ProjectBauPro?.save?.()||save()}catch(err){console.error('Speichern',err)}
+        ev.preventDefault();ev.stopPropagation();
+        try{
+          if(fpRecord)saveCurrentFloorplan({reason:'manual'});
+          else window.ProjectBauPro?.save?.()||save();
+        }catch(err){console.error('Speichern',err)}
         return;
       }
       if(target.dataset?.addObject){
@@ -5404,3 +5567,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   else stampVersion();
   setTimeout(stampVersion,250);
 })();
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const home=document.getElementById('fpHomeButton');
+  if(home){
+    home.addEventListener('touchend',ev=>{
+      ev.preventDefault();
+      ev.stopPropagation();
+      saveFloorplanAndGoHome();
+    },{passive:false});
+  }
+});

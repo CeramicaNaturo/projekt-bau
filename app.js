@@ -5324,3 +5324,160 @@ document.addEventListener('DOMContentLoaded',()=>{
   else setTimeout(rerender,0);
   window.addEventListener('pageshow',()=>setTimeout(rerender,20));
 })();
+
+
+/* ============================================================
+   v2.7.7 – Tablet project opening
+   ============================================================ */
+(()=>{
+  'use strict';
+
+  let projectPointer=null;
+  let suppressProjectClickUntil=0;
+
+  function projectCardFromTarget(target){
+    if(!target?.closest)return null;
+    return target.closest('[data-project-id], .project-card, .project-item, .project-row');
+  }
+
+  function resolveProjectId(card){
+    if(!card)return null;
+    return card.dataset?.projectId ||
+           card.getAttribute?.('data-id') ||
+           card.getAttribute?.('data-project') ||
+           card.querySelector?.('[data-project-id]')?.dataset?.projectId ||
+           null;
+  }
+
+  function isInteractiveChild(target){
+    return !!target?.closest?.('button,a,input,select,textarea,label,[role="button"]');
+  }
+
+  function openProjectSafely(id,card){
+    if(!id)return false;
+
+    // Prefer existing project-open functions if available.
+    const candidates=[
+      window.openProject,
+      window.selectProject,
+      window.editProject,
+      window.openProjekt,
+      window.selectProjekt
+    ].filter(fn=>typeof fn==='function');
+
+    for(const fn of candidates){
+      try{
+        fn(id);
+        return true;
+      }catch(e){
+        console.warn('Projekt öffnen fallback',e);
+      }
+    }
+
+    // Fallback: emulate a genuine click only on a known open control.
+    const btn=card?.querySelector?.(
+      '[data-action="open-project"],[data-open-project],.open-project,.project-open'
+    );
+    if(btn){
+      try{
+        btn.click();
+        return true;
+      }catch(_){}
+    }
+
+    return false;
+  }
+
+  document.addEventListener('pointerdown',ev=>{
+    const card=projectCardFromTarget(ev.target);
+    if(!card)return;
+
+    projectPointer={
+      id:ev.pointerId,
+      x:ev.clientX,
+      y:ev.clientY,
+      t:performance.now(),
+      card
+    };
+  },true);
+
+  document.addEventListener('pointermove',ev=>{
+    if(!projectPointer || projectPointer.id!==ev.pointerId)return;
+    const dx=ev.clientX-projectPointer.x;
+    const dy=ev.clientY-projectPointer.y;
+    if(Math.hypot(dx,dy)>12){
+      projectPointer.moved=true;
+    }
+  },true);
+
+  document.addEventListener('pointercancel',ev=>{
+    if(projectPointer?.id===ev.pointerId)projectPointer=null;
+  },true);
+
+  document.addEventListener('pointerup',ev=>{
+    if(!projectPointer || projectPointer.id!==ev.pointerId)return;
+
+    const state=projectPointer;
+    projectPointer=null;
+
+    const card=projectCardFromTarget(ev.target) || state.card;
+    if(!card || card!==state.card)return;
+
+    const duration=performance.now()-state.t;
+
+    // A scroll/drag must never open a project.
+    if(state.moved || duration>900)return;
+
+    // Buttons inside the card keep their own behavior.
+    if(isInteractiveChild(ev.target))return;
+
+    const id=resolveProjectId(card);
+    if(!id)return;
+
+    if(openProjectSafely(id,card)){
+      suppressProjectClickUntil=performance.now()+700;
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+  },true);
+
+  // Prevent the synthetic click fired after touch/pointerup from opening twice.
+  document.addEventListener('click',ev=>{
+    if(performance.now()>suppressProjectClickUntil)return;
+    const card=projectCardFromTarget(ev.target);
+    if(!card)return;
+    if(isInteractiveChild(ev.target))return;
+    ev.preventDefault();
+    ev.stopPropagation();
+  },true);
+
+  // Accessibility: Enter / Space opens focused project cards.
+  document.addEventListener('keydown',ev=>{
+    if(ev.key!=='Enter' && ev.key!==' ')return;
+    const card=projectCardFromTarget(ev.target);
+    if(!card || isInteractiveChild(ev.target))return;
+    const id=resolveProjectId(card);
+    if(!id)return;
+    if(openProjectSafely(id,card)){
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+  },true);
+
+  // After every render, make project cards keyboard/touch friendly.
+  const decorate=()=>{
+    document.querySelectorAll('[data-project-id],.project-card,.project-item,.project-row').forEach(card=>{
+      if(!card.hasAttribute('tabindex'))card.setAttribute('tabindex','0');
+      card.style.touchAction='pan-y';
+      card.style.webkitTapHighlightColor='transparent';
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    decorate();
+    const obs=new MutationObserver(()=>decorate());
+    obs.observe(document.body,{childList:true,subtree:true});
+  });
+
+  window.ProjectBauTabletProjectOpen={decorate};
+})();

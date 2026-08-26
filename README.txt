@@ -1,23 +1,18 @@
-Projekt Bau v2.7.6 PRO – Startup / Buttons / Project List Fix
+Projekt Bau v2.7.7 PRO – Tablet Projekt öffnen
 
-ASIL HATA DÜZELTİLDİ
-- HTML'de artık bulunmayan closeFloorplan butonuna doğrudan .onclick atanıyordu.
-- Bu JavaScript exception nedeniyle initFloorplanControls yarıda kesiliyordu.
-- Ardından initFloorplanCanvas ve başlangıç render() çağrısı hiç çalışmıyordu.
-- Sonuç: butonlar çalışmıyor, eski projeler ilk açılışta görünmüyor; yeni proje ekleyince render() tetiklenerek görünüyordu.
+DÜZELTİLDİ
+- Tablet/Samsung Chrome proje kartı açma davranışı.
+- Proje kartında pointerdown / pointermove / pointerup kullanılır.
+- Kaydırma ile dokunma birbirinden ayrılır.
+- 12 px üzerindeki hareket scroll olarak kabul edilir ve proje açılmaz.
+- 900 ms üzerindeki uzun basma proje açmaz.
+- Dokunmadan sonra oluşan sentetik click engellenir; proje iki kez açılmaz.
+- Kart içindeki butonların kendi davranışı korunur.
+- Proje kartları DOM yeniden render edilse bile event delegation ile çalışır.
+- Klavyede Enter/Space ile proje açma desteği.
+- touch-action: pan-y ile dikey kaydırma korunur.
+- Mevcut proje verileri, CAD, PDF, Abdichtung ve Fotodokumentation kodlarına dokunulmadı.
 
-v2.7.6
-- closeFloorplan referansı artık optional/guarded.
-- eski fpSave referansı artık optional/guarded.
-- Her init modülü pbSafeInit ile bağımsız başlatılır; biri hata verse bile diğerleri çalışır.
-- Proje listesi açılışta zorunlu render edilir.
-- 60 ms gecikmeli ikinci render vardır.
-- pageshow/bfcache dönüşünde proje listesi tekrar render edilir.
-- 2D als PDF event delegation ile her zaman çalışır.
-- Obje butonları event delegation ile çalışır.
-- CAD araç butonları event delegation ile çalışır.
-- 2D / 3D / Abdichtung ana mod butonları event delegation ile çalışır.
-- Mevcut proje migration/recovery sistemi korunur.
-- Mevcut 2D çizim ve PDF motoru korunur.
-
-Version 2.7.6 PRO
+CACHE
+- Version 2.7.7 PRO
+- Service Worker cache v2770

@@ -3272,3 +3272,34 @@ button:active{transform:translateY(1px)}
 .fp-tool.active,.cad-object-palette button.active{outline:2px solid rgba(37,99,235,.22);outline-offset:-2px}
 #fp2DPdfButton{pointer-events:auto!important;cursor:pointer!important}
 #floorplanCanvas{pointer-events:auto!important;touch-action:none!important}
+
+/* v2.7.7 – tablet project cards */
+.project-card,
+.project-item,
+.project-row,
+[data-project-id]{
+  touch-action:pan-y;
+  -webkit-tap-highlight-color:transparent;
+}
+.project-card:active,
+.project-item:active,
+.project-row:active,
+[data-project-id]:active{
+  transform:translateY(1px);
+}
+@media (pointer:coarse){
+  .project-card,
+  .project-item,
+  .project-row,
+  [data-project-id]{
+    cursor:pointer;
+    min-height:58px;
+  }
+  .project-card button,
+  .project-item button,
+  .project-row button,
+  [data-project-id] button{
+    min-height:38px;
+    min-width:38px;
+  }
+}

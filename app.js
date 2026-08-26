@@ -4,65 +4,151 @@ const K3='projekt-bau-v03',K2='projekt-bau-v02';
 function pbValidState(v){
   return !!v && typeof v==='object' && Array.isArray(v.projects);
 }
-function pbProjectScore(v){
-  if(!pbValidState(v))return -1;
-  let score=v.projects.length*1000000;
-  for(const p of v.projects){
-    score+=(Array.isArray(p?.areas)?p.areas.length:0)*1000;
-    score+=(Array.isArray(p?.photos)?p.photos.length:0)*10;
-  }
-  return score;
-}
-function pbReadStorageState(key){
+
+function pbReadStorageStateFrom(storage,key){
   try{
-    const raw=localStorage.getItem(key);
+    const raw=storage.getItem(key);
     if(!raw)return null;
     const data=JSON.parse(raw);
     return pbValidState(data)?data:null;
   }catch(_){return null}
 }
-function loadState(){
-  const candidates=[];
-  const preferred=[K3,K2,'projekt-bau-v01','projekt-bau','ProjektBau'];
 
-  for(const key of preferred){
-    const data=pbReadStorageState(key);
-    if(data)candidates.push({key,data,score:pbProjectScore(data)});
+function pbFingerprintProject(p){
+  const id=String(p?.id||'').trim();
+  if(id)return `id:${id}`;
+  const name=String(p?.name||'').trim().toLowerCase();
+  const address=String(p?.address||'').trim().toLowerCase();
+  const customer=String(p?.customer||'').trim().toLowerCase();
+  return `meta:${name}|${address}|${customer}`;
+}
+
+function pbRichness(p){
+  let score=0;
+  score+=(Array.isArray(p?.areas)?p.areas.length:0)*10000;
+  score+=(Array.isArray(p?.floorplans)?p.floorplans.length:0)*5000;
+  score+=(Array.isArray(p?.photos)?p.photos.length:0)*1000;
+  score+=(Array.isArray(p?.tileMaterials)?p.tileMaterials.length:0)*100;
+  score+=String(p?.description||'').length;
+  return score;
+}
+
+function pbMergeProjectData(base,incoming){
+  if(!base)return JSON.parse(JSON.stringify(incoming));
+  if(!incoming)return base;
+
+  const richer=pbRichness(incoming)>pbRichness(base)?incoming:base;
+  const other=richer===incoming?base:incoming;
+  const out=JSON.parse(JSON.stringify(richer));
+
+  // Preserve missing scalar values from the other copy.
+  for(const k of ['name','address','customer','phone','startDate','owner','description']){
+    if((out[k]===undefined||out[k]===null||out[k]==='') && other[k]!==undefined)out[k]=other[k];
   }
 
-  try{
-    for(let i=0;i<localStorage.length;i++){
-      const key=localStorage.key(i);
-      if(!key || !/projekt.?bau/i.test(key))continue;
-      if(candidates.some(x=>x.key===key))continue;
-      const data=pbReadStorageState(key);
-      if(data)candidates.push({key,data,score:pbProjectScore(data)});
+  // Merge arrays by id/fallback signature.
+  for(const key of ['areas','floorplans','photos','tileMaterials']){
+    const arr=[];
+    const seen=new Set();
+    for(const item of [...(Array.isArray(base[key])?base[key]:[]),...(Array.isArray(incoming[key])?incoming[key]:[])]){
+      const sig=String(item?.id||item?.name||item?.title||JSON.stringify(item));
+      if(seen.has(sig))continue;
+      seen.add(sig);
+      arr.push(JSON.parse(JSON.stringify(item)));
     }
-  }catch(_){}
+    if(arr.length)out[key]=arr;
+  }
+  return out;
+}
 
-  candidates.sort((x,y)=>y.score-x.score);
-  const chosen=candidates[0];
+function pbScanAllStates(){
+  const found=[];
+  const storages=[
+    {name:'localStorage',storage:localStorage},
+    {name:'sessionStorage',storage:sessionStorage}
+  ];
 
-  if(chosen){
+  for(const holder of storages){
     try{
-      const current=pbReadStorageState(K3);
-      if(!current || pbProjectScore(chosen.data)>pbProjectScore(current)){
-        localStorage.setItem(K3,JSON.stringify(chosen.data));
+      for(let i=0;i<holder.storage.length;i++){
+        const key=holder.storage.key(i);
+        if(!key)continue;
+        const data=pbReadStorageStateFrom(holder.storage,key);
+        if(data){
+          found.push({
+            storage:holder.name,
+            key,
+            data,
+            projects:data.projects.length
+          });
+          continue;
+        }
+
+        // Recovery fallback: some previous builds may have wrapped the state.
+        try{
+          const raw=holder.storage.getItem(key);
+          const obj=JSON.parse(raw);
+          for(const candidate of [obj?.state,obj?.data,obj?.projektBau,obj?.backup]){
+            if(pbValidState(candidate)){
+              found.push({storage:holder.name,key:`${key} (nested)`,data:candidate,projects:candidate.projects.length});
+              break;
+            }
+          }
+        }catch(_){}
       }
-      localStorage.setItem('projekt-bau-last-recovery-source',chosen.key);
     }catch(_){}
-    return chosen.data;
+  }
+  return found;
+}
+
+function pbMergedRecoveryState(){
+  const states=pbScanAllStates();
+  const map=new Map();
+
+  for(const state of states){
+    for(const p of state.data.projects){
+      const sig=pbFingerprintProject(p);
+      if(!map.has(sig))map.set(sig,JSON.parse(JSON.stringify(p)));
+      else map.set(sig,pbMergeProjectData(map.get(sig),p));
+    }
+  }
+
+  return {
+    projects:[...map.values()],
+    recovery:{
+      recoveredAt:new Date().toISOString(),
+      sources:states.map(x=>`${x.storage}:${x.key}`),
+      sourceCount:states.length
+    }
+  };
+}
+
+function loadState(){
+  const merged=pbMergedRecoveryState();
+
+  if(merged.projects.length){
+    try{
+      // Recovery is a COPY. We do not remove any older browser storage.
+      localStorage.setItem(K3,JSON.stringify(merged));
+    }catch(_){}
+    return merged;
   }
 
   return {projects:[]};
 }
-
 let S=loadState(),A=null;
 const $=x=>document.getElementById(x),u=()=>crypto.randomUUID?crypto.randomUUID():Date.now()+Math.random().toString(36);
 
 function save(){
   try{
-    const stored=pbReadStorageState(K3);
+    let stored=null;
+    try{
+      const raw=localStorage.getItem(K3);
+      const parsed=raw?JSON.parse(raw):null;
+      stored=pbValidState(parsed)?parsed:null;
+    }catch(_){}
+
+    // Never overwrite recovered projects with an accidental blank startup state.
     if((S?.projects?.length||0)===0 && (stored?.projects?.length||0)>0){
       S=stored;
     }else{
@@ -279,8 +365,6 @@ function generateDirectPDFReport(){
     alert('Das PDF-Modul konnte nicht geladen werden. Bitte Seite neu laden.');
     return;
   }
-
-  const pdfTab=window.open('about:blank','_blank');
 
   try{
     const {jsPDF}=window.jspdf;
@@ -5144,21 +5228,48 @@ window.ProjectBauProLayout={refresh};
   window.ProjectBauMaterialDrawer={open:()=>toggleMaterialDrawer(true),close:()=>toggleMaterialDrawer(false),toggle:()=>toggleMaterialDrawer()};
 })();
 
+
+
+/* v2.7.2 – non-destructive project recovery */
 window.ProjectBauRecovery={
   scan(){
-    const out=[];
-    try{
-      for(let i=0;i<localStorage.length;i++){
-        const key=localStorage.key(i);
-        if(!key||!/projekt.?bau/i.test(key))continue;
-        const data=pbReadStorageState(key);
-        if(data)out.push({key,projects:data.projects.length,score:pbProjectScore(data)});
-      }
-    }catch(_){}
-    return out.sort((x,y)=>y.score-x.score);
+    return pbScanAllStates().map(x=>({
+      storage:x.storage,
+      key:x.key,
+      projects:x.projects
+    }));
   },
   recover(){
-    S=loadState();A=null;render();
-    return Array.isArray(S?.projects)?S.projects.length:0;
+    const merged=pbMergedRecoveryState();
+    if(!merged.projects.length)return 0;
+    S=merged;
+    A=null;
+    try{localStorage.setItem(K3,JSON.stringify(S))}catch(_){}
+    render();
+    return merged.projects.length;
   }
 };
+
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const recoverBtn=document.getElementById('pbRecoverProjects');
+  const status=document.getElementById('pbRecoveryStatus');
+
+  if(status){
+    const states=window.ProjectBauRecovery?.scan?.()||[];
+    const total=states.reduce((n,x)=>n+(Number(x.projects)||0),0);
+    status.textContent=states.length
+      ? `${states.length} lokale Datenquelle(n) erkannt · ${total} Projektkopien`
+      : 'Keine weitere lokale Projektdatenquelle erkannt.';
+  }
+
+  if(recoverBtn){
+    recoverBtn.addEventListener('click',()=>{
+      const count=window.ProjectBauRecovery?.recover?.()||0;
+      if(status)status.textContent=count
+        ? `${count} Projekt(e) wiederhergestellt.`
+        : 'Keine wiederherstellbaren Projekte gefunden.';
+      if(count)alert(`${count} Projekt(e) wurden aus den lokalen Browserdaten wiederhergestellt.`);
+    });
+  }
+});

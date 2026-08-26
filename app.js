@@ -199,70 +199,65 @@ $('printReport').onclick=()=>generateDirectPDFReport();
 function render(){
   let b=$('projects');b.innerHTML=S.projects.length?'':'Noch keine Projekte vorhanden.';
   S.projects.forEach(p=>{
-    let d=document.createElement('div');
+    const d=document.createElement('div');
     d.className='project';
     d.dataset.projectId=p.id;
     d.setAttribute('role','button');
     d.setAttribute('tabindex','0');
-    d.innerHTML=`<div><b>${esc(p.name)}</b><div class=muted>${esc(p.address||'Keine Adresse')} · ${p.areas.length} Bereiche</div></div><button type="button" class=secondary>Öffnen</button>`;
+    d.innerHTML=`<div><b>${esc(p.name)}</b><div class=muted>${esc(p.address||'Keine Adresse')} · ${p.areas.length} Bereiche</div></div><button type="button" class="secondary project-open">Öffnen</button>`;
 
-    let sx=0,sy=0,moved=false,down=false;
+    let touchStartX=0, touchStartY=0, touchMoved=false, touchOpenedAt=0;
 
-    const activateProject=(ev)=>{
-      if(ev){
-        ev.preventDefault();
-        ev.stopPropagation();
-      }
+    const openProject=()=>{
       A=p.id;
-      render();
-      try{
-        $('panel')?.scrollIntoView?.({block:'start',behavior:'smooth'});
-      }catch(_){}
+      renderP(); // proje listesini tekrar render etme; tablette dokunma event zincirini bozmasın
+      requestAnimationFrame(()=>{
+        const panel=$('panel');
+        if(panel){
+          try{ panel.scrollIntoView({block:'start',behavior:'smooth'}); }catch(_){}
+        }
+      });
     };
 
-    d.addEventListener('pointerdown',ev=>{
-      if(ev.pointerType==='mouse')return;
-      sx=ev.clientX; sy=ev.clientY; moved=false; down=true;
-    },{passive:true});
-
-    d.addEventListener('pointermove',ev=>{
-      if(!down || ev.pointerType==='mouse')return;
-      if(Math.hypot(ev.clientX-sx,ev.clientY-sy)>14)moved=true;
-    },{passive:true});
-
-    d.addEventListener('pointercancel',()=>{down=false;moved=true},{passive:true});
-
-    d.addEventListener('pointerup',ev=>{
-      if(ev.pointerType==='mouse')return;
-      const ok=down && !moved;
-      down=false;
-      if(ok)activateProject(ev);
-    },false);
-
+    // Normal click: mouse + Samsung/Android'ın dokunmadan ürettiği click.
     d.addEventListener('click',ev=>{
-      // Desktop/mouse and keyboard generated click.
-      if(ev.detail===0 || ev.pointerType==='mouse' || !('PointerEvent' in window)){
-        activateProject(ev);
-      }
-    },false);
+      if(Date.now()-touchOpenedAt < 700) return; // touchend sonrası ghost click
+      ev.preventDefault();
+      ev.stopPropagation();
+      openProject();
+    });
+
+    // Tablet fallback: PointerEvent davranışından bağımsız gerçek touch olayları.
+    d.addEventListener('touchstart',ev=>{
+      if(!ev.touches || ev.touches.length!==1) return;
+      touchStartX=ev.touches[0].clientX;
+      touchStartY=ev.touches[0].clientY;
+      touchMoved=false;
+    },{passive:true});
+
+    d.addEventListener('touchmove',ev=>{
+      if(!ev.touches || ev.touches.length!==1) return;
+      const dx=ev.touches[0].clientX-touchStartX;
+      const dy=ev.touches[0].clientY-touchStartY;
+      if(Math.hypot(dx,dy)>12) touchMoved=true;
+    },{passive:true});
+
+    d.addEventListener('touchend',ev=>{
+      if(touchMoved) return; // kaydırma proje açmasın
+      touchOpenedAt=Date.now();
+      ev.preventDefault();
+      ev.stopPropagation();
+      openProject();
+    },{passive:false});
 
     d.addEventListener('keydown',ev=>{
       if(ev.key==='Enter' || ev.key===' '){
-        activateProject(ev);
+        ev.preventDefault();
+        openProject();
       }
     });
 
-    const openBtn=d.querySelector('button');
-    openBtn.addEventListener('pointerup',ev=>{
-      if(ev.pointerType!=='mouse')activateProject(ev);
-    },false);
-    openBtn.addEventListener('click',ev=>{
-      if(ev.detail===0 || ev.pointerType==='mouse' || !('PointerEvent' in window)){
-        activateProject(ev);
-      }
-    },false);
-
-    b.appendChild(d)
+    b.appendChild(d);
   });
   renderP()
 }
@@ -5394,9 +5389,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 
-/* v2.7.9 – authoritative runtime version stamp */
+/* v2.8.0 – authoritative runtime version stamp */
 (()=>{
-  const VERSION='2.7.9 PRO';
+  const VERSION='2.8.0 PRO';
   function stampVersion(){
     document.querySelectorAll(
       '.cad-sidebar-footer strong,.pro-version,[data-app-version],#appVersion,.app-version'

@@ -3171,7 +3171,7 @@ label[for="fpShowPositions"]{
 }
 
 /* ============================================================
-   v2.7.9 PRO – HARD CAD LAYOUT RECOVERY
+   v2.8.0 PRO – HARD CAD LAYOUT RECOVERY
    Keep the drawing viewport between toolbar and object palette.
    ============================================================ */
 #floorplanModal.cad-fullscreen-modal:not(.hidden){
@@ -3313,3 +3313,8 @@ button:active{transform:translateY(1px)}
   .project{min-height:64px;cursor:pointer}
   .project .secondary{min-height:44px;min-width:96px;touch-action:manipulation}
 }
+
+/* v2.8.0 tablet project open */
+.project{touch-action:pan-y;-webkit-tap-highlight-color:transparent;cursor:pointer}
+.project .project-open{touch-action:manipulation;min-width:88px;min-height:42px}
+@media (pointer:coarse){.project{min-height:64px}.project .project-open{min-width:104px;min-height:48px}}

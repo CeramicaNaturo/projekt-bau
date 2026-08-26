@@ -3266,3 +3266,9 @@ label[for="fpShowPositions"]{
 }
 /* Selection handles stay readable without becoming huge at high zoom. */
 #floorplanModal .floorplan-canvas-wrap canvas{cursor:crosshair}
+
+/* v2.7.6 – interaction feedback */
+button:active{transform:translateY(1px)}
+.fp-tool.active,.cad-object-palette button.active{outline:2px solid rgba(37,99,235,.22);outline-offset:-2px}
+#fp2DPdfButton{pointer-events:auto!important;cursor:pointer!important}
+#floorplanCanvas{pointer-events:auto!important;touch-action:none!important}

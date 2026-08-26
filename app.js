@@ -4579,7 +4579,7 @@ function initFloorplanControls(){
   const confirmName=$('confirmFloorplanName');if(confirmName)confirmName.onclick=confirmNewFloorplan;
   const nameInput=$('floorplanNameInput');if(nameInput)nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')confirmNewFloorplan()});
   document.querySelectorAll('.fp-tool').forEach(b=>b.onclick=()=>setFloorTool(b.dataset.tool));
-  $('closeFloorplan').onclick=closeFloorplan;
+  const closeBtn=$('closeFloorplan');if(closeBtn)closeBtn.onclick=closeFloorplan;
   $('fpUndo').onclick=()=>{if(!fpUndoStack.length)return;fpRedoStack.push(cloneObjects());restoreObjects(fpUndoStack.pop())};
   $('fpRedo').onclick=()=>{if(!fpRedoStack.length)return;fpUndoStack.push(cloneObjects());restoreObjects(fpRedoStack.pop())};
   const rot=$('fpRotation'),rotNum=$('fpRotationNumber');
@@ -4725,7 +4725,7 @@ function initFloorplanControls(){
   if(objY)objY.onchange=setSelectedPosition;
   $('fpDeleteSelected').onclick=deleteSelected;
   $('fpClear').onclick=()=>{if(confirm('Grundriss vollständig löschen?')){pushHistory();fpObjects=[];fpSelectedId=null;drawFloorplan();updateSelectedInfo()}};
-  $('fpSave').onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.fineStep=fpFineStep;fpRecord.wallThickness=fpWallThickness;fpRecord.activeLayer=fpActiveLayer;fpRecord.layerVisibility={...fpLayerVisibility};fpRecord.threeDOptions={...fp3DOptions};fpRecord.floorAreaM2=calculateFloorAreaM2(fpObjects);save();closeFloorplan()};
+  const legacySave=$('fpSave');if(legacySave)legacySave.onclick=()=>{if(!fpRecord)return;drawFloorplan();fpRecord.objects=cloneObjects();fpRecord.image=fpCanvas.toDataURL('image/png');fpRecord.grid=fpGrid;fpRecord.fineStep=fpFineStep;fpRecord.wallThickness=fpWallThickness;fpRecord.activeLayer=fpActiveLayer;fpRecord.layerVisibility={...fpLayerVisibility};fpRecord.threeDOptions={...fp3DOptions};fpRecord.floorAreaM2=calculateFloorAreaM2(fpObjects);save();closeFloorplan()};
   const roomHeightInput=$('fpRoomHeight');
   if(roomHeightInput)roomHeightInput.onchange=e=>{
     if(!fpRecord)return;
@@ -5006,9 +5006,23 @@ function initFloorplanCanvas(){
   fpCanvas.onpointercancel=finish;
 }
 
-initCadShell();initTileTools();initTabletCadUi();initFloorplanControls();initFloorplanCanvas();initPinchZoom();initCadKeyboard();
+function pbSafeInit(name,fn){
+  try{fn?.()}catch(err){console.error(`Projekt Bau Init: ${name}`,err)}
+}
 
-render();
+pbSafeInit('CAD Shell',initCadShell);
+pbSafeInit('Tile Tools',initTileTools);
+pbSafeInit('Tablet CAD',initTabletCadUi);
+pbSafeInit('Floorplan Controls',initFloorplanControls);
+pbSafeInit('Floorplan Canvas',initFloorplanCanvas);
+pbSafeInit('Pinch Zoom',initPinchZoom);
+pbSafeInit('CAD Keyboard',initCadKeyboard);
+
+// Always render saved projects, even if an optional CAD control fails.
+try{render()}catch(err){console.error('Projekt Bau Initial Render',err)}
+
+// A second render after DOM/layout settlement fixes browsers that restore storage late.
+setTimeout(()=>{try{render()}catch(err){console.error('Projekt Bau Delayed Render',err)}},60);
 
 
 /* v1.9.2 ---------------------------------------------------------------
@@ -5258,3 +5272,55 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
   }
 });
+
+
+/* v2.7.6 – resilient CAD controls */
+(()=>{
+  let delegated=false;
+  function installDelegation(){
+    if(delegated)return;delegated=true;
+    document.addEventListener('click',ev=>{
+      const target=ev.target.closest?.('button,[data-add-object],[data-tool]');
+      if(!target)return;
+
+      if(target.id==='fp2DPdfButton'){
+        ev.preventDefault();ev.stopPropagation();
+        try{generateFloorplan2DPDF()}catch(err){console.error('2D PDF',err);alert('2D PDF konnte nicht erstellt werden.');}
+        return;
+      }
+      if(target.id==='fpSavePrimary'){
+        ev.preventDefault();
+        try{window.ProjectBauPro?.save?.()||save()}catch(err){console.error('Speichern',err)}
+        return;
+      }
+      if(target.dataset?.addObject){
+        ev.preventDefault();
+        try{setFloorTool(target.dataset.addObject)}catch(err){console.error('Objektwerkzeug',err)}
+        return;
+      }
+      if(target.classList?.contains('fp-tool')&&target.dataset?.tool){
+        ev.preventDefault();
+        try{setFloorTool(target.dataset.tool)}catch(err){console.error('CAD Werkzeug',err)}
+        return;
+      }
+      if(target.matches?.('[data-mode="2d"]')){
+        ev.preventDefault();try{setFloorplanView('2d')}catch(err){console.error(err)};return;
+      }
+      if(target.matches?.('[data-mode="3d"]')||target.id==='fpHeader3D'){
+        ev.preventDefault();try{setFloorplanView('3d')}catch(err){console.error(err)};return;
+      }
+      if(target.id==='fpAbdichtungToolTop'){
+        ev.preventDefault();try{window.ProjectBauAbdichtung?.open?.()}catch(err){console.error(err)};return;
+      }
+    },true);
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installDelegation,{once:true});
+  else installDelegation();
+
+  // Ensure project cards are present on first paint and after bfcache restore.
+  const rerender=()=>{try{if(Array.isArray(S?.projects))render()}catch(err){console.error('Project list render',err)}};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(rerender,0),{once:true});
+  else setTimeout(rerender,0);
+  window.addEventListener('pageshow',()=>setTimeout(rerender,20));
+})();

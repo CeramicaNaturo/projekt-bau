@@ -1,19 +1,23 @@
-Projekt Bau v2.7.4 PRO – 2D INTERACTION + PDF FIX
+Projekt Bau v2.7.6 PRO – Startup / Buttons / Project List Fix
 
-DÜZELTİLDİ
-- 2D canvas dokunma/fare/kalem olayları tek PointerEvent sistemi üzerinden çalışır.
-- Canvas açık şekilde pointer-events:auto / touch-action:none kullanır.
-- Ruler ve bilgi katmanları dokunmayı engellemez.
-- Obje hit-test gerçek width/depth/rotation değerlerine göre çalışır.
-- Duvar hit-test gerçek segmente mesafe üzerinden yapılır.
-- Grundriss açılırken eski seçim temizlenir.
-- Nesne ölçü etiketleri zoom büyüdükçe devleşmez; ekranda sabit okunabilir boyda kalır.
-- Kararsız ikinci wall-joint/miter çizim geçişi kaldırıldı.
-- Duvar gövdesi güvenli polygon renderer ile çizilir; kayıtlı çizgi Innenkante olarak korunur.
-- 2D als PDF artık popup açmaz; doğrudan Grundriss_<Planname>.pdf indirir.
-- PDF export sonunda editor zoom/grid/seçim durumu geri yüklenir.
-- Mevcut projeler ve localStorage recovery sistemi korunur.
+ASIL HATA DÜZELTİLDİ
+- HTML'de artık bulunmayan closeFloorplan butonuna doğrudan .onclick atanıyordu.
+- Bu JavaScript exception nedeniyle initFloorplanControls yarıda kesiliyordu.
+- Ardından initFloorplanCanvas ve başlangıç render() çağrısı hiç çalışmıyordu.
+- Sonuç: butonlar çalışmıyor, eski projeler ilk açılışta görünmüyor; yeni proje ekleyince render() tetiklenerek görünüyordu.
 
-CACHE
-- Version 2.7.4 PRO
-- projekt-bau-v2740
+v2.7.6
+- closeFloorplan referansı artık optional/guarded.
+- eski fpSave referansı artık optional/guarded.
+- Her init modülü pbSafeInit ile bağımsız başlatılır; biri hata verse bile diğerleri çalışır.
+- Proje listesi açılışta zorunlu render edilir.
+- 60 ms gecikmeli ikinci render vardır.
+- pageshow/bfcache dönüşünde proje listesi tekrar render edilir.
+- 2D als PDF event delegation ile her zaman çalışır.
+- Obje butonları event delegation ile çalışır.
+- CAD araç butonları event delegation ile çalışır.
+- 2D / 3D / Abdichtung ana mod butonları event delegation ile çalışır.
+- Mevcut proje migration/recovery sistemi korunur.
+- Mevcut 2D çizim ve PDF motoru korunur.
+
+Version 2.7.6 PRO

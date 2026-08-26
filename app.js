@@ -5,122 +5,124 @@ function pbValidState(v){
   return !!v && typeof v==='object' && Array.isArray(v.projects);
 }
 
+function pbLooksLikeProject(p){
+  if(!p || typeof p!=='object' || Array.isArray(p))return false;
+  const hasMeta=['name','address','customer','startDate','owner','description'].some(k=>typeof p[k]==='string'&&p[k].trim());
+  const hasProjectArrays=['areas','floorplans','photos','tileMaterials','rooms','bereiche'].some(k=>Array.isArray(p[k]));
+  return !!(hasMeta && hasProjectArrays);
+}
+
+function pbNormaliseState(value){
+  if(pbValidState(value))return value;
+  if(Array.isArray(value)){
+    const projects=value.filter(pbLooksLikeProject);
+    if(projects.length)return {projects};
+  }
+  if(pbLooksLikeProject(value))return {projects:[value]};
+  return null;
+}
+
 function pbReadStorageStateFrom(storage,key){
   try{
     const raw=storage.getItem(key);
     if(!raw)return null;
-    const data=JSON.parse(raw);
-    return pbValidState(data)?data:null;
+    return pbNormaliseState(JSON.parse(raw));
   }catch(_){return null}
 }
 
 function pbFingerprintProject(p){
-  const id=String(p?.id||'').trim();
+  const id=String(p?.id||p?.projectId||p?.uuid||'').trim();
   if(id)return `id:${id}`;
-  const name=String(p?.name||'').trim().toLowerCase();
-  const address=String(p?.address||'').trim().toLowerCase();
-  const customer=String(p?.customer||'').trim().toLowerCase();
+  const name=String(p?.name||p?.projectName||p?.title||'').trim().toLowerCase();
+  const address=String(p?.address||p?.adresse||'').trim().toLowerCase();
+  const customer=String(p?.customer||p?.kunde||'').trim().toLowerCase();
   return `meta:${name}|${address}|${customer}`;
 }
 
 function pbRichness(p){
   let score=0;
-  score+=(Array.isArray(p?.areas)?p.areas.length:0)*10000;
-  score+=(Array.isArray(p?.floorplans)?p.floorplans.length:0)*5000;
-  score+=(Array.isArray(p?.photos)?p.photos.length:0)*1000;
-  score+=(Array.isArray(p?.tileMaterials)?p.tileMaterials.length:0)*100;
-  score+=String(p?.description||'').length;
+  for(const key of ['areas','floorplans','photos','tileMaterials','rooms','bereiche','objects','walls']){
+    score+=(Array.isArray(p?.[key])?p[key].length:0)*1000;
+  }
+  try{score+=JSON.stringify(p||{}).length}catch(_){}
   return score;
 }
 
 function pbMergeProjectData(base,incoming){
   if(!base)return JSON.parse(JSON.stringify(incoming));
   if(!incoming)return base;
-
   const richer=pbRichness(incoming)>pbRichness(base)?incoming:base;
   const other=richer===incoming?base:incoming;
   const out=JSON.parse(JSON.stringify(richer));
-
-  // Preserve missing scalar values from the other copy.
-  for(const k of ['name','address','customer','phone','startDate','owner','description']){
-    if((out[k]===undefined||out[k]===null||out[k]==='') && other[k]!==undefined)out[k]=other[k];
+  for(const [target,aliases] of Object.entries({
+    name:['name','projectName','title'],address:['address','adresse'],customer:['customer','kunde'],
+    phone:['phone','telefon'],startDate:['startDate','datum'],owner:['owner','verantwortlich'],description:['description','beschreibung']
+  })){
+    if(out[target]===undefined||out[target]===null||out[target]===''){
+      for(const k of aliases){if(other[k]!==undefined&&other[k]!==null&&other[k]!==''){out[target]=other[k];break}}
+    }
   }
-
-  // Merge arrays by id/fallback signature.
-  for(const key of ['areas','floorplans','photos','tileMaterials']){
-    const arr=[];
-    const seen=new Set();
+  for(const key of ['areas','floorplans','photos','tileMaterials','rooms','bereiche']){
+    const arr=[],seen=new Set();
     for(const item of [...(Array.isArray(base[key])?base[key]:[]),...(Array.isArray(incoming[key])?incoming[key]:[])]){
-      const sig=String(item?.id||item?.name||item?.title||JSON.stringify(item));
-      if(seen.has(sig))continue;
-      seen.add(sig);
-      arr.push(JSON.parse(JSON.stringify(item)));
+      let sig; try{sig=String(item?.id||item?.name||item?.title||JSON.stringify(item))}catch(_){sig=String(Math.random())}
+      if(seen.has(sig))continue; seen.add(sig); arr.push(JSON.parse(JSON.stringify(item)));
     }
     if(arr.length)out[key]=arr;
   }
+  if(!Array.isArray(out.areas) && Array.isArray(out.bereiche))out.areas=out.bereiche;
+  if(!Array.isArray(out.areas) && Array.isArray(out.rooms))out.areas=out.rooms;
+  if(!Array.isArray(out.areas))out.areas=[];
   return out;
 }
 
-function pbScanAllStates(){
-  const found=[];
-  const storages=[
-    {name:'localStorage',storage:localStorage},
-    {name:'sessionStorage',storage:sessionStorage}
-  ];
+function pbExtractStatesDeep(root,label,maxDepth=7){
+  const out=[],seen=new Set();
+  function walk(v,path,depth){
+    if(v===null||v===undefined||depth>maxDepth)return;
+    if(typeof v!=='object')return;
+    if(seen.has(v))return; seen.add(v);
+    const direct=pbNormaliseState(v);
+    if(direct?.projects?.length)out.push({label:path,data:direct,projects:direct.projects.length});
+    if(Array.isArray(v)){
+      v.slice(0,1000).forEach((x,i)=>walk(x,`${path}[${i}]`,depth+1));
+    }else{
+      Object.entries(v).slice(0,1000).forEach(([k,x])=>walk(x,`${path}.${k}`,depth+1));
+    }
+  }
+  walk(root,label,0); return out;
+}
 
+function pbScanAllStates(){
+  const found=[],dedupe=new Set();
+  const storages=[{name:'localStorage',storage:localStorage},{name:'sessionStorage',storage:sessionStorage}];
   for(const holder of storages){
     try{
       for(let i=0;i<holder.storage.length;i++){
-        const key=holder.storage.key(i);
-        if(!key)continue;
-        const data=pbReadStorageStateFrom(holder.storage,key);
-        if(data){
-          found.push({
-            storage:holder.name,
-            key,
-            data,
-            projects:data.projects.length
-          });
-          continue;
+        const key=holder.storage.key(i); if(!key)continue;
+        const raw=holder.storage.getItem(key); if(!raw)continue;
+        let obj; try{obj=JSON.parse(raw)}catch(_){continue}
+        const candidates=pbExtractStatesDeep(obj,`${holder.name}:${key}`);
+        for(const c of candidates){
+          let sig; try{sig=holder.name+'|'+key+'|'+JSON.stringify(c.data.projects.map(pbFingerprintProject))}catch(_){sig=holder.name+'|'+key+'|'+c.label}
+          if(dedupe.has(sig))continue; dedupe.add(sig);
+          found.push({storage:holder.name,key,path:c.label,data:c.data,projects:c.projects});
         }
-
-        // Recovery fallback: some previous builds may have wrapped the state.
-        try{
-          const raw=holder.storage.getItem(key);
-          const obj=JSON.parse(raw);
-          for(const candidate of [obj?.state,obj?.data,obj?.projektBau,obj?.backup]){
-            if(pbValidState(candidate)){
-              found.push({storage:holder.name,key:`${key} (nested)`,data:candidate,projects:candidate.projects.length});
-              break;
-            }
-          }
-        }catch(_){}
       }
-    }catch(_){}
+    }catch(_){ }
   }
   return found;
 }
 
 function pbMergedRecoveryState(){
-  const states=pbScanAllStates();
-  const map=new Map();
-
+  const states=pbScanAllStates(),map=new Map();
   for(const state of states){
-    for(const p of state.data.projects){
-      const sig=pbFingerprintProject(p);
-      if(!map.has(sig))map.set(sig,JSON.parse(JSON.stringify(p)));
-      else map.set(sig,pbMergeProjectData(map.get(sig),p));
+    for(const p0 of state.data.projects){
+      const p=pbMergeProjectData(null,p0),sig=pbFingerprintProject(p);
+      if(!map.has(sig))map.set(sig,p); else map.set(sig,pbMergeProjectData(map.get(sig),p));
     }
   }
-
-  return {
-    projects:[...map.values()],
-    recovery:{
-      recoveredAt:new Date().toISOString(),
-      sources:states.map(x=>`${x.storage}:${x.key}`),
-      sourceCount:states.length
-    }
-  };
+  return {projects:[...map.values()],recovery:{recoveredAt:new Date().toISOString(),sources:states.map(x=>x.path||`${x.storage}:${x.key}`),sourceCount:states.length}};
 }
 
 function loadState(){
@@ -3337,7 +3339,7 @@ function drawFloorplan(preview=null){
     });
 
     // Close perpendicular wall corners as one continuous L-shaped construction.
-    // v2.7.4: no separate miter wedge pass; safe wall polygons remain authoritative.
+    // v2.7.5: no separate miter wedge pass; safe wall polygons remain authoritative.
     try{fpDrawAllObjectDimensions()}catch(e){console.error('Objektmasse',e)}
 
     if(preview){

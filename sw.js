@@ -1,4 +1,4 @@
-const CACHE='projekt-bau-v2740';
+const CACHE='projekt-bau-v2750';
 const ASSETS=['./','./index.html?v=2740','./styles.css?v=2740','./app.js?v=2740','./pro_core.js?v=2740','./abdichtung_core.js?v=2740','./photo_editor.js?v=2740','./manifest.webmanifest','./three_viewer.js?v=2740'];
 
 self.addEventListener('install',event=>{

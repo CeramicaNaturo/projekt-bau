@@ -3303,3 +3303,13 @@ button:active{transform:translateY(1px)}
     min-width:38px;
   }
 }
+
+/* v2.7.8 real tablet project opener */
+.project{
+  touch-action:pan-y;
+  -webkit-tap-highlight-color:transparent;
+}
+@media (pointer:coarse){
+  .project{min-height:64px;cursor:pointer}
+  .project .secondary{min-height:44px;min-width:96px;touch-action:manipulation}
+}

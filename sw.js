@@ -1,14 +1,15 @@
-const CACHE='projekt-bau-v2850';
+const CACHE='projekt-bau-v2860';
 const ASSETS=[
   './',
-  './index.html?v=2850',
-  './styles_v285.css?v=2850',
-  './app_v285.js?v=2850',
-  './pro_core.js?v=2850',
-  './abdichtung_core.js?v=2850',
-  './photo_editor.js?v=2850',
+  './index.html?v=2860',
+  './styles_v286.css?v=2860',
+  './app_v286.js?v=2860',
+  './onedrive_sync.js?v=2860',
+  './pro_core.js?v=2860',
+  './abdichtung_core.js?v=2860',
+  './photo_editor.js?v=2860',
   './manifest.webmanifest',
-  './three_viewer.js?v=2850'
+  './three_viewer.js?v=2860'
 ];
 
 self.addEventListener('install',event=>{
@@ -29,6 +30,13 @@ self.addEventListener('activate',event=>{
 
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
+  const url=new URL(event.request.url);
+  // Microsoft auth / Graph are not cached by the app service worker.
+  if(url.hostname.includes('microsoftonline.com') ||
+     url.hostname.includes('graph.microsoft.com') ||
+     url.hostname.includes('msauth.net') ||
+     url.hostname.includes('msftauth.net')) return;
+
   event.respondWith(
     fetch(event.request,{cache:'no-store'})
       .then(response=>{

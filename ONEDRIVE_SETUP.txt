@@ -1,0 +1,30 @@
+Projekt Bau v2.8.6 PRO – OneDrive Einrichtung
+
+1) Microsoft Entra Admin Center öffnen:
+   https://entra.microsoft.com/
+
+2) Identity > Applications > App registrations > New registration.
+
+3) Name:
+   Projekt Bau
+
+4) Supported account types:
+   - Wenn nur Ihre Firma: Accounts in this organizational directory only.
+   - Wenn auch private Microsoft-Konten: passende Multi-Tenant/Personal-Option wählen.
+
+5) Authentication > Add a platform > Single-page application (SPA).
+
+6) Redirect URI EXAKT:
+   https://ceramicanaturo.github.io/projekt-bau/
+
+7) API permissions > Add a permission > Microsoft Graph > Delegated permissions:
+   Files.ReadWrite
+
+8) Overview > Application (client) ID kopieren.
+   Diese ID im OneDrive-Bereich von Projekt Bau eintragen.
+
+WICHTIG:
+- Kein Client Secret in die Webseite oder GitHub-Dateien eintragen.
+- Projekt Bau speichert das Backup im OneDrive App Root:
+  Apps/<Name der Entra-Anwendung>/ProjektBau_Backup.json
+- Wiederherstellung löscht lokale Projekte nicht, sondern führt lokale und Cloud-Projekte zusammen.

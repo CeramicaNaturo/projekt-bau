@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v285.css?v=2850">
+<link rel="stylesheet" href="styles_v286.css?v=2860">
 </head>
 <body class="cad-app">
 
@@ -55,7 +55,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.8.5 PRO</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.8.6 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -71,7 +71,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.8.5 PRO</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.8.6 PRO</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -181,9 +181,75 @@
 </section>
 </section>
 
-<section class="card editor">
-  <div class="title"><h2>OneDrive</h2><span class="pill warn">nächster Schritt</span></div>
-  <p class="muted">Önce saha ve PDF yapısını tamamlıyoruz. OneDrive senkronizasyonu nächster Schrittda eklenecek.</p>
+<section class="card editor onedrive-card" id="oneDrivePanel">
+  <div class="title">
+    <div>
+      <div class="eyebrow">CLOUD-SICHERUNG</div>
+      <h2>OneDrive</h2>
+    </div>
+    <span class="pill od-live">Microsoft Graph</span>
+  </div>
+
+  <div id="odStatus" class="od-status" data-type="neutral">Noch nicht mit Microsoft verbunden.</div>
+
+  <div class="od-grid">
+    <div class="od-config">
+      <h3>Microsoft-Verbindung</h3>
+      <p class="muted">Projekt Bau speichert die Sicherung in Ihrem OneDrive-App-Ordner. Es wird kein Client Secret im Browser gespeichert.</p>
+
+      <label>Application (Client) ID
+        <input id="odClientId" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
+      </label>
+      <label>Tenant
+        <input id="odTenant" type="text" value="common" placeholder="common oder Tenant-ID">
+      </label>
+      <label>SPA Redirect URI
+        <input id="odRedirect" type="url" value="https://ceramicanaturo.github.io/projekt-bau/">
+      </label>
+
+      <div class="od-actions">
+        <button id="odSaveSettings" class="secondary" type="button">Einstellungen speichern</button>
+        <button id="odConnect" class="primary" type="button">Mit OneDrive verbinden</button>
+        <button id="odDisconnect" class="secondary" type="button">Trennen</button>
+      </div>
+    </div>
+
+    <div class="od-sync">
+      <h3>Sicherung & Wiederherstellung</h3>
+      <div class="od-facts">
+        <div><span>Konto</span><strong id="odAccount">Nicht verbunden</strong></div>
+        <div><span>Letzte Sicherung</span><strong id="odLastBackup">—</strong></div>
+        <div><span>Cloud-Datei</span><strong id="odCloudFile">—</strong></div>
+      </div>
+
+      <label class="od-toggle">
+        <input id="odAutoSync" type="checkbox">
+        <span>Automatische OneDrive-Sicherung nach Änderungen</span>
+      </label>
+
+      <div class="od-actions od-actions-main">
+        <button id="odBackupNow" class="primary" type="button">Jetzt in OneDrive sichern</button>
+        <button id="odRestore" class="secondary" type="button">Aus OneDrive wiederherstellen</button>
+        <button id="odRefresh" class="secondary" type="button">Cloud-Status aktualisieren</button>
+      </div>
+
+      <div class="od-note">
+        <strong>Sicherheitsprinzip:</strong>
+        Beim Wiederherstellen werden lokale Projekte nicht gelöscht. Lokale und Cloud-Projekte werden zusammengeführt und davor wird eine lokale Sicherheitskopie erstellt.
+      </div>
+    </div>
+  </div>
+
+  <details class="od-setup">
+    <summary>Einmalige Microsoft-Entra-Einrichtung anzeigen</summary>
+    <ol>
+      <li>Microsoft Entra Admin Center → App registrations → New registration.</li>
+      <li>Als Plattform <strong>Single-page application (SPA)</strong> verwenden.</li>
+      <li>Redirect URI exakt: <code>https://ceramicanaturo.github.io/projekt-bau/</code></li>
+      <li>Microsoft Graph delegated permission <code>Files.ReadWrite</code> hinzufügen.</li>
+      <li>Die Application (Client) ID oben eintragen. <strong>Kein Client Secret</strong> in Projekt Bau eintragen.</li>
+    </ol>
+  </details>
 </section>
 </main>
 
@@ -278,7 +344,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.8.5 PRO</span>
+    <span class="pro-version">v2.8.6 PRO</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -920,12 +986,14 @@
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=2850"></script>
+<script type="module" src="three_viewer.js?v=2860"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app_v285.js?v=2850"></script>
-<script src="pro_core.js?v=2850"></script>
-<script src="abdichtung_core.js?v=2850"></script>
-<script src="photo_editor.js?v=2850"></script>
+<script src="app_v286.js?v=2860"></script>
+<script src="pro_core.js?v=2860"></script>
+<script src="abdichtung_core.js?v=2860"></script>
+<script src="photo_editor.js?v=2860"></script>
+<script src="https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
+<script src="onedrive_sync.js?v=2860"></script>
 
 <script>
 (async()=>{
@@ -934,9 +1002,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw.js?v=2840')) await reg.unregister();
+      if(url && !url.includes('sw.js?v=2860')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw.js?v=2840',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw.js?v=2860',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

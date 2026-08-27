@@ -1,21 +1,21 @@
-Projekt Bau v2.8.5 PRO – HARD UPDATE
+Projekt Bau v2.8.6 PRO – OneDrive Sync
 
-NEDEN:
-v2.8.4 paketinin içi doğru olmasına rağmen cihaz v2.8.3 göstermeye devam ediyordu.
-Bu paket yalnız query string değiştirmez; asset dosya adlarını da değiştirir.
+NEU
+- Microsoft OneDrive Verbindung über MSAL Browser / Microsoft Graph.
+- Client ID + Tenant + Redirect URI direkt im OneDrive-Bereich konfigurierbar.
+- Kein Client Secret im Browser.
+- Manuelle OneDrive-Sicherung.
+- OneDrive-Wiederherstellung mit nicht-destruktivem Projekt-Merge.
+- Lokale Sicherheitskopie vor jeder Cloud-Wiederherstellung.
+- Optional automatische Sicherung 5 Sekunden nach lokalen Änderungen.
+- Cloud-Datei und letzte Sicherungszeit werden angezeigt.
+- Backup-Datei: ProjektBau_Backup.json im OneDrive App Root.
+- Bis 250 MB über einfachen Microsoft Graph Upload.
 
-YENİ DOSYALAR:
-- app_v285.js
-- styles_v285.css
-- update-285.html
-
-UYGULAMA:
-1. ZIP içindeki TÜM dosyaları GitHub repo köküne yükleyin.
-2. Deployment tamamlandıktan sonra:
-   https://ceramicanaturo.github.io/projekt-bau/update-285.html
-   adresini açın.
-3. Bu sayfa Service Worker + Cache Storage temizler.
-4. localStorage/sessionStorage proje verileri silinmez.
-5. Uygulama v2.8.5 PRO olarak açılır.
-
-v2.8.4 duvar sürükleme özelliği korunmuştur.
+CACHE
+- Version 2.8.6 PRO
+- app_v286.js
+- styles_v286.css
+- onedrive_sync.js
+- projekt-bau-v2860
+- update-286.html

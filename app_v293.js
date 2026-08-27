@@ -5825,7 +5825,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 /* v2.9.1 – authoritative runtime version stamp */
 (()=>{
-  const VERSION='2.9.2 PRO';
+  const VERSION='2.9.3 PRO';
   function stampVersion(){
     document.querySelectorAll(
       '.cad-sidebar-footer strong,.pro-version,[data-app-version],#appVersion,.app-version'

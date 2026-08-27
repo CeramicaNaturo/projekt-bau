@@ -55,7 +55,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.8.6 PRO</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.8.9 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -71,7 +71,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.8.6 PRO</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.8.9 PRO</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -353,7 +353,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.8.6 PRO</span>
+    <span class="pro-version">v2.8.9 PRO</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -1007,14 +1007,48 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 }
 </script>
-<script type="module" src="three_viewer.js?v=2860"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="app_v287.js?v=2880"></script>
-<script src="pro_core.js?v=2860"></script>
-<script src="abdichtung_core.js?v=2860"></script>
-<script src="photo_editor.js?v=2880"></script>
-<script src="https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
-<script src="onedrive_sync.js?v=2880"></script>
+<script src="storage_bridge_v289.js?v=2890"></script>
+<script>
+(async()=>{
+  function loadScript(src,type){
+    return new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src=src;
+      if(type)s.type=type;
+      s.onload=resolve;
+      s.onerror=()=>reject(new Error('Konnte nicht laden: '+src));
+      document.body.appendChild(s);
+    });
+  }
+
+  try{
+    await window.PBStorage.ready;
+
+    // App code starts only after IndexedDB migration/hydration is complete.
+    await loadScript('app_v289.js?v=2890');
+    await loadScript('pro_core.js?v=2890');
+    await loadScript('abdichtung_core.js?v=2890');
+    await loadScript('photo_editor.js?v=2890');
+    await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
+    await loadScript('onedrive_sync_v289.js?v=2890');
+
+    // Three.js module can initialize independently after storage/app boot.
+    await loadScript('three_viewer.js?v=2890','module');
+  }catch(e){
+    console.error('Projekt Bau Startfehler',e);
+    alert('Projekt Bau konnte nicht vollständig gestartet werden: '+e.message);
+  }
+})();
+</script>
+
+
+
+
+
+
+
 
 <script>
 (async()=>{
@@ -1023,9 +1057,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw.js?v=2880')) await reg.unregister();
+      if(url && !url.includes('sw.js?v=2890')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw.js?v=2880',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw.js?v=2890',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

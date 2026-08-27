@@ -1,21 +1,25 @@
-Projekt Bau v2.8.6 PRO – OneDrive Sync
+Projekt Bau v2.8.9 PRO — IndexedDB Hard Fix
 
-NEU
-- Microsoft OneDrive Verbindung über MSAL Browser / Microsoft Graph.
-- Client ID + Tenant + Redirect URI direkt im OneDrive-Bereich konfigurierbar.
-- Kein Client Secret im Browser.
-- Manuelle OneDrive-Sicherung.
-- OneDrive-Wiederherstellung mit nicht-destruktivem Projekt-Merge.
-- Lokale Sicherheitskopie vor jeder Cloud-Wiederherstellung.
-- Optional automatische Sicherung 5 Sekunden nach lokalen Änderungen.
-- Cloud-Datei und letzte Sicherungszeit werden angezeigt.
-- Backup-Datei: ProjektBau_Backup.json im OneDrive App Root.
-- Bis 250 MB über einfachen Microsoft Graph Upload.
+KERNÄNDERUNG
+- Projekt-/Foto-Daten werden nicht mehr als grosses JSON in localStorage gespeichert.
+- IndexedDB ist jetzt der Primärspeicher.
+- localStorage enthält nur kleine Metadaten/Kompatibilitätswerte.
+- Bestehende Projekt-Bau-Daten werden beim ersten Start nach IndexedDB migriert.
+- Legacy-Daten werden bei der Migration NICHT gelöscht.
 
-CACHE
-- Version 2.8.6 PRO
-- app_v286.js
-- styles_v286.css
-- onedrive_sync.js
-- projekt-bau-v2860
-- update-286.html
+ONEDRIVE
+- Restore schreibt direkt nach IndexedDB.
+- Safety Snapshot vor Restore liegt in IndexedDB.
+- 8 MB+ OneDrive Backup verursacht dadurch keinen localStorage quota error mehr.
+- Auto-Sync bleibt erhalten.
+
+DUPLIKATE
+- Migration dedupliziert Projekte nach stabiler Projekt-ID.
+- Falls keine ID vorhanden ist: Name + Adresse + Kunde.
+- Child-Arrays (Fotos, Grundrisse, Bereiche) werden nach ID/Name dedupliziert.
+- Normaler App-Start scannt nicht mehr 25+ lokale Backup-Quellen.
+
+UPDATE
+- Alle Dateien in GitHub-Root hochladen.
+- Nach erfolgreichem Pages-Build einmal update-289.html öffnen.
+- update-289.html löscht KEINE Projekt-/OneDrive-Daten; nur Cache/Service Worker.

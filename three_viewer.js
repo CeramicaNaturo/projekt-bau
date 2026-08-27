@@ -544,10 +544,8 @@ function openingsForWall3D(w,objects){
         type:o.type,
         object:o,
         a,b,
-        bottom:o.type==='door'?0:Math.max(.1,m(o.sillHeightCm||90)),
-        top:o.type==='door'
-          ?Math.max(.5,m(o.heightCm||205))
-          :Math.max(.6,m((o.sillHeightCm||90)+(o.heightCm||120)))
+        bottom:floorHeight3D(o),
+        top:floorHeight3D(o)+Math.max(.3,m(o.heightCm||(o.type==='door'?205:120)))
       });
     }
   }
@@ -725,8 +723,16 @@ function addSphere(group,rx,ry,rz,x,y,z,material){
   group.add(mesh);
   return mesh;
 }
+
+function floorHeight3D(o){
+  if(!o)return 0;
+  if(Number.isFinite(Number(o.floorHeightCm)))return Math.max(0,m(o.floorHeightCm));
+  if(o.type==='window'&&Number.isFinite(Number(o.sillHeightCm)))return Math.max(0,m(o.sillHeightCm));
+  if((o.type==='mirror'||o.type==='niche')&&Number.isFinite(Number(o.mountHeightCm)))return Math.max(0,m(o.mountHeightCm));
+  return 0;
+}
 function finishObject(group,o){
-  group.position.set(m(o.x),0,m(o.y));
+  group.position.set(m(o.x),floorHeight3D(o),m(o.y));
   group.rotation.y=-(o.rotation||0)*Math.PI/180;
   group.scale.setScalar(o.scale||1);
   return group;
@@ -765,7 +771,7 @@ function realisticNiche(o){
   const w=m(o.widthCm||60);
   const h=Math.max(.10,m(o.heightCm||60));
   const d=Math.max(.03,m(o.depthCm||12));
-  const bottom=Math.max(0,m(o.mountHeightCm||100));
+  const bottom=0;
   const edge=Math.min(.035,Math.max(.012,w*.035));
   const inner=mat(0xd7d7d2,.88,.01);
   const edgeMat=mat(0xf1f0eb,.82,.01);
@@ -784,7 +790,7 @@ function realisticMirror(o){
   const g=new THREE.Group();
   const w=m(o.widthCm||80);
   const h=Math.max(.25,m(o.heightCm||80));
-  const mount=Math.max(.20,m(o.mountHeightCm||110));
+  const mount=0;
   const frame=mat(0x20252b,.24,.55);
   const mirrorMat=new THREE.MeshPhysicalMaterial({
     color:0xdcecf2,metalness:.72,roughness:.08,
@@ -1106,7 +1112,7 @@ function objectMesh(o){
 
       // Inner face = stored wall line. Outer face = one full wall thickness outward.
       const faceShift=(o.wallFace||'inside')==='outside'?f.th:0;
-      g.position.set(px+f.nx*faceShift,0,pz+f.nz*faceShift);
+      g.position.set(px+f.nx*faceShift,floorHeight3D(o),pz+f.nz*faceShift);
       g.rotation.y=f.angle;
       return g;
     }
@@ -1117,7 +1123,7 @@ function objectMesh(o){
     const g=new THREE.Group();
     const w=m(o.widthCm||100);
     const h=Math.max(.3,m(o.heightCm||120));
-    const sill=Math.max(0,m(o.sillHeightCm||90));
+    const sill=0;
     const frame=mat(0xe8ebed,.34,.10);
     const dark=mat(0x34383d,.28,.40);
 
@@ -1144,7 +1150,7 @@ function objectMesh(o){
       const faceShift=(o.wallFace||'inside')==='outside'?f.th:0;
       g.position.set(
         f.x1+f.dx*hit.t+f.nx*faceShift,
-        0,
+        floorHeight3D(o),
         f.z1+f.dz*hit.t+f.nz*faceShift
       );
       g.rotation.y=f.angle;

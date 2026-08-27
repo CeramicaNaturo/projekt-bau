@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2912.css?v=291101">
+<link rel="stylesheet" href="styles_v2913.css?v=291301">
 </head>
 <body class="cad-app">
 
@@ -993,7 +993,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2912.js?v=291101"></script>
+<script src="storage_bridge_v2913.js?v=291301"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1011,12 +1011,12 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2912.js?v=291101');
+    await loadScript('app_v2913.js?v=291301');
     await loadScript('pro_core.js?v=29901');
     await loadScript('abdichtung_core.js?v=29901');
-    await loadScript('photo_editor_v2912.js?v=291101');
+    await loadScript('photo_editor_v2913.js?v=291301');
     await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-    await loadScript('onedrive_sync_v2912.js?v=291101');
+    await loadScript('onedrive_sync_v2913.js?v=291301');
 
     // Three.js module can initialize independently after storage/app boot.
     await loadScript('three_viewer.js?v=29901','module');
@@ -1041,9 +1041,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2912.js?v=291101')) await reg.unregister();
+      if(url && !url.includes('sw_v2913.js?v=291301')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2912.js?v=291101',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2913.js?v=291301',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

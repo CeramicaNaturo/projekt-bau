@@ -1,5 +1,5 @@
 
-/* Projekt Bau v2.8.6 PRO - OneDrive Sync
+/* Projekt Bau v2.8.7 PRO - OneDrive Multi-Device Sync
    Static SPA integration using MSAL Browser + Microsoft Graph.
    No client secret is used or stored.
 */
@@ -8,6 +8,8 @@
 
   const CONFIG_KEY='projekt-bau-onedrive-config-v1';
   const META_KEY='projekt-bau-onedrive-meta-v1';
+  const SYNC_KEY='projekt-bau-onedrive-sync-v2';
+  const DEVICE_KEY='projekt-bau-device-id-v1';
   const BACKUP_FILE='ProjektBau_Backup.json';
   const GRAPH='https://graph.microsoft.com/v1.0';
   const DEFAULT_REDIRECT='https://ceramicanaturo.github.io/projekt-bau/';
@@ -18,6 +20,9 @@
   let uploadRunning=false;
   let uploadAgain=false;
   let autoTimer=null;
+  let syncRunning=false;
+  let syncAgain=false;
+  let pollTimer=null;
 
   const el=id=>document.getElementById(id);
   const nowCH=()=>new Intl.DateTimeFormat('de-CH',{
@@ -51,6 +56,23 @@
     localStorage.setItem(META_KEY,JSON.stringify(next));
     return next;
   }
+
+
+  function deviceId(){
+    let id=localStorage.getItem(DEVICE_KEY);
+    if(!id){id=(crypto.randomUUID?crypto.randomUUID():`dev-${Date.now()}-${Math.random()}`);localStorage.setItem(DEVICE_KEY,id)}
+    return id;
+  }
+  function readSync(){try{return {tombstones:{},...JSON.parse(localStorage.getItem(SYNC_KEY)||'{}')}}catch(_){return {tombstones:{}}}}
+  function writeSync(v){localStorage.setItem(SYNC_KEY,JSON.stringify(v||{tombstones:{}}))}
+  function recordProjectDeletion(id){
+    if(!id)return;
+    const x=readSync(); x.tombstones=x.tombstones||{}; x.tombstones[String(id)]=new Date().toISOString(); writeSync(x);
+    scheduleAutoSync('project-delete');
+  }
+  function isoMs(v){const n=Date.parse(v||'');return Number.isFinite(n)?n:0}
+  function clone(v){return JSON.parse(JSON.stringify(v))}
+  function projectId(p){return String(p?.id||p?.projectId||p?.uuid||'')}
 
   function setStatus(text,type='neutral'){
     const n=el('odStatus');
@@ -131,6 +153,7 @@
     syncUi();
     setStatus(`Verbunden: ${result.account.username||result.account.name||'Microsoft-Konto'}`,'ok');
     await refreshRemoteInfo(false);
+    if(readConfig().autoSync)await syncNow({silent:true,reason:'connect'});
   }
 
   async function disconnect(){
@@ -194,7 +217,10 @@
     return {
       schema:'projekt-bau-cloud-backup',
       schemaVersion:1,
-      appVersion:'2.8.6 PRO',
+      appVersion:'2.8.7 PRO',
+      syncVersion:2,
+      deviceId:deviceId(),
+      tombstones:clone(readSync().tombstones||{}),
       savedAt:new Date().toISOString(),
       projectsCount:Array.isArray(S?.projects)?S.projects.length:0,
       state:JSON.parse(JSON.stringify(S||{projects:[]}))
@@ -261,19 +287,54 @@
     throw new Error('OneDrive yedek dosyasında geçerli Projekt Bau verisi bulunamadı.');
   }
 
-  function mergeState(localState,remoteState){
-    const map=new Map();
-    for(const p of [...(localState?.projects||[]),...(remoteState?.projects||[])]){
-      const sig=typeof pbFingerprintProject==='function'
-        ? pbFingerprintProject(p)
-        : `id:${p?.id||JSON.stringify(p)}`;
-      if(!map.has(sig)){
-        map.set(sig,JSON.parse(JSON.stringify(p)));
-      }else if(typeof pbMergeProjectData==='function'){
-        map.set(sig,pbMergeProjectData(map.get(sig),p));
-      }
+  function mergeState(localState,remoteState,remotePayload={}){
+    const localSync=readSync(), tomb={...(remotePayload?.tombstones||{}),...(localSync.tombstones||{})};
+    // Keep the newest deletion timestamp when both devices know about a deletion.
+    for(const [id,ts] of Object.entries(remotePayload?.tombstones||{})){
+      if(isoMs(ts)>isoMs(tomb[id]))tomb[id]=ts;
     }
+    const map=new Map();
+    const add=(p,source)=>{
+      const id=projectId(p) || (typeof pbFingerprintProject==='function'?pbFingerprintProject(p):JSON.stringify(p));
+      const deletedAt=tomb[id];
+      const changedAt=p?._syncUpdatedAt;
+      if(deletedAt && isoMs(deletedAt)>=isoMs(changedAt))return;
+      if(!map.has(id)){map.set(id,clone(p));return}
+      const old=map.get(id), a=isoMs(old?._syncUpdatedAt), b=isoMs(p?._syncUpdatedAt);
+      if(b>a)map.set(id,clone(p));
+      else if(a===0&&b===0&&typeof pbMergeProjectData==='function')map.set(id,pbMergeProjectData(old,p));
+    };
+    for(const p of (localState?.projects||[]))add(p,'local');
+    for(const p of (remoteState?.projects||[]))add(p,'remote');
+    writeSync({...localSync,tombstones:tomb,lastMergeAt:new Date().toISOString()});
     return {projects:[...map.values()]};
+  }
+
+  async function syncNow({silent=true,reason='auto'}={}){
+    if(syncRunning){syncAgain=true;return false}
+    syncRunning=true;
+    try{
+      let payload=null,remote={projects:[]};
+      try{payload=await fetchBackup();remote=normalizeRemoteState(payload)}catch(e){if(e.status!==404)throw e}
+      if(payload){
+        const before=JSON.stringify(S||{projects:[]});
+        const merged=mergeState(S,remote,payload);
+        if(JSON.stringify(merged)!==before){
+          S=merged; A=null; localStorage.setItem(K3,JSON.stringify(S));
+          try{render()}catch(_){}
+        }
+      }
+      const ok=await uploadBackup({silent,reason:`sync:${reason}`});
+      if(ok)writeMeta({lastSyncAt:nowCH()});
+      return ok;
+    }catch(e){
+      console.error('OneDrive sync',e);
+      if(!silent)setStatus(`Synchronisierung fehlgeschlagen: ${e.message}`,'error');
+      return false;
+    }finally{
+      syncRunning=false;
+      if(syncAgain){syncAgain=false;setTimeout(()=>syncNow({silent:true,reason:'queued'}),700)}
+    }
   }
 
   async function restoreBackup(){
@@ -303,7 +364,7 @@
         );
       }catch(_){}
 
-      const merged=mergeState(S,remote);
+      const merged=mergeState(S,remote,payload);
       S=merged;
       A=null;
       localStorage.setItem(K3,JSON.stringify(S));
@@ -382,7 +443,7 @@
     if(!cfg.autoSync || !cfg.clientId)return;
     clearTimeout(autoTimer);
     autoTimer=setTimeout(()=>{
-      uploadBackup({silent:true,reason});
+      syncNow({silent:true,reason});
     },5000);
   }
 
@@ -416,14 +477,23 @@
           syncUi();
           setStatus(`Microsoft-Konto erkannt: ${account.username||account.name}`,'ok');
           await refreshRemoteInfo(false);
+          if(cfg.autoSync)await syncNow({silent:true,reason:'startup'});
         }
       }catch(_){}
     },700);
   }
 
+  function startPolling(){
+    clearInterval(pollTimer);
+    pollTimer=setInterval(()=>{if(readConfig().autoSync&&document.visibilityState==='visible')syncNow({silent:true,reason:'poll'})},60000);
+  }
+  window.addEventListener('focus',()=>{if(readConfig().autoSync)syncNow({silent:true,reason:'focus'})});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&readConfig().autoSync)syncNow({silent:true,reason:'visible'})});
+  startPolling();
+
   window.ProjectBauOneDrive={
-    connect,disconnect,uploadBackup,restoreBackup,refreshRemoteInfo,
-    scheduleAutoSync,saveSettings,readConfig
+    connect,disconnect,uploadBackup,restoreBackup,refreshRemoteInfo,syncNow,
+    scheduleAutoSync,saveSettings,readConfig,recordProjectDeletion,deviceId
   };
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);

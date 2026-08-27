@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v291.css?v=29101">
+<link rel="stylesheet" href="styles_v292.css?v=29201">
 </head>
 <body class="cad-app">
 
@@ -55,7 +55,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.1 PRO</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.2 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -987,18 +987,6 @@
   </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded',()=>{
-  const b=document.getElementById('saveProjectDetails'); if(!b)return;
-  b.addEventListener('click',()=>{
-    const p=(typeof cur==='function')?cur():null; if(!p)return;
-    const name=document.getElementById('editProjectName').value.trim(); if(!name){alert('Projektname ist erforderlich.');return;}
-    p.name=name; p.address=document.getElementById('editProjectAddress').value.trim(); p.customer=document.getElementById('editProjectCustomer').value.trim();
-    p.phone=document.getElementById('editProjectPhone').value.trim(); p.startDate=document.getElementById('editProjectStartDate').value; p.owner=document.getElementById('editProjectOwner').value.trim();
-    p.description=document.getElementById('editProjectDescription').value.trim(); save();
-  });
-});
-</script>
 <script type="importmap">
 {
   "imports": {
@@ -1009,7 +997,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v291.js?v=29101"></script>
+<script src="storage_bridge_v292.js?v=29201"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1027,15 +1015,15 @@ document.addEventListener('DOMContentLoaded',()=>{
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v291.js?v=29101');
-    await loadScript('pro_core.js?v=29101');
-    await loadScript('abdichtung_core.js?v=29101');
-    await loadScript('photo_editor.js?v=29101');
+    await loadScript('app_v292.js?v=29201');
+    await loadScript('pro_core.js?v=29201');
+    await loadScript('abdichtung_core.js?v=29201');
+    await loadScript('photo_editor.js?v=29201');
     await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-    await loadScript('onedrive_sync_v291.js?v=29101');
+    await loadScript('onedrive_sync_v292.js?v=29201');
 
     // Three.js module can initialize independently after storage/app boot.
-    await loadScript('three_viewer.js?v=29101','module');
+    await loadScript('three_viewer.js?v=29201','module');
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
     alert('Projekt Bau konnte nicht vollständig gestartet werden: '+e.message);
@@ -1057,9 +1045,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v291.js?v=29101')) await reg.unregister();
+      if(url && !url.includes('sw_v292.js?v=29201')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v291.js?v=29101',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v292.js?v=29201',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

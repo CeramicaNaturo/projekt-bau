@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v298.css?v=29801">
+<link rel="stylesheet" href="styles_v299.css?v=29901">
 </head>
 <body class="cad-app">
 
@@ -56,7 +56,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.8 PRO</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.9 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -429,7 +429,7 @@
       <label class="check-inline"><input id="fpShowPositions" type="checkbox" checked> Positionen anzeigen</label>
       <label class="check-inline"><input id="fpShowMeasures" type="checkbox" checked> Masse anzeigen</label>
       <label class="check-inline"><input id="fpObjectWallSnap" type="checkbox" checked> Objekte an Wand fangen</label>
-      <label class="check-inline"><input id="fpAngleSnap" type="checkbox" checked> Gerade / 45° Fang</label>
+      <label class="check-inline"><input id="fpAngleSnap" type="checkbox" checked disabled> Wand zeichnen: horizontal / vertikal</label>
 
       <label>Aktive Ebene
         <select id="fpActiveLayer">
@@ -590,18 +590,8 @@
               <input id="fpQuickWallLength" type="number" min="1" step="1">
             </label>
 
-            <label>Winkel
-              <select id="fpQuickWallAngle">
-                <option value="auto">Aktuellen Winkel behalten</option>
-                <option value="0">0° – horizontal rechts</option>
-                <option value="45">45°</option>
-                <option value="90">90° – vertikal unten</option>
-                <option value="135">135°</option>
-                <option value="180">180° – horizontal links</option>
-                <option value="225">225°</option>
-                <option value="270">270° – vertikal oben</option>
-                <option value="315">315°</option>
-              </select>
+            <label>Winkel (°)
+              <input id="fpQuickWallAngle" type="number" step="0.1" min="0" max="359.9" placeholder="z. B. 37.5">
             </label>
 
             <label>Wandstärke (cm)
@@ -841,18 +831,8 @@
             <input id="fpWallLength" type="number" min="1" step="1" placeholder="Länge">
           </label>
 
-          <label>Winkel
-            <select id="fpWallAngle">
-              <option value="auto">Aktuellen Winkel behalten</option>
-              <option value="0">0° – horizontal rechts</option>
-              <option value="90">90° – vertikal unten</option>
-              <option value="180">180° – horizontal links</option>
-              <option value="270">270° – vertikal oben</option>
-              <option value="45">45°</option>
-              <option value="135">135°</option>
-              <option value="225">225°</option>
-              <option value="315">315°</option>
-            </select>
+          <label>Winkel (°)
+            <input id="fpWallAngle" type="number" step="0.1" min="0" max="359.9" placeholder="z. B. 37.5">
           </label>
 
           <label>Wandstärke
@@ -1013,7 +993,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v298.js?v=29801"></script>
+<script src="storage_bridge_v299.js?v=29901"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1031,15 +1011,15 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v298.js?v=29801');
-    await loadScript('pro_core.js?v=29801');
-    await loadScript('abdichtung_core.js?v=29801');
-    await loadScript('photo_editor_v298.js?v=29801');
+    await loadScript('app_v299.js?v=29901');
+    await loadScript('pro_core.js?v=29901');
+    await loadScript('abdichtung_core.js?v=29901');
+    await loadScript('photo_editor_v299.js?v=29901');
     await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-    await loadScript('onedrive_sync_v298.js?v=29801');
+    await loadScript('onedrive_sync_v299.js?v=29901');
 
     // Three.js module can initialize independently after storage/app boot.
-    await loadScript('three_viewer.js?v=29801','module');
+    await loadScript('three_viewer.js?v=29901','module');
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
     alert('Projekt Bau konnte nicht vollständig gestartet werden: '+e.message);
@@ -1061,9 +1041,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v298.js?v=29801')) await reg.unregister();
+      if(url && !url.includes('sw_v299.js?v=29901')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v298.js?v=29801',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v299.js?v=29901',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

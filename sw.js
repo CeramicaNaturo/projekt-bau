@@ -1,49 +1,5 @@
-const CACHE='projekt-bau-v2860';
-const ASSETS=[
-  './',
-  './index.html?v=2860',
-  './styles_v286.css?v=2860',
-  './app_v286.js?v=2860',
-  './onedrive_sync.js?v=2860',
-  './pro_core.js?v=2860',
-  './abdichtung_core.js?v=2860',
-  './photo_editor.js?v=2860',
-  './manifest.webmanifest',
-  './three_viewer.js?v=2860'
-];
-
-self.addEventListener('install',event=>{
-  event.waitUntil(
-    caches.open(CACHE)
-      .then(cache=>cache.addAll(ASSETS))
-      .then(()=>self.skipWaiting())
-  );
-});
-
-self.addEventListener('activate',event=>{
-  event.waitUntil((async()=>{
-    const keys=await caches.keys();
-    await Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)));
-    await self.clients.claim();
-  })());
-});
-
-self.addEventListener('fetch',event=>{
-  if(event.request.method!=='GET')return;
-  const url=new URL(event.request.url);
-  // Microsoft auth / Graph are not cached by the app service worker.
-  if(url.hostname.includes('microsoftonline.com') ||
-     url.hostname.includes('graph.microsoft.com') ||
-     url.hostname.includes('msauth.net') ||
-     url.hostname.includes('msftauth.net')) return;
-
-  event.respondWith(
-    fetch(event.request,{cache:'no-store'})
-      .then(response=>{
-        const copy=response.clone();
-        caches.open(CACHE).then(cache=>cache.put(event.request,copy));
-        return response;
-      })
-      .catch(()=>caches.match(event.request))
-  );
-});
+const CACHE='projekt-bau-v2880';
+const ASSETS=['./','./index.html?v=2880','./styles_v287.css?v=2880','./app_v287.js?v=2880','./onedrive_sync.js?v=2880','./pro_core.js?v=2880','./abdichtung_core.js?v=2880','./photo_editor.js?v=2880','./manifest.webmanifest','./three_viewer.js?v=2880'];
+self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)));await self.clients.claim()})()));
+self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const url=new URL(event.request.url);if(url.hostname.includes('microsoftonline.com')||url.hostname.includes('graph.microsoft.com')||url.hostname.includes('msauth.net')||url.hostname.includes('msftauth.net'))return;event.respondWith(fetch(event.request,{cache:'no-store'}).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(event.request,copy));return r}).catch(()=>caches.match(event.request)))});

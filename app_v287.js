@@ -277,6 +277,13 @@ function renderP(){
   $('pTitle').textContent=p.name;
   $('pMeta').textContent=[p.address,p.customer&&'Kunde: '+p.customer,p.owner&&'Verantwortlich: '+p.owner].filter(Boolean).join(' · ');
   $('summary').innerHTML=[['Telefon',p.phone||'-'],['Startdatum',fmtDate(p.startDate)],['Bereiche',p.areas.length],['Beschreibung',p.description||'-']].map(x=>`<div><small>${esc(x[0])}</small><br><b>${esc(x[1])}</b></div>`).join('');
+  const pe=$('projectEditFields');
+  if(pe){
+    $('editProjectName').value=p.name||''; $('editProjectAddress').value=p.address||'';
+    $('editProjectCustomer').value=p.customer||''; $('editProjectPhone').value=p.phone||'';
+    $('editProjectStartDate').value=p.startDate||''; $('editProjectOwner').value=p.owner||'';
+    $('editProjectDescription').value=p.description||'';
+  }
   $('areas').innerHTML='';
   p.areas.forEach(a=>$('areas').appendChild(area(p,a)));
   renderFloorplans(p);
@@ -390,8 +397,10 @@ function photoCard(a,ph,i){
     <label>Titel / Position<input class=photoTitle placeholder="Örn. Badezimmer - duş duvarı"></label>
     <label>Beschreibung im PDF<textarea class=photoNote rows=5 placeholder="Auszuführende Arbeiten für dieses Foto beschreiben..."></textarea></label>
   </div>
-  <div class="photo-actions editor"><button class="secondary up">↑ Nach oben</button><button class="secondary down">↓ Nach unten</button><button class="danger del">Löschen</button></div></div>`;
+  <div class="photo-actions editor"><button class="primary editPhoto">✎ Foto bearbeiten</button><button class="secondary up">↑ Nach oben</button><button class="secondary down">↓ Nach unten</button><button class="danger del">Löschen</button></div></div>`;
   c.querySelector('img').src=ph.data;c.querySelector('.photoTitle').value=ph.title;c.querySelector('.photoNote').value=ph.note;
+  const editExisting=()=>{ if(window.ProjectBauPhotoEditor?.openExisting) window.ProjectBauPhotoEditor.openExisting(ph,a); else alert('Fotoeditor wird noch geladen. Bitte erneut versuchen.'); };
+  c.querySelector('.editPhoto').onclick=editExisting; c.querySelector('img').style.cursor='pointer'; c.querySelector('img').onclick=editExisting;
   c.querySelector('.photoTitle').onchange=e=>{ph.title=e.target.value;save()};c.querySelector('.photoNote').onchange=e=>{ph.note=e.target.value;save()};
   c.querySelector('.up').disabled=i===0;c.querySelector('.down').disabled=i===a.photos.length-1;
   c.querySelector('.up').onclick=()=>{if(i>0){[a.photos[i-1],a.photos[i]]=[a.photos[i],a.photos[i-1]];save()}};
@@ -5725,7 +5734,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 /* v2.8.7 – authoritative runtime version stamp */
 (()=>{
-  const VERSION='2.8.7 PRO';
+  const VERSION='2.8.8 PRO';
   function stampVersion(){
     document.querySelectorAll(
       '.cad-sidebar-footer strong,.pro-version,[data-app-version],#appVersion,.app-version'

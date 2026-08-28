@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2943.css?v=294301">
+<link rel="stylesheet" href="styles_v2944.css?v=294401">
 </head>
 <body class="cad-app">
 
@@ -56,7 +56,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.43 PRO</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.44 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -369,7 +369,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.9.1 PRO</span>
+    <span class="pro-version">v2.9.44 PRO</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -395,6 +395,7 @@
   <div class="pro-mode-tabs">
     <button type="button" class="pro-mode-tab active" data-mode="2d">2D CAD</button>
     <button type="button" class="pro-mode-tab" data-mode="3d">3D Ansicht</button>
+    <button type="button" class="pro-mode-tab" data-mode="wall">Wandansicht</button>
     <button type="button" class="pro-mode-tab pro-mode-seal" id="fpAbdichtungToolTop">▲ Abdichtung</button>
     <button type="button" class="pro-mode-tab" id="fpModeFliesen">◆ Fliesen</button>
     <button type="button" class="pro-mode-tab" id="fpModeSanitaer">◉ Sanitär</button>
@@ -693,6 +694,16 @@
             <span>2 Finger / Rechtsklick: Verschieben</span>
           </div>
         </div>
+
+        <div id="fpWallWorkspace" class="fp-wall-workspace hidden">
+          <div class="fp-wall-toolbar">
+            <label>Wand <select id="fpWallViewSelect"></select></label>
+            <button type="button" id="fpWallView2D" class="active">2D Elevation</button>
+            <button type="button" id="fpWallView3D">3D Wandansicht</button>
+          </div>
+          <div id="fpWall2DViewport" class="fp-wall-elevation"><canvas id="fpWallElevationCanvas"></canvas></div>
+          <div id="fpWall3DViewport" class="fp-3d-viewport hidden"></div>
+        </div>
       </main>
 
       <aside class="cad-inspector">
@@ -891,6 +902,8 @@
           </label>
           <label class="check-inline"><input id="fp3DShowCeiling" type="checkbox"> Decke anzeigen</label>
           <button id="fp3DResetCamera" class="secondary">3D-Ansicht zentrieren</button>
+          <button id="fp3DTopView" class="secondary">Draufsicht / Vogelperspektive</button>
+          <button id="fp3DNormalView" class="secondary">Normale 3D-Ansicht</button>
         </div>
 
         <div class="cad-inspector-section">
@@ -995,7 +1008,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=294301"></script>
+<script src="storage_bridge_v2942.js?v=294401"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1013,15 +1026,15 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2943.js?v=294301');
+    await loadScript('app_v2944.js?v=294401');
     await loadScript('pro_core.js?v=29901');
     await loadScript('abdichtung_core.js?v=29901');
-    await loadScript('photo_editor_v2942.js?v=294301');
+    await loadScript('photo_editor_v2942.js?v=294401');
     await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-    await loadScript('onedrive_sync_v2942.js?v=294301');
+    await loadScript('onedrive_sync_v2942.js?v=294401');
 
     // Three.js module can initialize independently after storage/app boot.
-    await loadScript('three_viewer.js?v=29901','module');
+    await loadScript('three_viewer_v2944.js?v=294401','module');
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
     alert('Projekt Bau konnte nicht vollständig gestartet werden: '+e.message);
@@ -1043,9 +1056,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2942.js?v=294301')) await reg.unregister();
+      if(url && !url.includes('sw_v2944.js?v=294401')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2942.js?v=294301',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2944.js?v=294401',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

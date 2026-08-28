@@ -133,12 +133,115 @@ function findTile(project,id){
 }
 
 
+
+/* === v2.9.41 2D/3D GEOMETRY SYNC ===
+   Stored wall endpoints are the OUTER construction polygon.
+   3D walls grow inward; the floor is bounded by the true inner faces. */
+function buildOuterCycle3D(objects){
+  const walls=(objects||[]).filter(o=>o?.type==='wall');
+  if(walls.length<3)return null;
+
+  const tol=.30;
+  const nodes=[];
+  const edges=[];
+
+  function nodeFor(x,z){
+    const px=m(x),pz=m(z);
+    let n=nodes.find(v=>Math.hypot(v.x-px,v.z-pz)<tol);
+    if(!n){n={id:nodes.length,x:px,z:pz,edges:[]};nodes.push(n);}
+    return n;
+  }
+
+  for(const w of walls){
+    const a=nodeFor(w.x1,w.y1),b=nodeFor(w.x2,w.y2);
+    if(a===b)continue;
+    const e={wall:w,a:a.id,b:b.id};
+    edges.push(e);
+    a.edges.push(edges.length-1);
+    b.edges.push(edges.length-1);
+  }
+
+  if(nodes.length<3||edges.length<3||nodes.some(n=>n.edges.length!==2))return null;
+
+  const ordered=[];
+  const used=new Set();
+  const firstNode=nodes[0].id;
+  let current=firstNode,previousEdge=null;
+
+  for(let guard=0;guard<edges.length+2;guard++){
+    const n=nodes[current];
+    const ei=n.edges.find(i=>i!==previousEdge&&!used.has(i));
+    if(ei==null)break;
+    const e=edges[ei];
+    used.add(ei);
+    const forward=e.a===current;
+    const next=forward?e.b:e.a;
+    ordered.push({
+      wall:e.wall,
+      from:{x:nodes[current].x,z:nodes[current].z},
+      to:{x:nodes[next].x,z:nodes[next].z}
+    });
+    previousEdge=ei;
+    current=next;
+    if(current===firstNode)break;
+  }
+
+  if(current!==firstNode||ordered.length!==edges.length)return null;
+  return ordered;
+}
+
+function intersectLinesXZ2941(a1,a2,b1,b2){
+  const rx=a2.x-a1.x,rz=a2.z-a1.z;
+  const sx=b2.x-b1.x,sz=b2.z-b1.z;
+  const den=rx*sz-rz*sx;
+  if(Math.abs(den)<1e-9)return null;
+  const qx=b1.x-a1.x,qz=b1.z-a1.z;
+  const t=(qx*sz-qz*sx)/den;
+  return {x:a1.x+t*rx,z:a1.z+t*rz};
+}
+
+function buildInnerFloorPolygon3D(objects){
+  const cycle=buildOuterCycle3D(objects);
+  if(!cycle||cycle.length<3)return null;
+
+  // Winding of OUTER construction polygon.
+  let twice=0;
+  for(let i=0;i<cycle.length;i++){
+    const p=cycle[i].from,q=cycle[(i+1)%cycle.length].from;
+    twice+=p.x*q.z-q.x*p.z;
+  }
+  if(Math.abs(twice)<1e-9)return null;
+  const ccw=twice>0;
+
+  // Offset every outer wall edge toward room interior by full thickness.
+  const lines=cycle.map(e=>{
+    const dx=e.to.x-e.from.x,dz=e.to.z-e.from.z,L=Math.hypot(dx,dz)||1;
+    let nx=-dz/L,nz=dx/L;
+    if(!ccw){nx=-nx;nz=-nz;}
+    const th=Math.max(.001,m(e.wall.thickness||15));
+    return {
+      wall:e.wall,
+      a:{x:e.from.x+nx*th,z:e.from.z+nz*th},
+      b:{x:e.to.x+nx*th,z:e.to.z+nz*th}
+    };
+  });
+
+  const pts=[];
+  for(let i=0;i<lines.length;i++){
+    const prev=lines[(i-1+lines.length)%lines.length],cur=lines[i];
+    const hit=intersectLinesXZ2941(prev.a,prev.b,cur.a,cur.b);
+    if(!hit)return null;
+    pts.push({x:hit.x,y:hit.z,z:hit.z});
+  }
+  return pts;
+}
+
 function roomCentroid3D(objects){
-  const pts=buildPolygon(objects);
-  if(!pts||!pts.length)return null;
+  const cycle=buildOuterCycle3D(objects);
+  if(!cycle||!cycle.length)return null;
   return {
-    x:pts.reduce((s,p)=>s+p.x,0)/pts.length,
-    z:pts.reduce((s,p)=>s+p.y,0)/pts.length
+    x:cycle.reduce((s,e)=>s+e.from.x,0)/cycle.length,
+    z:cycle.reduce((s,e)=>s+e.from.z,0)/cycle.length
   };
 }
 
@@ -217,9 +320,9 @@ function addWallTileAreaMeshes(group,w,roomHeight,objects){
 
     const plane=new THREE.Mesh(new THREE.PlaneGeometry(width,height),mat);
     plane.position.set(
-      cx+interior.nx*(thickness/2+.006),
+      cx+interior.nx*(thickness+.006),
       bottom+height/2,
-      cz+interior.nz*(thickness/2+.006)
+      cz+interior.nz*(thickness+.006)
     );
     plane.rotation.y=rotationY;
     plane.receiveShadow=true;
@@ -357,15 +460,18 @@ function wallFrame3D(w,objects){
   const ux=dx/len,uz=dz/len;
   const out=wallOuterNormal3D(w,objects);
   const th=Math.max(.02,m(w.thickness||15));
+  const inx=-out.nx,inz=-out.nz;
 
-  // gespeicherte Linie = Innenkante
-  // Box-Mittellinie liegt um halbe Wandstärke nach aussen versetzt
+  // v2.9.41:
+  // gespeicherte Linie = AUSSENKANTE.
+  // Wandkörper wächst um die volle Wandstärke nach INNEN.
   return {
     x1,z1,x2,z2,dx,dz,len,ux,uz,
-    nx:out.nx,nz:out.nz,
+    nx:out.nx,nz:out.nz,       // outward (compatibility)
+    inx,inz,                   // room-facing inward normal
     th,
-    cx:(x1+x2)/2 + out.nx*th/2,
-    cz:(z1+z2)/2 + out.nz*th/2,
+    cx:(x1+x2)/2 + inx*th/2,
+    cz:(z1+z2)/2 + inz*th/2,
     angle:-Math.atan2(dz,dx)
   };
 }
@@ -387,8 +493,8 @@ function makeWallBoxSegment(w,objects,t0,t1,height,material,y0=0,extendStart=fal
   let extraStart=0;
   let extraEnd=0;
   const centerShift=0;
-  const baseX=f.x1 + f.dx*centerT + f.nx*f.th/2;
-  const baseZ=f.z1 + f.dz*centerT + f.nz*f.th/2;
+  const baseX=f.x1 + f.dx*centerT + f.inx*f.th/2;
+  const baseZ=f.z1 + f.dz*centerT + f.inz*f.th/2;
 
   const cx=baseX + f.ux*centerShift;
   const cz=baseZ + f.uz*centerShift;
@@ -446,15 +552,13 @@ function connectedWallPairsAtPoint(objects){
 }
 
 function wallOuterPointAtVertex3D(w,v,objects){
-  const f=wallFrame3D(w,objects);
-  return {x:v.x+f.nx*f.th,z:v.z+f.nz*f.th};
+  return {x:v.x,z:v.z};
 }
 
 function outerLineForWall3D(w,objects){
-  const f=wallFrame3D(w,objects);
   return {
-    a:{x:f.x1+f.nx*f.th,z:f.z1+f.nz*f.th},
-    b:{x:f.x2+f.nx*f.th,z:f.z2+f.nz*f.th}
+    a:{x:m(w.x1),z:m(w.y1)},
+    b:{x:m(w.x2),z:m(w.y2)}
   };
 }
 
@@ -508,20 +612,9 @@ function cornerFillerMesh(vertex,w1,w2,height,objects,material){
 }
 
 function addCleanWallCorners(group,objects,height,material){
-  const joints=connectedWallPairsAtPoint(objects);
-  for(const j of joints){
-    // Most architectural corners connect exactly two walls.
-    for(let i=0;i<j.walls.length;i++){
-      for(let k=i+1;k<j.walls.length;k++){
-        const mesh=cornerFillerMesh(
-          {x:j.x,z:j.z},
-          j.walls[i],j.walls[k],
-          height,objects,material
-        );
-        if(mesh)group.add(mesh);
-      }
-    }
-  }
+  // v2.9.41: no extra filler required. Wall boxes share the stored outer
+  // corner and overlap naturally through the inward wall thickness.
+  return;
 }
 
 function openingsForWall3D(w,objects){
@@ -607,35 +700,7 @@ function wallMeshGroup(w,height,material,objects){
   return group;
 }
 function buildPolygon(objects){
-  const walls=(objects||[]).filter(o=>o.type==='wall');
-  if(walls.length<3) return null;
-
-  const tol=.3;
-  const nodes=[];
-  function node(x,y){
-    const px=m(x),py=m(y);
-    let n=nodes.find(v=>Math.hypot(v.x-px,v.y-py)<tol);
-    if(!n){ n={x:px,y:py,neighbors:[]}; nodes.push(n); }
-    return n;
-  }
-  walls.forEach(w=>{
-    const a=node(w.x1,w.y1),b=node(w.x2,w.y2);
-    if(!a.neighbors.includes(b))a.neighbors.push(b);
-    if(!b.neighbors.includes(a))b.neighbors.push(a);
-  });
-  if(nodes.some(n=>n.neighbors.length!==2)) return null;
-
-  const first=nodes[0];
-  const pts=[];
-  let cur=first,prev=null;
-  for(let guard=0;guard<nodes.length+2;guard++){
-    pts.push(cur);
-    const next=cur.neighbors.find(n=>n!==prev);
-    prev=cur;cur=next;
-    if(cur===first)break;
-  }
-  if(cur!==first || pts.length<3) return null;
-  return pts;
+  return buildInnerFloorPolygon3D(objects);
 }
 
 function floorMesh(objects, material){

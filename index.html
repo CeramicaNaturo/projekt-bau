@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2949.css?v=294901">
+<link rel="stylesheet" href="styles_v2950.css?v=295001">
 </head>
 <body class="cad-app">
 
@@ -56,7 +56,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.49 PRO Plattenleger</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.50 PRO Plattenleger</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -125,6 +125,7 @@
       <button id="savePlattenlegerCockpit" type="button" class="primary">Cockpit speichern</button>
     </div>
     <div class="plattenleger-phasebar" id="plattenlegerPhasebar"></div>
+    <div id="plattenlegerPhaseContent" class="plattenleger-phase-content"></div>
     <div class="plattenleger-grid">
       <div class="plattenleger-form">
         <label>Projektphase<select id="plProjectPhase"><option value="anfrage">Anfrage</option><option value="aufmass">Aufmass</option><option value="offerte">Offerte</option><option value="vorbereitung">Arbeitsvorbereitung</option><option value="ausfuehrung">Ausführung</option><option value="abnahme">Abnahme</option><option value="abgeschlossen">Abgeschlossen</option></select></label>
@@ -400,7 +401,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.9.49 PRO Plattenleger</span>
+    <span class="pro-version">v2.9.50 PRO Plattenleger</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -1041,7 +1042,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=294901"></script>
+<script src="storage_bridge_v2942.js?v=295001"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1059,19 +1060,19 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2949.js?v=294901');
+    await loadScript('app_v2950.js?v=295001');
     await loadScript('pro_core.js?v=29901');
     await loadScript('abdichtung_core.js?v=29901');
-    await loadScript('photo_editor_v2942.js?v=294901');
+    await loadScript('photo_editor_v2942.js?v=295001');
     try{
       await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-      await loadScript('onedrive_sync_v2942.js?v=294901');
+      await loadScript('onedrive_sync_v2942.js?v=295001');
     }catch(cloudError){
       console.warn('OneDrive ist momentan nicht verfügbar; CAD und lokale Projektdaten bleiben nutzbar.',cloudError);
     }
 
     // Three.js module can initialize independently after storage/app boot.
-    try{await loadScript('three_viewer_v2949.js?v=294901','module')}
+    try{await loadScript('three_viewer_v2950.js?v=295001','module')}
     catch(viewError){console.warn('3D-Modul konnte nicht geladen werden; 2D CAD bleibt nutzbar.',viewError)}
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
@@ -1094,9 +1095,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2949.js?v=294901')) await reg.unregister();
+      if(url && !url.includes('sw_v2950.js?v=295001')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2949.js?v=294901',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2950.js?v=295001',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2944.css?v=294401">
+<link rel="stylesheet" href="styles_v2945.css?v=294501">
 </head>
 <body class="cad-app">
 
@@ -56,7 +56,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.44 PRO</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.45 PRO Plattenleger</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -118,6 +118,37 @@
   </div>
 
   <div id="summary" class="summary"></div>
+
+  <section id="plattenlegerCockpit" class="plattenleger-cockpit editor">
+    <div class="section-heading">
+      <div><div class="eyebrow">PRO PLATTENLEGER · BADUMBAU</div><h3>Projekt-Cockpit</h3><p>Aufmass, Ausführung und Materialbedarf in einem Arbeitsablauf.</p></div>
+      <button id="savePlattenlegerCockpit" type="button" class="primary">Cockpit speichern</button>
+    </div>
+    <div class="plattenleger-phasebar" id="plattenlegerPhasebar"></div>
+    <div class="plattenleger-grid">
+      <div class="plattenleger-form">
+        <label>Projektphase<select id="plProjectPhase"><option value="anfrage">Anfrage</option><option value="aufmass">Aufmass</option><option value="offerte">Offerte</option><option value="vorbereitung">Arbeitsvorbereitung</option><option value="ausfuehrung">Ausführung</option><option value="abnahme">Abnahme</option><option value="abgeschlossen">Abgeschlossen</option></select></label>
+        <label>Objektart<select id="plObjectType"><option>Badumbau</option><option>WC-Umbau</option><option>Dusche</option><option>Neubau</option><option>Küche</option><option>Sonstiges</option></select></label>
+        <label>Baustart<input id="plConstructionStart" type="date"></label>
+        <label>Geplante Abnahme<input id="plAcceptanceDate" type="date"></label>
+        <label class="plattenleger-wide">Interne Baustellennotiz<textarea id="plSiteNote" rows="3" placeholder="Zugang, Parkierung, Schlüssel, Kundenwünsche, offene Entscheide …"></textarea></label>
+      </div>
+      <div class="plattenleger-scope">
+        <strong>Leistungsumfang</strong>
+        <label><input type="checkbox" data-pl-scope="demontage"> Demontage / Entsorgung</label>
+        <label><input type="checkbox" data-pl-scope="untergrund"> Untergrundvorbereitung</label>
+        <label><input type="checkbox" data-pl-scope="abdichtung"> Abdichtung</label>
+        <label><input type="checkbox" data-pl-scope="bodenplatten"> Bodenplatten</label>
+        <label><input type="checkbox" data-pl-scope="wandplatten"> Wandplatten</label>
+        <label><input type="checkbox" data-pl-scope="silikon"> Silikonfugen</label>
+        <label><input type="checkbox" data-pl-scope="sanitaer"> Sanitärmontage</label>
+        <label><input type="checkbox" data-pl-scope="duschglas"> Duschglas</label>
+      </div>
+    </div>
+    <div id="plattenlegerKpis" class="plattenleger-kpis"></div>
+    <div id="plattenlegerChecks" class="plattenleger-checks"></div>
+  </section>
+
   <div id="projectEditFields" class="editor project-edit-fields">
     <div class="title"><h3>Projektdetails bearbeiten</h3><button id="saveProjectDetails" type="button" class="primary">Änderungen speichern</button></div>
     <div class="grid compact">
@@ -369,7 +400,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.9.44 PRO</span>
+    <span class="pro-version">v2.9.45 PRO Plattenleger</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -1008,7 +1039,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=294401"></script>
+<script src="storage_bridge_v2942.js?v=294501"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1026,15 +1057,20 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2944.js?v=294401');
+    await loadScript('app_v2945.js?v=294501');
     await loadScript('pro_core.js?v=29901');
     await loadScript('abdichtung_core.js?v=29901');
-    await loadScript('photo_editor_v2942.js?v=294401');
-    await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-    await loadScript('onedrive_sync_v2942.js?v=294401');
+    await loadScript('photo_editor_v2942.js?v=294501');
+    try{
+      await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
+      await loadScript('onedrive_sync_v2942.js?v=294501');
+    }catch(cloudError){
+      console.warn('OneDrive ist momentan nicht verfügbar; CAD und lokale Projektdaten bleiben nutzbar.',cloudError);
+    }
 
     // Three.js module can initialize independently after storage/app boot.
-    await loadScript('three_viewer_v2944.js?v=294401','module');
+    try{await loadScript('three_viewer_v2945.js?v=294501','module')}
+    catch(viewError){console.warn('3D-Modul konnte nicht geladen werden; 2D CAD bleibt nutzbar.',viewError)}
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
     alert('Projekt Bau konnte nicht vollständig gestartet werden: '+e.message);
@@ -1056,9 +1092,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2944.js?v=294401')) await reg.unregister();
+      if(url && !url.includes('sw_v2945.js?v=294501')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2944.js?v=294401',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2945.js?v=294501',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

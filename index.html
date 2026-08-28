@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2941.css?v=294101">
+<link rel="stylesheet" href="styles_v2942.css?v=294201">
 </head>
 <body class="cad-app">
 
@@ -56,7 +56,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.41 PRO</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.42 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -916,6 +916,7 @@
       <button data-add-object="wc"><b>▱</b><span>WC</span></button>
       <button data-add-object="shower"><b>☒</b><span>Dusche</span></button>
       <button data-add-object="walkInShower" class="fp-feature-object"><b>↘</b><span>Bodengleiche Dusche</span></button>
+      <button data-add-object="glass" class="fp-feature-object"><b>▯</b><span>Duschglas</span></button>
       <button data-add-object="bathtub"><b>▭</b><span>Badewanne</span></button>
       <button data-add-object="kitchenSink"><b>▣</b><span>Küche Spüle</span></button>
       <button data-add-object="stove"><b>▦</b><span>Herd</span></button>
@@ -993,7 +994,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2941.js?v=294101"></script>
+<script src="storage_bridge_v2942.js?v=294201"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1011,12 +1012,12 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2941.js?v=294101');
+    await loadScript('app_v2942.js?v=294201');
     await loadScript('pro_core.js?v=29901');
     await loadScript('abdichtung_core.js?v=29901');
-    await loadScript('photo_editor_v2941.js?v=294101');
+    await loadScript('photo_editor_v2942.js?v=294201');
     await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-    await loadScript('onedrive_sync_v2941.js?v=294101');
+    await loadScript('onedrive_sync_v2942.js?v=294201');
 
     // Three.js module can initialize independently after storage/app boot.
     await loadScript('three_viewer.js?v=29901','module');
@@ -1041,9 +1042,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2941.js?v=294101')) await reg.unregister();
+      if(url && !url.includes('sw_v2942.js?v=294201')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2941.js?v=294101',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2942.js?v=294201',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

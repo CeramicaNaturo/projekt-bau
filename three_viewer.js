@@ -134,7 +134,7 @@ function findTile(project,id){
 
 
 
-/* === v2.9.41 2D/3D GEOMETRY SYNC ===
+/* === v2.9.42 2D/3D GEOMETRY SYNC ===
    Stored wall endpoints are the OUTER construction polygon.
    3D walls grow inward; the floor is bounded by the true inner faces. */
 function buildOuterCycle3D(objects){
@@ -462,7 +462,7 @@ function wallFrame3D(w,objects){
   const th=Math.max(.02,m(w.thickness||15));
   const inx=-out.nx,inz=-out.nz;
 
-  // v2.9.41:
+  // v2.9.42:
   // gespeicherte Linie = AUSSENKANTE.
   // Wandkörper wächst um die volle Wandstärke nach INNEN.
   return {
@@ -612,7 +612,7 @@ function cornerFillerMesh(vertex,w1,w2,height,objects,material){
 }
 
 function addCleanWallCorners(group,objects,height,material){
-  // v2.9.41: no extra filler required. Wall boxes share the stored outer
+  // v2.9.42: no extra filler required. Wall boxes share the stored outer
   // corner and overlap naturally through the inward wall thickness.
   return;
 }
@@ -721,7 +721,7 @@ function floorMesh(objects, material){
 
 function objectDefaultDims3D(type){
   const dims={
-    door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],walkInShower:[100,100],
+    door:[90,15],window:[100,15],wc:[40,70],shower:[90,90],walkInShower:[100,100],glass:[100,1],
     bathtub:[180,80],sink:[60,50],drain:[15,15],
     kitchenSink:[60,60],stove:[60,60],fridge:[60,65],washingMachine:[60,65],
     table:[160,90],chair:[50,50],sofa:[220,90],bed:[200,100],cabinet:[120,60],plant:[45,45]
@@ -913,9 +913,22 @@ function realisticWalkInShower(o){
     const z=dir==='front'?d/2-.07:-d/2+.07, x=dir==='left'?-w/2+.07:(dir==='right'?w/2-.07:0);
     if(dir==='left'||dir==='right')addBox(g,.045,.012,d*.65,x,.018,0,chrome); else addBox(g,w*.65,.012,.045,0,.018,z,chrome);
   }else addCylinder(g,.045,.045,.012,0,.018,0,chrome,24);
-  // frameless glass panel to make the walk-in shower visible without a tray
-  addBox(g,.012,1.95,d*.72,-w/2,.98,0,glassMat());
-  addCylinder(g,.010,.010,1.95,-w/2,.98,-d*.36,chrome,12);
+  // v2.9.42: glass is NOT part of the shower object.
+  // The user places independent Duschglas objects manually.
+  return finishObject(g,o);
+}
+
+
+function realisticGlass(o){
+  const g=new THREE.Group();
+  const w=Math.max(.10,m(o.widthCm||100));
+  const h=Math.max(.10,m(o.heightCm||200));
+  const d=Math.max(.006,m(o.depthCm||1));
+  addBox(g,w,h,d,0,h/2,0,glassMat());
+  // subtle vertical end profiles, independent from shower
+  const profile=CHROME();
+  addCylinder(g,.006,.006,h,-w/2,h/2,0,profile,10);
+  addCylinder(g,.006,.006,h, w/2,h/2,0,profile,10);
   return finishObject(g,o);
 }
 
@@ -1226,6 +1239,7 @@ function objectMesh(o){
   if(type==='wc')return realisticWC(o);
   if(type==='shower')return realisticShower(o);
   if(type==='walkInShower')return realisticWalkInShower(o);
+  if(type==='glass')return realisticGlass(o);
   if(type==='bathtub')return realisticBathtub(o);
   if(type==='sink')return realisticSink(o);
   if(type==='mirror')return realisticMirror(o);

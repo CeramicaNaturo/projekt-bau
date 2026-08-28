@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2942.css?v=294201">
+<link rel="stylesheet" href="styles_v2943.css?v=294301">
 </head>
 <body class="cad-app">
 
@@ -56,7 +56,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.42 PRO</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.43 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -854,7 +854,8 @@
         </div>
 
         <div class="cad-inspector-section">
-          <h4>EBENEN</h4>
+          <h4>GÖRÜNÜRLÜK · 2D / 3D</h4>
+          <div class="fp-layer-help">Aynı katman düğmeleri 2D ve 3D görünümde ayrı ayrı kontrol edilebilir. Özellikle <b>Wände</b> ile duvarları açıp kapatabilirsin.</div>
           <label class="check-inline"><input class="fp-layer-toggle" data-layer="walls" type="checkbox" checked> Wände</label>
           <label class="check-inline"><input class="fp-layer-toggle" data-layer="openings" type="checkbox" checked> Türen / Fenster</label>
           <label class="check-inline"><input class="fp-layer-toggle" data-layer="sanitary" type="checkbox" checked> Sanitär</label>
@@ -994,7 +995,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=294201"></script>
+<script src="storage_bridge_v2942.js?v=294301"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1012,12 +1013,12 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2942.js?v=294201');
+    await loadScript('app_v2943.js?v=294301');
     await loadScript('pro_core.js?v=29901');
     await loadScript('abdichtung_core.js?v=29901');
-    await loadScript('photo_editor_v2942.js?v=294201');
+    await loadScript('photo_editor_v2942.js?v=294301');
     await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-    await loadScript('onedrive_sync_v2942.js?v=294201');
+    await loadScript('onedrive_sync_v2942.js?v=294301');
 
     // Three.js module can initialize independently after storage/app boot.
     await loadScript('three_viewer.js?v=29901','module');
@@ -1042,9 +1043,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2942.js?v=294201')) await reg.unregister();
+      if(url && !url.includes('sw_v2942.js?v=294301')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2942.js?v=294201',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2942.js?v=294301',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

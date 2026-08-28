@@ -134,7 +134,7 @@ function findTile(project,id){
 
 
 
-/* === v2.9.42 2D/3D GEOMETRY SYNC ===
+/* === v2.9.43 2D/3D GEOMETRY SYNC ===
    Stored wall endpoints are the OUTER construction polygon.
    3D walls grow inward; the floor is bounded by the true inner faces. */
 function buildOuterCycle3D(objects){
@@ -462,7 +462,7 @@ function wallFrame3D(w,objects){
   const th=Math.max(.02,m(w.thickness||15));
   const inx=-out.nx,inz=-out.nz;
 
-  // v2.9.42:
+  // v2.9.43:
   // gespeicherte Linie = AUSSENKANTE.
   // Wandkörper wächst um die volle Wandstärke nach INNEN.
   return {
@@ -612,7 +612,7 @@ function cornerFillerMesh(vertex,w1,w2,height,objects,material){
 }
 
 function addCleanWallCorners(group,objects,height,material){
-  // v2.9.42: no extra filler required. Wall boxes share the stored outer
+  // v2.9.43: no extra filler required. Wall boxes share the stored outer
   // corner and overlap naturally through the inward wall thickness.
   return;
 }
@@ -913,7 +913,7 @@ function realisticWalkInShower(o){
     const z=dir==='front'?d/2-.07:-d/2+.07, x=dir==='left'?-w/2+.07:(dir==='right'?w/2-.07:0);
     if(dir==='left'||dir==='right')addBox(g,.045,.012,d*.65,x,.018,0,chrome); else addBox(g,w*.65,.012,.045,0,.018,z,chrome);
   }else addCylinder(g,.045,.045,.012,0,.018,0,chrome,24);
-  // v2.9.42: glass is NOT part of the shower object.
+  // v2.9.43: glass is NOT part of the shower object.
   // The user places independent Duschglas objects manually.
   return finishObject(g,o);
 }
@@ -1618,16 +1618,26 @@ function fitReferenceCamera(objects){
 
   if(floorTile) addFloorTileGrid(rootGroup,currentData);
 
-  (objects||[]).filter(o=>o.type==='wall').forEach(w=>{
-    const mesh=wallMeshGroup(w,roomHeight,wallMat,objects);
-    if(mesh)rootGroup.add(mesh);
-    addWallTileAreaMeshes(rootGroup,w,roomHeight,objects);
-  });
+  const layerVisibility=options?.layerVisibility||{};
+  const layerFor3D=o=>{
+    if(o.type==='wall')return 'walls';
+    if(o.type==='door'||o.type==='window'||o.type==='niche')return 'openings';
+    if(['wc','shower','walkInShower','glass','bathtub','sink','drain','kitchenSink','mirror'].includes(o.type))return 'sanitary';
+    if(['stove','fridge','washingMachine','table','chair','sofa','bed','cabinet','plant'].includes(o.type))return 'furniture';
+    return 'notes';
+  };
+  const visible3D=o=>layerVisibility[layerFor3D(o)]!==false;
 
-  addCleanWallCorners(rootGroup,objects,roomHeight,wallMat);
+  if(layerVisibility.walls!==false){
+    (objects||[]).filter(o=>o.type==='wall').forEach(w=>{
+      const mesh=wallMeshGroup(w,roomHeight,wallMat,objects);
+      if(mesh)rootGroup.add(mesh);
+      addWallTileAreaMeshes(rootGroup,w,roomHeight,objects);
+    });
+    addCleanWallCorners(rootGroup,objects,roomHeight,wallMat);
+  }
 
-
-  (objects||[]).filter(o=>o.type!=='wall'&&o.type!=='text').forEach(o=>{
+  (objects||[]).filter(o=>o.type!=='wall'&&o.type!=='text'&&visible3D(o)).forEach(o=>{
     const mesh=objectMesh(o);
     if(mesh)rootGroup.add(mesh);
   });

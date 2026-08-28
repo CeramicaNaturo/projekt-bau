@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2932.css?v=293201">
+<link rel="stylesheet" href="styles_v2933.css?v=293301">
 </head>
 <body class="cad-app">
 
@@ -56,7 +56,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.32 PRO</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.33 PRO</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -993,7 +993,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2932.js?v=293201"></script>
+<script src="storage_bridge_v2933.js?v=293301"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1011,12 +1011,12 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2932.js?v=293201');
+    await loadScript('app_v2933.js?v=293301');
     await loadScript('pro_core.js?v=29901');
     await loadScript('abdichtung_core.js?v=29901');
-    await loadScript('photo_editor_v2932.js?v=293201');
+    await loadScript('photo_editor_v2933.js?v=293301');
     await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-    await loadScript('onedrive_sync_v2932.js?v=293201');
+    await loadScript('onedrive_sync_v2933.js?v=293301');
 
     // Three.js module can initialize independently after storage/app boot.
     await loadScript('three_viewer.js?v=29901','module');
@@ -1041,9 +1041,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2932.js?v=293201')) await reg.unregister();
+      if(url && !url.includes('sw_v2933.js?v=293301')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2932.js?v=293201',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2933.js?v=293301',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2948.css?v=294801">
+<link rel="stylesheet" href="styles_v2949.css?v=294901">
 </head>
 <body class="cad-app">
 
@@ -24,10 +24,10 @@
     <button class="cad-nav-item active" data-scroll="#projects"><span class="nav-icon">⌂</span><span>Dashboard</span></button>
 
     <div class="cad-nav-section">PROJEKT</div>
-    <button class="cad-nav-item" data-scroll=".editor"><span class="nav-icon">▤</span><span>Projektdetails</span></button>
+    <button class="cad-nav-item" data-scroll="#projectEditFields"><span class="nav-icon">▤</span><span>Projektdetails</span></button>
     <button class="cad-nav-item" data-scroll="#projectInformation"><span class="nav-icon">≡</span><span>Projektinformationen</span></button>
     <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">▧</span><span>Räume / Bereiche</span></button>
-    <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">↔</span><span>Aufmass</span></button>
+    <button class="cad-nav-item" data-scroll="#plattenlegerCockpit"><span class="nav-icon">↔</span><span>Aufmass</span></button>
     <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">☑</span><span>Arbeiten</span></button>
 
     <div class="cad-nav-section">FLIESEN</div>
@@ -49,14 +49,14 @@
     <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">◷</span><span>Arbeitsaufwand</span></button>
 
     <div class="cad-nav-section">EINSTELLUNGEN</div>
-    <button class="cad-nav-item" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
+    <button class="cad-nav-item" data-scroll="#oneDrivePanel" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
   </nav>
 
   <div class="cad-sidebar-recovery">
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.48 PRO Plattenleger</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.49 PRO Plattenleger</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -400,7 +400,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.9.48 PRO Plattenleger</span>
+    <span class="pro-version">v2.9.49 PRO Plattenleger</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -1041,7 +1041,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=294801"></script>
+<script src="storage_bridge_v2942.js?v=294901"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1059,19 +1059,19 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2948.js?v=294801');
+    await loadScript('app_v2949.js?v=294901');
     await loadScript('pro_core.js?v=29901');
     await loadScript('abdichtung_core.js?v=29901');
-    await loadScript('photo_editor_v2942.js?v=294801');
+    await loadScript('photo_editor_v2942.js?v=294901');
     try{
       await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-      await loadScript('onedrive_sync_v2942.js?v=294801');
+      await loadScript('onedrive_sync_v2942.js?v=294901');
     }catch(cloudError){
       console.warn('OneDrive ist momentan nicht verfügbar; CAD und lokale Projektdaten bleiben nutzbar.',cloudError);
     }
 
     // Three.js module can initialize independently after storage/app boot.
-    try{await loadScript('three_viewer_v2948.js?v=294801','module')}
+    try{await loadScript('three_viewer_v2949.js?v=294901','module')}
     catch(viewError){console.warn('3D-Modul konnte nicht geladen werden; 2D CAD bleibt nutzbar.',viewError)}
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
@@ -1094,9 +1094,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2948.js?v=294801')) await reg.unregister();
+      if(url && !url.includes('sw_v2949.js?v=294901')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2948.js?v=294801',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2949.js?v=294901',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

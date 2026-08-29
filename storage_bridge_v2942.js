@@ -129,16 +129,35 @@
 
   function mergeStates(states){
     const map=new Map();
+    const customerMap=new Map();
+    let shell={};
     for(const st of states){
       if(!validState(st)) continue;
+      if(!Object.keys(shell).length){
+        shell=clone(st);
+        delete shell.projects;
+        delete shell.customers;
+        delete shell.storage;
+      }
       for(const p of st.projects){
         if(!p || typeof p!=='object') continue;
         const sig=fingerprint(p);
         map.set(sig,map.has(sig)?mergeProject(map.get(sig),p):clone(p));
       }
+      for(const customer of (Array.isArray(st.customers)?st.customers:[])){
+        if(!customer || typeof customer!=='object') continue;
+        const sig=String(customer.id||customer.number||`${customer.company||''}|${customer.email||''}|${customer.phone||''}`);
+        if(!sig) continue;
+        const previous=customerMap.get(sig)||{};
+        const previousTime=Date.parse(previous.updatedAt||previous.createdAt||'')||0;
+        const nextTime=Date.parse(customer.updatedAt||customer.createdAt||'')||0;
+        customerMap.set(sig,clone(nextTime>=previousTime?{...previous,...customer}:{...customer,...previous}));
+      }
     }
     return {
+      ...shell,
       projects:[...map.values()],
+      customers:[...customerMap.values()],
       storage:{
         engine:'IndexedDB',
         schema:1,

@@ -522,7 +522,7 @@ const PB_PDF_PHASES=[['aufmass','Aufmass'],['offerte','Offerte'],['auftrag','Auf
 let pbBrandLogoCache=null;
 async function pbBrandLogoData(){
   if(pbBrandLogoCache)return pbBrandLogoCache;
-  try{const blob=await fetch('./logo_ceramica.jpg?v=295905').then(r=>r.blob());pbBrandLogoCache=await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(blob)});return pbBrandLogoCache}catch(_){return null}
+  try{const blob=await fetch('./logo_ceramica.jpg?v=295907').then(r=>r.blob());pbBrandLogoCache=await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(blob)});return pbBrandLogoCache}catch(_){return null}
 }
 function pbAddBrandLogo(doc,data,x=16,y=7,w=56){if(!data)return;try{const props=doc.getImageProperties(data),h=w*props.height/props.width;doc.addImage(data,'JPEG',x,y,w,h,undefined,'FAST')}catch(_){}}
 async function pbPhasePdfExport(p,requested){
@@ -1062,7 +1062,7 @@ function buildPrintReport(){
     const page=document.createElement('section'); page.className='pdf-page';
     page.innerHTML=`<div class="pdf-header">
       <div>
-        <img class="pdf-company-logo" src="logo_ceramica.jpg?v=295905" alt="Ceramica Naturo">
+        <img class="pdf-company-logo" src="logo_ceramica.jpg?v=295907" alt="Ceramica Naturo">
         <div class="pdf-brand">CERAMICA NATURO · BAUDOKUMENTATION</div>
         <h1>${esc(p.name)}</h1>
         <div class="pdf-meta">
@@ -7999,13 +7999,19 @@ function pbRenderCustomerEditorV2958(workspace,editId){
   street.addEventListener('input',()=>{clearTimeout(addressTimer);const q=street.value.trim();if(q.length<3){suggestions.hidden=true;return}addressTimer=setTimeout(async()=>{try{controller?.abort();controller=new AbortController();const url='https://api3.geo.admin.ch/rest/services/api/SearchServer?type=locations&origins=address&limit=8&searchText='+encodeURIComponent(q);const json=await fetch(url,{signal:controller.signal}).then(r=>r.json());const items=(json.results||[]).map(x=>{const tmp=document.createElement('div');tmp.innerHTML=x.attrs?.label||x.attrs?.detail||'';const label=tmp.textContent.trim();const m=label.match(/^(.*?)(\d+[A-Za-z]?)\s*,?\s*(\d{4})\s+(.+?)(?:\s+[A-Z]{2})?$/);return{label,street:m?.[1]?.trim()||label,houseNo:m?.[2]||'',zip:m?.[3]||'',city:m?.[4]?.trim()||''}}).filter(x=>x.label);suggestions.innerHTML=items.map((x,i)=>`<button type="button" data-address-i="${i}">⌖ ${esc(x.label)}</button>`).join('');suggestions.hidden=!items.length;suggestions.querySelectorAll('[data-address-i]').forEach(btn=>btn.onclick=()=>{const x=items[Number(btn.dataset.addressI)];street.value=x.street;workspace.querySelector('[data-cf="houseNo"]').value=x.houseNo;workspace.querySelector('[data-cf="zip"]').value=x.zip;workspace.querySelector('[data-cf="city"]').value=x.city;suggestions.hidden=true})}catch(err){if(err.name!=='AbortError')suggestions.hidden=true}},280)});
   workspace.querySelectorAll('[data-customer-relation]').forEach(btn=>pbBindTap(btn,()=>{workspace.querySelectorAll('[data-customer-relation]').forEach(x=>x.classList.toggle('active',x===btn));pbRenderCustomerRelation(workspace,c,btn.dataset.customerRelation)}));
   if(customer)pbRenderCustomerRelation(workspace,customer,'projects');
-  pbBindTap(workspace.querySelector('[data-customer-save]'),()=>{
+  pbBindTap(workspace.querySelector('[data-customer-save]'),async()=>{
+    const saveButton=workspace.querySelector('[data-customer-save]');
     try{
+      saveButton.disabled=true;saveButton.textContent='Speichert …';
       const obj=customer||c;workspace.querySelectorAll('[data-cf]').forEach(el=>obj[el.dataset.cf]=el.value);const cp={};workspace.querySelectorAll('[data-contact]').forEach(el=>{if(el.dataset.contact!=='selection')cp[el.dataset.contact]=el.value});obj.contacts=[cp];obj.bank=obj.bank||{};workspace.querySelectorAll('[data-bank]').forEach(el=>obj.bank[el.dataset.bank]=el.value);workspace.querySelectorAll('[data-bank-check]').forEach(el=>obj.bank[el.dataset.bankCheck]=el.checked);
-      if(!pbCustomerName(obj)){alert('Bitte Name / Firma oder Vor- und Nachname eingeben.');workspace.querySelector('[data-cf="company"]')?.focus();return}
+      if(!pbCustomerName(obj)){alert('Bitte Name / Firma oder Vor- und Nachname eingeben.');workspace.querySelector('[data-cf="company"]')?.focus();saveButton.disabled=false;saveButton.textContent='✓ Kunde speichern';return}
       obj.fullAddress=[obj.street,obj.houseNo].filter(Boolean).join(' ')+(obj.zip||obj.city?`, ${[obj.zip,obj.city].filter(Boolean).join(' ')}`:'');obj.updatedAt=new Date().toISOString();obj.createdAt=obj.createdAt||obj.updatedAt;S.customers=Array.isArray(S.customers)?S.customers:[];if(!S.customers.some(x=>x.id===obj.id))S.customers.unshift(obj);
-      (S.projects||[]).filter(p=>p.customerId===obj.id).forEach(p=>pbApplyCustomerToProject(p,obj));save();const liveWorkspace=document.getElementById('pbModuleWorkspace');document.body.classList.add('pb-customer-mode');pbRenderCustomersWorkspace(liveWorkspace);liveWorkspace.classList.remove('hidden');pbActionToast('Kunde erfolgreich gespeichert.');
-    }catch(error){console.error('Kunde speichern',error);alert('Der Kunde konnte nicht gespeichert werden. Bitte Eingaben prüfen und erneut versuchen.')}
+      (S.projects||[]).filter(p=>p.customerId===obj.id).forEach(p=>pbApplyCustomerToProject(p,obj));
+      localStorage.setItem(K3,JSON.stringify(S));
+      await Promise.resolve(window.PBStorage?.saveState?.(S,{reason:'customer-save-295906'}));
+      try{window.ProjectBauOneDrive?.scheduleAutoSync?.('customer-save')}catch(_){ }
+      render();const liveWorkspace=document.getElementById('pbModuleWorkspace');document.body.classList.add('pb-customer-mode');pbRenderCustomersWorkspace(liveWorkspace);liveWorkspace.classList.remove('hidden');pbActionToast('Kunde dauerhaft gespeichert.');
+    }catch(error){console.error('Kunde speichern',error);saveButton.disabled=false;saveButton.textContent='✓ Kunde speichern';alert('Der Kunde konnte nicht gespeichert werden: '+(error?.message||'Unbekannter Fehler'))}
   });
   if(customer)pbBindTap(workspace.querySelector('[data-customer-delete]'),()=>{if(!confirm('Kunde wirklich löschen?'))return;S.customers=S.customers.filter(x=>x.id!==customer.id);save();pbRenderCustomersWorkspace(document.getElementById('pbModuleWorkspace'))});
 }

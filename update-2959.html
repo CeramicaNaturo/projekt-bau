@@ -9,8 +9,8 @@ const run=async()=>{
       sessionStorage.setItem('pb-worker-released-2959','yes');m.textContent='Eski sürüm kapatıldı. Temiz güncelleme oturumu açılıyor …';
       setTimeout(()=>location.replace('./update-2959.html?released=1&t='+Date.now()),800);return;
     }
-    sessionStorage.removeItem('pb-worker-released-2959');sessionStorage.setItem('pb-update-2959','295905');m.textContent='2.9.59 hazır. Uygulama şimdi yeniden açılıyor …';
-    setTimeout(()=>location.replace('./index.html?pb-version=2.9.59&v=295905&t='+Date.now()),900);
+    sessionStorage.removeItem('pb-worker-released-2959');sessionStorage.setItem('pb-update-2959','295907');m.textContent='2.9.59 hazır. Uygulama şimdi yeniden açılıyor …';
+    setTimeout(()=>location.replace('./index.html?pb-version=2.9.59&v=295907&t='+Date.now()),900);
   }catch(e){m.textContent='Güncelleme tamamlanamadı: '+e.message;retry.hidden=false}
 };document.getElementById('retry').onclick=run;run();
 </script></body></html>

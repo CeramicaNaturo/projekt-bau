@@ -3,7 +3,7 @@
   "short_name": "Projekt Bau",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f3f4f6",
-  "theme_color": "#111827",
+  "background_color": "#eef3f8",
+  "theme_color": "#075ea8",
   "icons": []
 }

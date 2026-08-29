@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827">
+<meta name="theme-color" content="#075ea8">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2951.css?v=295101">
+<link rel="stylesheet" href="styles_v2952.css?v=295207">
 </head>
 <body class="cad-app">
 
@@ -15,55 +15,68 @@
     <div class="cad-brand-mark">PB</div>
     <div>
       <strong>Projekt Bau</strong>
-      <small>Baudokumentation</small>
+      <small>ERP · Bauadministration</small>
     </div>
   </div>
 
-  <nav class="cad-nav">
+  <nav class="cad-nav" aria-label="Hauptmodule">
     <div class="cad-nav-section">ÜBERSICHT</div>
-    <button class="cad-nav-item active" data-scroll="#projects"><span class="nav-icon">⌂</span><span>Dashboard</span></button>
+    <button class="cad-nav-item active" data-scroll="#projects"><span class="nav-icon">⌂</span><span>Cockpit</span></button>
+    <button class="cad-nav-item" data-module="Berichte"><span class="nav-icon">▥</span><span>Berichte</span></button>
+    <button class="cad-nav-item" data-module="Aufgaben"><span class="nav-icon">✓</span><span>Aufgaben</span></button>
 
-    <div class="cad-nav-section">PROJEKT</div>
-    <button class="cad-nav-item" data-scroll="#projectEditFields"><span class="nav-icon">▤</span><span>Projektdetails</span></button>
-    <button class="cad-nav-item" data-scroll="#projectInformation"><span class="nav-icon">≡</span><span>Projektinformationen</span></button>
-    <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">▧</span><span>Räume / Bereiche</span></button>
+    <div class="cad-nav-section">VERKAUF &amp; PROJEKTE</div>
+    <button class="cad-nav-item" data-scroll="#projects"><span class="nav-icon">♙</span><span>Kunden</span></button>
+    <button class="cad-nav-item" data-scroll="#projects"><span class="nav-icon">▤</span><span>Projekte</span></button>
+    <button class="cad-nav-item" data-module="Projekt Aufgaben"><span class="nav-icon">☑</span><span>Projekt Aufgaben</span></button>
+    <button class="cad-nav-item" data-module="Einsatzplanung"><span class="nav-icon">▦</span><span>Einsatzplanung</span></button>
+    <button class="cad-nav-item" data-module="Offerten"><span class="nav-icon">CHF</span><span>Offerten</span></button>
+    <button class="cad-nav-item" data-module="Aufträge"><span class="nav-icon">↗</span><span>Aufträge</span></button>
+    <button class="cad-nav-item" data-module="Meine Aufträge"><span class="nav-icon">★</span><span>Meine Aufträge</span></button>
+
+    <div class="cad-nav-section">BAUSTELLE</div>
+    <button class="cad-nav-item" data-module="Regieberichte"><span class="nav-icon">R</span><span>Regieberichte</span></button>
+    <button class="cad-nav-item" data-module="Bautagebücher"><span class="nav-icon">▣</span><span>Bautagebücher</span></button>
     <button class="cad-nav-item" data-scroll="#plattenlegerCockpit"><span class="nav-icon">↔</span><span>Aufmass</span></button>
-    <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">☑</span><span>Arbeiten</span></button>
 
-    <div class="cad-nav-section">FLIESEN</div>
-    <button class="cad-nav-item" data-scroll="#tileLibrary"><span class="nav-icon">▦</span><span>Fliesen</span></button>
-    <button class="cad-nav-item" data-scroll="#tileLibrary"><span class="nav-icon">◇</span><span>Fugen / Silikon</span></button>
-    <button class="cad-nav-item" data-scroll="#tileLibrary"><span class="nav-icon">▥</span><span>Verlegeart</span></button>
-    <button class="cad-nav-item" data-scroll="#tileLibrary"><span class="nav-icon">Σ</span><span>Materialbedarf</span></button>
-
-    <div class="cad-nav-section">GRUNDRISS</div>
+    <div class="cad-nav-section">CAD &amp; DOKUMENTATION</div>
     <button class="cad-nav-item" data-scroll=".project-floorplans"><span class="nav-icon">⌗</span><span>Grundrisse</span></button>
-    <button class="cad-nav-item" id="cadNewFloorplan"><span class="nav-icon">⊕</span><span>Grundriss erstellen</span></button>
-
-    <div class="cad-nav-section">FOTOS</div>
+    <button class="cad-nav-item" id="cadNewFloorplan"><span class="nav-icon">⊕</span><span>2D / 3D CAD</span></button>
     <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">▧</span><span>Baustellenfotos</span></button>
     <button class="cad-nav-item" id="cadPdfReport"><span class="nav-icon">▤</span><span>Foto-Berichte</span></button>
 
-    <div class="cad-nav-section">AUSWERTUNG</div>
-    <button class="cad-nav-item" data-scroll="#tileLibrary"><span class="nav-icon">CHF</span><span>Material</span></button>
-    <button class="cad-nav-item" data-scroll="#areas"><span class="nav-icon">◷</span><span>Arbeitsaufwand</span></button>
+    <div class="cad-nav-section">FINANZEN</div>
+    <button class="cad-nav-item" data-module="Rechnungen"><span class="nav-icon">₣</span><span>Rechnungen</span></button>
+    <button class="cad-nav-item" data-module="Zeiterfassung / Arbeitszeiten"><span class="nav-icon">◷</span><span>Arbeitszeiten</span></button>
+    <button class="cad-nav-item" data-module="Zahlungen"><span class="nav-icon">✓</span><span>Zahlungen</span></button>
+    <button class="cad-nav-item" data-module="Verträge"><span class="nav-icon">§</span><span>Verträge</span></button>
+    <div class="cad-nav-section">STAMMDATEN</div>
+    <button class="cad-nav-item" data-module="Bestand"><span class="nav-icon">▦</span><span>Bestand</span></button>
+    <button class="cad-nav-item" data-scroll="#tileLibrary"><span class="nav-icon">◇</span><span>Materialien</span></button>
+    <button class="cad-nav-item" data-module="Leistungen"><span class="nav-icon">Σ</span><span>Leistungen</span></button>
+    <button class="cad-nav-item" data-module="Lieferanten"><span class="nav-icon">↔</span><span>Lieferanten</span></button>
+    <button class="cad-nav-item" data-module="Mitarbeiter"><span class="nav-icon">♟</span><span>Mitarbeiter</span></button>
+    <button class="cad-nav-item" data-module="Textbausteine"><span class="nav-icon">T</span><span>Textbausteine</span></button>
+    <button class="cad-nav-item" data-module="Formular Editor"><span class="nav-icon">✎</span><span>Formular Editor</span></button>
 
     <div class="cad-nav-section">EINSTELLUNGEN</div>
     <button class="cad-nav-item" data-scroll="#oneDrivePanel" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
+    <button class="cad-nav-item" data-module="Hilfe"><span class="nav-icon">?</span><span>Hilfe</span></button>
   </nav>
 
   <div class="cad-sidebar-recovery">
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.51 PRO Plattenleger</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.52 PRO CLEAN</strong></div>
 </aside>
 
 <header class="cad-topbar">
   <div class="cad-topbar-title">
     <span>Projekt Bau</span>
-    <small>Professionelle Baudokumentation</small>
+    <small>ERP / CRM · de-CH</small>
   </div>
+  <div class="cad-global-search"><input id="pbGlobalSearch" type="search" placeholder="Projekte, Kunden oder Module suchen …" aria-label="Globale Suche"></div>
   <div class="cad-topbar-actions">
     <button class="secondary" id="cadSaveProject">Speichern</button>
     <button class="primary" id="cadPdfReportTop">PDF-Bericht erstellen</button>
@@ -72,13 +85,14 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.9.1 PRO</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.9.52 PRO CLEAN</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
 </header>
 
 <main class="wrap cad-main">
+<section id="pbModuleWorkspace" class="card pb-module-workspace hidden" aria-live="polite"></section>
 <section class="card editor">
   <div class="title"><h2>Neues Projekt</h2><span class="pill">PDF-Bericht · Foto & Galerie</span></div>
   <div class="grid">
@@ -401,7 +415,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.9.51 PRO Plattenleger</span>
+    <span class="pro-version">v2.9.52 PRO CLEAN</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -1042,7 +1056,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=295101"></script>
+<script src="storage_bridge_v2942.js?v=295207"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1060,19 +1074,19 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2951.js?v=295101');
+    await loadScript('app_v2952.js?v=295207');
     await loadScript('pro_core.js?v=29901');
     await loadScript('abdichtung_core.js?v=29901');
-    await loadScript('photo_editor_v2942.js?v=295101');
+    await loadScript('photo_editor_v2942.js?v=295207');
     try{
       await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-      await loadScript('onedrive_sync_v2942.js?v=295101');
+      await loadScript('onedrive_sync_v2942.js?v=295207');
     }catch(cloudError){
       console.warn('OneDrive ist momentan nicht verfügbar; CAD und lokale Projektdaten bleiben nutzbar.',cloudError);
     }
 
     // Three.js module can initialize independently after storage/app boot.
-    try{await loadScript('three_viewer_v2951.js?v=295101','module')}
+    try{await loadScript('three_viewer_v2952.js?v=295207','module')}
     catch(viewError){console.warn('3D-Modul konnte nicht geladen werden; 2D CAD bleibt nutzbar.',viewError)}
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
@@ -1095,9 +1109,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2951.js?v=295101')) await reg.unregister();
+      if(url && !url.includes('sw_v2952.js?v=295207')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2951.js?v=295101',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2952.js?v=295207',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#075ea8">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2960.css?v=296001">
+<link rel="stylesheet" href="styles_v2961.css?v=296101">
 </head>
 <body class="cad-app">
 
@@ -68,7 +68,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.60 PRO CLEAN</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.61 PRO CLEAN</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -85,7 +85,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.9.60 PRO CLEAN</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.9.61 PRO CLEAN</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -420,7 +420,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.9.60 PRO CLEAN</span>
+    <span class="pro-version">v2.9.61 PRO CLEAN</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -1061,7 +1061,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=296001"></script>
+<script src="storage_bridge_v2942.js?v=296101"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1079,19 +1079,19 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2960.js?v=296001');
-    await loadScript('pro_core.js?v=296001');
-    await loadScript('abdichtung_core.js?v=296001');
-    await loadScript('photo_editor_v2942.js?v=296001');
+    await loadScript('app_v2961.js?v=296101');
+    await loadScript('pro_core.js?v=296101');
+    await loadScript('abdichtung_core.js?v=296101');
+    await loadScript('photo_editor_v2942.js?v=296101');
     try{
       await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-      await loadScript('onedrive_sync_v2942.js?v=296001');
+      await loadScript('onedrive_sync_v2942.js?v=296101');
     }catch(cloudError){
       console.warn('OneDrive ist momentan nicht verfügbar; CAD und lokale Projektdaten bleiben nutzbar.',cloudError);
     }
 
     // Three.js module can initialize independently after storage/app boot.
-    try{await loadScript('three_viewer_v2960.js?v=296001','module')}
+    try{await loadScript('three_viewer_v2961.js?v=296101','module')}
     catch(viewError){console.warn('3D-Modul konnte nicht geladen werden; 2D CAD bleibt nutzbar.',viewError)}
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
@@ -1114,9 +1114,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2960.js?v=296001')) await reg.unregister();
+      if(url && !url.includes('sw_v2961.js?v=296101')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2960.js?v=296001',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2961.js?v=296101',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

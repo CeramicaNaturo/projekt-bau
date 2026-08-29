@@ -130,6 +130,7 @@
   function mergeStates(states){
     const map=new Map();
     const customerMap=new Map();
+    const collections=new Map();
     let shell={};
     for(const st of states){
       if(!validState(st)) continue;
@@ -153,8 +154,22 @@
         const nextTime=Date.parse(customer.updatedAt||customer.createdAt||'')||0;
         customerMap.set(sig,clone(nextTime>=previousTime?{...previous,...customer}:{...customer,...previous}));
       }
+      for(const [key,value] of Object.entries(st)){
+        if(key==='projects'||key==='customers'||!Array.isArray(value))continue;
+        if(!collections.has(key))collections.set(key,new Map());const bucket=collections.get(key);
+        for(const item of value){
+          let sig='';
+          if(item&&typeof item==='object')sig=String(item.id||item.uuid||item.number||item.no||item.key||item.name||'');
+          if(!sig){try{sig=JSON.stringify(item)}catch(_){sig=String(item)}}
+          if(!bucket.has(sig)){bucket.set(sig,clone(item));continue}
+          if(item&&typeof item==='object'){
+            const old=bucket.get(sig),a=Date.parse(old?.updatedAt||old?.createdAt||'')||0,b=Date.parse(item.updatedAt||item.createdAt||'')||0;
+            bucket.set(sig,clone(b>=a?{...old,...item}:{...item,...old}));
+          }
+        }
+      }
     }
-    return {
+    const result={
       ...shell,
       projects:[...map.values()],
       customers:[...customerMap.values()],
@@ -164,6 +179,8 @@
         migratedAt:new Date().toISOString()
       }
     };
+    for(const [key,bucket] of collections)result[key]=[...bucket.values()];
+    return result;
   }
 
   function openDb(){

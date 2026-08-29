@@ -336,6 +336,20 @@
     };
     (localState?.customers||[]).forEach(addCustomer);(remoteState?.customers||[]).forEach(addCustomer);
     const merged={...clone(remoteState||{}),...clone(localState||{}),projects:[...map.values()],customers:[...customerMap.values()]};
+    const keys=new Set([...Object.keys(remoteState||{}),...Object.keys(localState||{})]);
+    for(const key of keys){
+      if(key==='projects'||key==='customers')continue;
+      const localValue=localState?.[key],remoteValue=remoteState?.[key];
+      if(Array.isArray(localValue)||Array.isArray(remoteValue)){
+        const bucket=new Map();
+        for(const item of [...(Array.isArray(remoteValue)?remoteValue:[]),...(Array.isArray(localValue)?localValue:[])]){
+          let sig='';if(item&&typeof item==='object')sig=String(item.id||item.uuid||item.number||item.no||item.key||item.name||'');if(!sig){try{sig=JSON.stringify(item)}catch(_){sig=String(item)}}
+          if(!bucket.has(sig)){bucket.set(sig,clone(item));continue}
+          if(item&&typeof item==='object'){const old=bucket.get(sig),a=isoMs(old?.updatedAt||old?.createdAt),b=isoMs(item.updatedAt||item.createdAt);bucket.set(sig,clone(b>=a?{...old,...item}:{...item,...old}))}
+        }
+        merged[key]=[...bucket.values()];
+      }else if(localValue&&remoteValue&&typeof localValue==='object'&&typeof remoteValue==='object')merged[key]={...clone(remoteValue),...clone(localValue)};
+    }
     merged.meta={...(remoteState?.meta||{}),...(localState?.meta||{})};
     writeSync({...localSync,tombstones:tomb,lastMergeAt:new Date().toISOString()});
     return merged;

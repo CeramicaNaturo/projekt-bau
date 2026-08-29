@@ -1,1 +1,16 @@
-<!doctype html><html lang="de-CH"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Projekt Bau v2.9.59</title></head><body style="font-family:Segoe UI,Arial,sans-serif;padding:30px"><h2>Projekt Bau v2.9.59 PRO CLEAN</h2><p id="m">Aktualisierung …</p><script>(async()=>{try{for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();for(const k of await caches.keys())if(k.startsWith('projekt-bau-'))await caches.delete(k);}catch(e){}document.getElementById('m').textContent='Fertig. Kundenmaske, Dokumentverknüpfungen und Zahlungsziel werden geladen …';setTimeout(()=>location.replace('index.html?v=295904&u='+Date.now()),600)})();</script></body></html>
+<!doctype html><html lang="de-CH"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate"><title>Projekt Bau v2.9.59 aktualisieren</title><style>body{font-family:Segoe UI,Arial,sans-serif;display:grid;place-items:center;min-height:80vh;background:#f3f6fa;color:#13263a}.box{width:min(520px,calc(100% - 40px));padding:28px;border:1px solid #d9e3ed;border-radius:14px;background:#fff}.bar{height:8px;border-radius:99px;background:#e3edf6;overflow:hidden}.bar i{display:block;width:35%;height:100%;background:#0870c6;animation:p 1s infinite alternate}@keyframes p{to{transform:translateX(190%)}}button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;background:#075ea8;color:#fff;font-weight:700}</style></head><body><main class="box"><h2>Projekt Bau 2.9.59 PRO CLEAN</h2><p id="m">Eski önbellek temizleniyor ve yeni sürüm hazırlanıyor …</p><div class="bar"><i></i></div><button type="button" id="retry" hidden>Erneut versuchen</button></main><script>
+const run=async()=>{
+  const m=document.getElementById('m'),retry=document.getElementById('retry');retry.hidden=true;
+  try{
+    const controlled='serviceWorker'in navigator&&!!navigator.serviceWorker.controller;
+    if('serviceWorker'in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}
+    if('caches'in window){const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith('projekt-bau-')).map(k=>caches.delete(k)))}
+    if(controlled&&sessionStorage.getItem('pb-worker-released-2959')!=='yes'){
+      sessionStorage.setItem('pb-worker-released-2959','yes');m.textContent='Eski sürüm kapatıldı. Temiz güncelleme oturumu açılıyor …';
+      setTimeout(()=>location.replace('./update-2959.html?released=1&t='+Date.now()),800);return;
+    }
+    sessionStorage.removeItem('pb-worker-released-2959');sessionStorage.setItem('pb-update-2959','295905');m.textContent='2.9.59 hazır. Uygulama şimdi yeniden açılıyor …';
+    setTimeout(()=>location.replace('./index.html?pb-version=2.9.59&v=295905&t='+Date.now()),900);
+  }catch(e){m.textContent='Güncelleme tamamlanamadı: '+e.message;retry.hidden=false}
+};document.getElementById('retry').onclick=run;run();
+</script></body></html>

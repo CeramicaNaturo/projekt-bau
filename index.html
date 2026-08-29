@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#075ea8">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2955.css?v=295510">
+<link rel="stylesheet" href="styles_v2956.css?v=295601">
 </head>
 <body class="cad-app">
 
@@ -68,7 +68,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.55 PRO CLEAN</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.56 PRO CLEAN</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -85,7 +85,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.9.55 PRO CLEAN</div>
+    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.9.56 PRO CLEAN</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -142,7 +142,7 @@
     <div id="plattenlegerPhaseContent" class="plattenleger-phase-content"></div>
     <div class="plattenleger-grid">
       <div class="plattenleger-form">
-        <label>Projektphase<select id="plProjectPhase"><option value="anfrage">Anfrage</option><option value="aufmass">Aufmass</option><option value="offerte">Offerte</option><option value="vorbereitung">Arbeitsvorbereitung</option><option value="ausfuehrung">Ausführung</option><option value="abnahme">Abnahme</option><option value="abgeschlossen">Abgeschlossen</option></select></label>
+        <label>Projektphase<select id="plProjectPhase"><option value="anfrage">Anfrage</option><option value="aufmass">Aufmass</option><option value="offerte">Offerte</option><option value="auftrag">Auftrag</option><option value="vorbereitung">Arbeitsvorbereitung</option><option value="ausfuehrung">Ausführung</option><option value="abnahme">Abnahme</option><option value="abgeschlossen">Abgeschlossen</option></select></label>
         <label>Objektart<select id="plObjectType"><option>Badumbau</option><option>WC-Umbau</option><option>Dusche</option><option>Neubau</option><option>Küche</option><option>Sonstiges</option></select></label>
         <label>Baustart<input id="plConstructionStart" type="date"></label>
         <label>Geplante Abnahme<input id="plAcceptanceDate" type="date"></label>
@@ -253,6 +253,9 @@
 </section>
 
 <section class="card editor onedrive-card" id="oneDrivePanel">
+  <details class="pb-onedrive-collapse">
+  <summary>☁ OneDrive Cloud-Sicherung</summary>
+  <div class="pb-onedrive-details">
   <div class="title">
     <div>
       <div class="eyebrow">CLOUD-SICHERUNG</div>
@@ -320,6 +323,8 @@
       <li>Microsoft Graph delegated permission <code>Files.ReadWrite</code> hinzufügen.</li>
       <li>Die Application (Client) ID oben eintragen. <strong>Kein Client Secret</strong> in Projekt Bau eintragen.</li>
     </ol>
+  </details>
+  </div>
   </details>
 </section>
 </main>
@@ -415,7 +420,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.9.55 PRO CLEAN</span>
+    <span class="pro-version">v2.9.56 PRO CLEAN</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -1056,7 +1061,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=295510"></script>
+<script src="storage_bridge_v2942.js?v=295601"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1074,19 +1079,19 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2955.js?v=295510');
+    await loadScript('app_v2956.js?v=295601');
     await loadScript('pro_core.js?v=29901');
     await loadScript('abdichtung_core.js?v=29901');
-    await loadScript('photo_editor_v2942.js?v=295510');
+    await loadScript('photo_editor_v2942.js?v=295601');
     try{
       await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-      await loadScript('onedrive_sync_v2942.js?v=295510');
+      await loadScript('onedrive_sync_v2942.js?v=295601');
     }catch(cloudError){
       console.warn('OneDrive ist momentan nicht verfügbar; CAD und lokale Projektdaten bleiben nutzbar.',cloudError);
     }
 
     // Three.js module can initialize independently after storage/app boot.
-    try{await loadScript('three_viewer_v2955.js?v=295510','module')}
+    try{await loadScript('three_viewer_v2956.js?v=295601','module')}
     catch(viewError){console.warn('3D-Modul konnte nicht geladen werden; 2D CAD bleibt nutzbar.',viewError)}
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
@@ -1109,9 +1114,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2955.js?v=295510')) await reg.unregister();
+      if(url && !url.includes('sw_v2956.js?v=295601')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2955.js?v=295510',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2956.js?v=295601',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

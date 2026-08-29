@@ -522,7 +522,7 @@ const PB_PDF_PHASES=[['aufmass','Aufmass'],['offerte','Offerte'],['auftrag','Auf
 let pbBrandLogoCache=null;
 async function pbBrandLogoData(){
   if(pbBrandLogoCache)return pbBrandLogoCache;
-  try{const blob=await fetch('./logo_ceramica.jpg?v=295907').then(r=>r.blob());pbBrandLogoCache=await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(blob)});return pbBrandLogoCache}catch(_){return null}
+  try{const blob=await fetch('./logo_ceramica.jpg?v=295908').then(r=>r.blob());pbBrandLogoCache=await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(blob)});return pbBrandLogoCache}catch(_){return null}
 }
 function pbAddBrandLogo(doc,data,x=16,y=7,w=56){if(!data)return;try{const props=doc.getImageProperties(data),h=w*props.height/props.width;doc.addImage(data,'JPEG',x,y,w,h,undefined,'FAST')}catch(_){}}
 async function pbPhasePdfExport(p,requested){
@@ -1062,7 +1062,7 @@ function buildPrintReport(){
     const page=document.createElement('section'); page.className='pdf-page';
     page.innerHTML=`<div class="pdf-header">
       <div>
-        <img class="pdf-company-logo" src="logo_ceramica.jpg?v=295907" alt="Ceramica Naturo">
+        <img class="pdf-company-logo" src="logo_ceramica.jpg?v=295908" alt="Ceramica Naturo">
         <div class="pdf-brand">CERAMICA NATURO · BAUDOKUMENTATION</div>
         <h1>${esc(p.name)}</h1>
         <div class="pdf-meta">

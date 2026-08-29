@@ -256,6 +256,7 @@
         lastBackupIso:new Date().toISOString(),
         remoteInfo:`${info.name||BACKUP_FILE} · ${bytes(info.size||size)}`,
         remoteModified:info.lastModifiedDateTime||null,
+        remoteETag:info.eTag||null,
         lastReason:reason
       });
       syncUi();
@@ -263,14 +264,18 @@
       return true;
     }catch(e){
       console.error('OneDrive upload',e);
-      setStatus(`OneDrive-Fehler: ${e.message}`,'error');
-      if(!silent)alert(`OneDrive-Sicherung fehlgeschlagen:\n${e.message}`);
+      if(e.status===412){
+        if(!silent)setStatus('Cloud-Datei wurde zwischenzeitlich geändert. Daten werden neu zusammengeführt …','working');
+      }else if(!silent){
+        setStatus(`OneDrive-Fehler: ${e.message}`,'error');
+        alert(`OneDrive-Sicherung fehlgeschlagen:\n${e.message}`);
+      }
       return false;
     }finally{
       uploadRunning=false;
       if(uploadAgain){
         uploadAgain=false;
-        setTimeout(()=>uploadBackup({silent:true,reason:'queued'}),500);
+        setTimeout(()=>syncNow({silent:true,reason:'queued-upload'}),500);
       }
     }
   }
@@ -321,8 +326,19 @@
     };
     for(const p of (localState?.projects||[]))add(p,'local');
     for(const p of (remoteState?.projects||[]))add(p,'remote');
+    const customerMap=new Map();
+    const addCustomer=customer=>{
+      if(!customer||typeof customer!=='object')return;
+      const id=String(customer.id||customer.number||`${customer.company||''}|${customer.email||''}|${customer.phone||''}`);if(!id)return;
+      const old=customerMap.get(id);if(!old){customerMap.set(id,clone(customer));return}
+      const a=isoMs(old.updatedAt||old.createdAt),b=isoMs(customer.updatedAt||customer.createdAt);
+      customerMap.set(id,clone(b>=a?{...old,...customer}:{...customer,...old}));
+    };
+    (localState?.customers||[]).forEach(addCustomer);(remoteState?.customers||[]).forEach(addCustomer);
+    const merged={...clone(remoteState||{}),...clone(localState||{}),projects:[...map.values()],customers:[...customerMap.values()]};
+    merged.meta={...(remoteState?.meta||{}),...(localState?.meta||{})};
     writeSync({...localSync,tombstones:tomb,lastMergeAt:new Date().toISOString()});
-    return {projects:[...map.values()]};
+    return merged;
   }
 
   async function syncNow({silent=true,reason='auto'}={}){
@@ -496,7 +512,7 @@
       }
     });
     el('odDisconnect')?.addEventListener('click',disconnect);
-    el('odBackupNow')?.addEventListener('click',()=>uploadBackup({reason:'manual'}));
+    el('odBackupNow')?.addEventListener('click',()=>syncNow({silent:false,reason:'manual'}));
     el('odRestore')?.addEventListener('click',restoreBackup);
     el('odRefresh')?.addEventListener('click',()=>refreshRemoteInfo(true));
     el('odAutoSync')?.addEventListener('change',saveSettings);

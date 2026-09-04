@@ -6,13 +6,13 @@
 <meta name="theme-color" content="#075ea8">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2971.css?v=297101">
+<link rel="stylesheet" href="styles_v2972.css?v=297201">
 </head>
 <body class="cad-app pb-auth-locked">
 
 <div id="pbAuthGate" class="pb-auth-gate" aria-hidden="false">
   <div class="pb-auth-card">
-    <div class="pb-auth-brand"><img src="logo_ceramica.jpg?v=297101" alt="Ceramica Naturo"><div><strong>Projekt Bau</strong><span>Sichere lokale Anmeldung</span></div></div>
+    <div class="pb-auth-brand"><img src="logo_ceramica.jpg?v=297201" alt="Ceramica Naturo"><div><strong>Projekt Bau</strong><span>Sichere lokale Anmeldung</span></div></div>
     <div id="pbAuthLogin" class="pb-auth-panel hidden">
       <h1>Anmelden</h1><p>Mit E-Mail-Adresse und Passwort anmelden.</p>
       <label>E-Mail-Adresse<input id="pbLoginEmail" type="email" autocomplete="username" inputmode="email"></label>
@@ -107,7 +107,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.71 PRO CLEAN</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.72 PRO CLEAN</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -125,7 +125,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJEKT-DOKUMENTATION · v2.9.71 PRO CLEAN</div>
+    <div class="eyebrow">BAUPROJEKT-DOKUMENTATION · v2.9.72 PRO CLEAN</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -217,8 +217,8 @@
     <div id="plattenlegerChecks" class="plattenleger-checks"></div>
   </section>
 
-  <div id="projectEditFields" class="editor project-edit-fields">
-    <div class="title"><h3>Projektdetails bearbeiten</h3><button id="saveProjectDetails" type="button" class="primary">Änderungen speichern</button></div>
+  <div id="projectEditFields" class="editor project-edit-fields pb-baudokumentation-panel hidden">
+    <div class="title"><div><div class="eyebrow">BAUDOKUMENTATION</div><h3>Projektdetails</h3></div><div class="pb-baudoc-actions"><button id="closeBaudokumentation" type="button" class="secondary">Schliessen</button><button id="saveProjectDetails" type="button" class="primary">Änderungen speichern</button></div></div>
     <div class="grid compact">
       <label>Projektname<input id="editProjectName"></label><label>Adresse<input id="editProjectAddress"></label>
       <label>Kunde / Firma<select id="editProjectCustomer"></select></label><label>Telefon<input id="editProjectPhone"></label>
@@ -474,7 +474,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.9.71 PRO CLEAN</span>
+    <span class="pro-version">v2.9.72 PRO CLEAN</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -1115,7 +1115,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=297101"></script>
+<script src="storage_bridge_v2942.js?v=297201"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1131,22 +1131,22 @@
 
   try{
     await window.PBStorage.ready;
-    await loadScript('auth_core.js?v=297101');
+    await loadScript('auth_core.js?v=297201');
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2971.js?v=297101');
-    await loadScript('pro_core.js?v=297101');
-    await loadScript('abdichtung_core.js?v=297101');
-    await loadScript('photo_editor_v2942.js?v=297101');
+    await loadScript('app_v2972.js?v=297201');
+    await loadScript('pro_core.js?v=297201');
+    await loadScript('abdichtung_core.js?v=297201');
+    await loadScript('photo_editor_v2942.js?v=297201');
     try{
       await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-      await loadScript('onedrive_sync_v2942.js?v=297101');
+      await loadScript('onedrive_sync_v2942.js?v=297201');
     }catch(cloudError){
       console.warn('OneDrive ist momentan nicht verfügbar; CAD und lokale Projektdaten bleiben nutzbar.',cloudError);
     }
 
     // Three.js module can initialize independently after storage/app boot.
-    try{await loadScript('three_viewer_v2971.js?v=297101','module')}
+    try{await loadScript('three_viewer_v2972.js?v=297201','module')}
     catch(viewError){console.warn('3D-Modul konnte nicht geladen werden; 2D CAD bleibt nutzbar.',viewError)}
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
@@ -1169,9 +1169,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2971.js?v=297101')) await reg.unregister();
+      if(url && !url.includes('sw_v2972.js?v=297201')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2971.js?v=297101',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2972.js?v=297201',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

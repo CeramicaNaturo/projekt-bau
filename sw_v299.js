@@ -1,5 +1,0 @@
-const CACHE='projekt-bau-v29901';
-const ASSETS=['./index.html?v=29901','./styles_v299.css?v=29901','./storage_bridge_v299.js?v=29901','./app_v299.js?v=29901','./onedrive_sync_v299.js?v=29901','./pro_core.js?v=29901','./abdichtung_core.js?v=29901','./photo_editor_v299.js?v=29901','./manifest.webmanifest','./three_viewer.js?v=29901'];
-self.addEventListener('install',e=>e.waitUntil((async()=>{const c=await caches.open(CACHE);await c.addAll(ASSETS);await self.skipWaiting();})()));
-self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const k of await caches.keys())if(k!==CACHE)await caches.delete(k);await self.clients.claim();})()));
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.hostname.includes('microsoftonline.com')||u.hostname.includes('graph.microsoft.com'))return;const doc=e.request.mode==='navigate'||e.request.destination==='document';if(doc){e.respondWith(fetch(e.request,{cache:'no-store'}).catch(()=>caches.match('./index.html?v=29901')));return;}e.respondWith(caches.match(e.request).then(x=>x||fetch(e.request,{cache:'no-store'})));});

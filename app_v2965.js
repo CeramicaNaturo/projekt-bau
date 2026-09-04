@@ -1,4 +1,4 @@
-
+﻿
 const K3='projekt-bau-v03',K2='projekt-bau-v02';
 
 function pbValidState(v){
@@ -168,7 +168,7 @@ function pbMigrateProject2946(p){
   if(statuses.some(s=>s.includes('arbeit')))inferredPhase='ausfuehrung';
   if(statuses.length&&statuses.every(s=>s.includes('abgeschlossen')))inferredPhase='abnahme';
   if(photos.some(ph=>String(ph.kind||'').toLowerCase()==='nachher')&&statuses.every(s=>s.includes('abgeschlossen')))inferredPhase='abnahme';
-  const objectType=/\bwc\b|toilet/.test(allText)?'WC-Umbau':/küche|kueche/.test(allText)?'Küche':/dusche/.test(allText)&&!/bad/.test(allText)?'Dusche':/bad|badezimmer|wanne/.test(allText)?'Badumbau':'Badumbau';
+  const objectType=/\bwc\b|toilet/.test(allText)?'WC-Umbau':/kÃ¼che|kueche/.test(allText)?'KÃ¼che':/dusche/.test(allText)&&!/bad/.test(allText)?'Dusche':/bad|badezimmer|wanne/.test(allText)?'Badumbau':'Badumbau';
   const old=p.plattenleger&&typeof p.plattenleger==='object'?p.plattenleger:{};
   p.plattenleger={...old,
     phase:old.phase||inferredPhase,objectType:old.objectType||objectType,constructionStart:old.constructionStart||p.startDate||'',
@@ -228,12 +228,12 @@ function save(){
 function cur(){return S.projects.find(p=>p.id===A)}
 function formatCHF(value){
   const n=Number(value); if(!Number.isFinite(n)) return '-';
-  const p=n.toFixed(2).split('.'); p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,'’');
+  const p=n.toFixed(2).split('.'); p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,'â€™');
   return `CHF ${p[0]}.${p[1]}`;
 }
 function formatCHNumber(value,decimals=2){
   const n=Number(value); if(!Number.isFinite(n)) return '-';
-  const p=n.toFixed(decimals).split('.'); p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,'’');
+  const p=n.toFixed(decimals).split('.'); p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,'â€™');
   return p.join('.');
 }
 
@@ -265,7 +265,7 @@ function pbApplyCustomerToProject(p,c){
     (S.invoices||[]).filter(invoice=>invoice.customerId===c?.id||invoice.projectId===p.id).forEach(invoice=>{invoice.paymentDays=paymentDays;invoice.paymentTermDays=paymentDays});
   }
 }
-function pbCustomerOptions(selected=''){pbEnsureCustomerRecords();return `<option value="">Kunde auswählen …</option>`+S.customers.map(c=>`<option value="${esc(c.id)}" ${c.id===selected?'selected':''}>${esc(c.number||'')} · ${esc(pbCustomerName(c))}</option>`).join('')}
+function pbCustomerOptions(selected=''){pbEnsureCustomerRecords();return `<option value="">Kunde auswÃ¤hlen â€¦</option>`+S.customers.map(c=>`<option value="${esc(c.id)}" ${c.id===selected?'selected':''}>${esc(c.number||'')} Â· ${esc(pbCustomerName(c))}</option>`).join('')}
 
 $('create').onclick=()=>{
   if(!$('name').value.trim())return alert('Projektname ist erforderlich.');
@@ -274,7 +274,7 @@ $('create').onclick=()=>{
 };
 function pbSaveProjectDetails(){
   const p=cur();
-  if(!p){alert('Kein Projekt geöffnet.');return false;}
+  if(!p){alert('Kein Projekt geÃ¶ffnet.');return false;}
   const name=$('editProjectName')?.value?.trim()||'';
   if(!name){alert('Projektname ist erforderlich.');$('editProjectName')?.focus();return false;}
   p.name=name;
@@ -291,7 +291,7 @@ function pbSaveProjectDetails(){
 }
 function pbAddArea(){
   const p=cur();
-  if(!p){alert('Kein Projekt geöffnet.');return false;}
+  if(!p){alert('Kein Projekt geÃ¶ffnet.');return false;}
   const n=$('areaName')?.value?.trim()||'';
   if(!n){alert('Bitte zuerst einen Bereichsnamen eingeben.');$('areaName')?.focus();return false;}
   p.areas=p.areas||[];
@@ -299,16 +299,16 @@ function pbAddArea(){
   $('areaName').value='';
   p.updatedAt=new Date().toISOString();
   save();
-  pbActionToast('Bereich hinzugefügt.');
+  pbActionToast('Bereich hinzugefÃ¼gt.');
   return true;
 }
 function pbDeleteProject(){
   const p=cur();
-  if(!p){alert('Kein Projekt geöffnet.');return false;}
-  if(!confirm(`Projekt „${p.name||''}“ wirklich löschen?`))return false;
+  if(!p){alert('Kein Projekt geÃ¶ffnet.');return false;}
+  if(!confirm(`Projekt â€ž${p.name||''}â€œ wirklich lÃ¶schen?`))return false;
   try{window.ProjectBauOneDrive?.recordProjectDeletion?.(p.id)}catch(_){}
   S.projects=S.projects.filter(x=>x.id!==p.id);A=null;save();
-  pbActionToast('Projekt gelöscht.');
+  pbActionToast('Projekt gelÃ¶scht.');
   return true;
 }
 function pbActionToast(message){
@@ -335,7 +335,7 @@ function pbNavigateToProject(projectId,phase=''){
 
 function pbSaveProjectInformation(){
   const p=cur();
-  if(!p){alert('Kein Projekt geöffnet.');return false;}
+  if(!p){alert('Kein Projekt geÃ¶ffnet.');return false;}
   p.projectInformation=$('projectInformationText')?.value||'';
   p.updatedAt=new Date().toISOString();
   save();
@@ -350,7 +350,7 @@ pbBindTap($('savePlattenlegerCockpit'),savePlattenlegerCockpit);
 pbBindTap($('addArea'),pbAddArea);
 pbBindTap($('deleteProject'),pbDeleteProject);
 pbBindTap($('openProjectCalendar'),()=>{
-  const p=cur();if(!p){alert('Kein Projekt geöffnet.');return}
+  const p=cur();if(!p){alert('Kein Projekt geÃ¶ffnet.');return}
   const workspace=document.getElementById('pbModuleWorkspace');if(!workspace)return;
   document.body.classList.remove('pb-customer-mode','pb-shell-focus');document.body.classList.add('pb-module-mode');
   document.querySelectorAll('.cad-main>section').forEach(x=>x.classList.remove('pb-shell-visible'));
@@ -359,7 +359,7 @@ pbBindTap($('openProjectCalendar'),()=>{
 });
 $('workerView').onclick=()=>document.body.classList.toggle('worker-mode');
 $('backup').onclick=()=>{let a=document.createElement('a'),b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});a.href=URL.createObjectURL(b);a.download='ProjektBau_Sicherung.json';a.click()};
-$('restore').onchange=async e=>{try{let d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d.projects))throw 0;S=d;A=null;save()}catch{alert('Ungültige Sicherungsdatei.')}};
+$('restore').onchange=async e=>{try{let d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d.projects))throw 0;S=d;A=null;save()}catch{alert('UngÃ¼ltige Sicherungsdatei.')}};
 pbBindTap($('printReport'),()=>generateDirectPDFReport());
 
 function render(){
@@ -372,21 +372,21 @@ function render(){
     d.dataset.projectId=p.id;
     d.setAttribute('role','button');
     d.setAttribute('tabindex','0');
-    d.innerHTML=`<div><b>${esc(p.name)}</b><div class=muted>${esc(p.address||'Keine Adresse')} · ${p.areas.length} Bereiche · ${esc(phaseLabel)} · ${esc(pl.objectType||'Badumbau')}</div></div><button type="button" class="secondary project-open">Öffnen</button>`;
+    d.innerHTML=`<div><b>${esc(p.name)}</b><div class=muted>${esc(p.address||'Keine Adresse')} Â· ${p.areas.length} Bereiche Â· ${esc(phaseLabel)} Â· ${esc(pl.objectType||'Badumbau')}</div></div><button type="button" class="secondary project-open">Ã–ffnen</button>`;
 
     let touchStartX=0, touchStartY=0, touchMoved=false, touchOpenedAt=0;
 
     const openProject=()=>pbNavigateToProject(p.id);
 
-    // Normal click: mouse + Samsung/Android'ın dokunmadan ürettiği click.
+    // Normal click: mouse + Samsung/Android'Ä±n dokunmadan Ã¼rettiÄŸi click.
     d.addEventListener('click',ev=>{
-      if(Date.now()-touchOpenedAt < 700) return; // touchend sonrası ghost click
+      if(Date.now()-touchOpenedAt < 700) return; // touchend sonrasÄ± ghost click
       ev.preventDefault();
       ev.stopPropagation();
       openProject();
     });
 
-    // Tablet fallback: PointerEvent davranışından bağımsız gerçek touch olayları.
+    // Tablet fallback: PointerEvent davranÄ±ÅŸÄ±ndan baÄŸÄ±msÄ±z gerÃ§ek touch olaylarÄ±.
     d.addEventListener('touchstart',ev=>{
       if(!ev.touches || ev.touches.length!==1) return;
       touchStartX=ev.touches[0].clientX;
@@ -402,7 +402,7 @@ function render(){
     },{passive:true});
 
     d.addEventListener('touchend',ev=>{
-      if(touchMoved) return; // kaydırma proje açmasın
+      if(touchMoved) return; // kaydÄ±rma proje aÃ§masÄ±n
       touchOpenedAt=Date.now();
       ev.preventDefault();
       ev.stopPropagation();
@@ -423,48 +423,48 @@ function render(){
 
 const PL_PHASES=[
   ['anfrage','Anfrage'],['aufmass','Aufmass'],['offerte','Offerte'],['auftrag','Auftrag'],['vorbereitung','AVOR'],
-  ['ausfuehrung','Ausführung'],['abnahme','Abnahme'],['abgeschlossen','Abgeschlossen']
+  ['ausfuehrung','AusfÃ¼hrung'],['abnahme','Abnahme'],['abgeschlossen','Abgeschlossen']
 ];
 
 const PL_PHASE_CONTENT={
   anfrage:{title:'Kundenanfrage',desc:'Erstkontakt, Kundenwunsch und Besichtigung erfassen.',fields:[
-    ['requestDate','Eingangsdatum','date'],['source','Anfrage über','select',['Telefon','E-Mail','Empfehlung','Website','Hornbach','Sonstiges']],['contact','Kontaktperson','text'],
+    ['requestDate','Eingangsdatum','date'],['source','Anfrage Ã¼ber','select',['Telefon','E-Mail','Empfehlung','Website','Hornbach','Sonstiges']],['contact','Kontaktperson','text'],
     ['visitDate','Besichtigungstermin','datetime-local'],['budget','Budget / Kostenvorstellung (CHF)','number'],['requestNotes','Kundenwunsch / Ausgangslage','textarea','wide']
-  ],checks:[['contactConfirmed','Kontaktdaten bestätigt'],['visitConfirmed','Besichtigung vereinbart'],['plansReceived','Pläne/Unterlagen erhalten']]},
-  aufmass:{title:'Aufmass',desc:'Raumzustand, Masse, Anschlüsse und offene Punkte dokumentieren.',fields:[
-    ['measureDate','Aufmassdatum','date'],['measurer','Aufgenommen durch','text'],['roomCount','Anzahl Räume','number'],
-    ['substrate','Untergrund / Bestand','select',['Zementestrich','Anhydrit','Beton','Gips','Mauerwerk','Holz','Unbekannt']],['moisture','Feuchteprüfung / Wert','text'],['measureNotes','Aufmassnotizen / offene Masse','textarea','wide']
-  ],checks:[['floorplanReady','Grundriss erstellt'],['wallViewsReady','Wandansichten kontrolliert'],['photosReady','Bestandsfotos vorhanden'],['connectionsChecked','Sanitäranschlüsse geprüft'],['substrateChecked','Untergrund geprüft']]},
-  offerte:{title:'Offerte',desc:'Angebotsdaten, Kalkulation, Gültigkeit und Versandstatus.',fields:[
-    ['offerNo','Offertennummer','text'],['offerDate','Offertendatum','date'],['validUntil','Gültig bis','date'],
+  ],checks:[['contactConfirmed','Kontaktdaten bestÃ¤tigt'],['visitConfirmed','Besichtigung vereinbart'],['plansReceived','PlÃ¤ne/Unterlagen erhalten']]},
+  aufmass:{title:'Aufmass',desc:'Raumzustand, Masse, AnschlÃ¼sse und offene Punkte dokumentieren.',fields:[
+    ['measureDate','Aufmassdatum','date'],['measurer','Aufgenommen durch','text'],['roomCount','Anzahl RÃ¤ume','number'],
+    ['substrate','Untergrund / Bestand','select',['Zementestrich','Anhydrit','Beton','Gips','Mauerwerk','Holz','Unbekannt']],['moisture','FeuchteprÃ¼fung / Wert','text'],['measureNotes','Aufmassnotizen / offene Masse','textarea','wide']
+  ],checks:[['floorplanReady','Grundriss erstellt'],['wallViewsReady','Wandansichten kontrolliert'],['photosReady','Bestandsfotos vorhanden'],['connectionsChecked','SanitÃ¤ranschlÃ¼sse geprÃ¼ft'],['substrateChecked','Untergrund geprÃ¼ft']]},
+  offerte:{title:'Offerte',desc:'Angebotsdaten, Kalkulation, GÃ¼ltigkeit und Versandstatus.',fields:[
+    ['offerNo','Offertennummer','text'],['offerDate','Offertendatum','date'],['validUntil','GÃ¼ltig bis','date'],
     ['netAmount','Nettobetrag (CHF)','number'],['vat','MWST','select',['8.1 %','0 %','inklusive']],['offerStatus','Status','select',['Entwurf','Kalkuliert','Gesendet','Nachverhandlung','Angenommen','Abgelehnt']],['offerNotes','Kalkulations-/Kundenhinweis','textarea','wide']
-  ],checks:[['scopeComplete','Leistungsumfang vollständig'],['materialCalculated','Material kalkuliert'],['laborCalculated','Arbeitszeit kalkuliert'],['offerPdf','Offerte/PDF erstellt'],['offerSent','Offerte versendet']]},
-  auftrag:{title:'Auftrag',desc:'Aus der Offerte erstellte Auftrag-Entwürfe. Das vollständige Auftrag-Modul folgt später.',fields:[],checks:[]},
-  vorbereitung:{title:'AVOR · Arbeitsvorbereitung',desc:'Personal, Material, Lieferungen und Baustellenstart koordinieren.',fields:[
+  ],checks:[['scopeComplete','Leistungsumfang vollstÃ¤ndig'],['materialCalculated','Material kalkuliert'],['laborCalculated','Arbeitszeit kalkuliert'],['offerPdf','Offerte/PDF erstellt'],['offerSent','Offerte versendet']]},
+  auftrag:{title:'Auftrag',desc:'Aus der Offerte erstellte Auftrag-EntwÃ¼rfe. Das vollstÃ¤ndige Auftrag-Modul folgt spÃ¤ter.',fields:[],checks:[]},
+  vorbereitung:{title:'AVOR Â· Arbeitsvorbereitung',desc:'Personal, Material, Lieferungen und Baustellenstart koordinieren.',fields:[
     ['siteManager','Bauleiter / Verantwortlich','text'],['team','Mitarbeiter / Team','text'],['supplier','Lieferant','text'],
     ['deliveryDate','Materiallieferung','date'],['startMeeting','Startbesprechung','datetime-local'],['schedule','Termin- und Arbeitsablauf','textarea','wide'],['avorNotes','Besonderheiten / Fremdgewerke','textarea','wide']
-  ],checks:[['orderPlaced','Material bestellt'],['deliveryConfirmed','Liefertermin bestätigt'],['accessReady','Zugang/Schlüssel geklärt'],['subcontractorsReady','Fremdgewerke koordiniert'],['drawingsReleased','Pläne/Verlegeplan freigegeben']]},
-  ausfuehrung:{title:'Ausführung',desc:'Baufortschritt, Stunden, Zusatzarbeiten und Hindernisse führen.',fields:[
+  ],checks:[['orderPlaced','Material bestellt'],['deliveryConfirmed','Liefertermin bestÃ¤tigt'],['accessReady','Zugang/SchlÃ¼ssel geklÃ¤rt'],['subcontractorsReady','Fremdgewerke koordiniert'],['drawingsReleased','PlÃ¤ne/Verlegeplan freigegeben']]},
+  ausfuehrung:{title:'AusfÃ¼hrung',desc:'Baufortschritt, Stunden, Zusatzarbeiten und Hindernisse fÃ¼hren.',fields:[
     ['executionStart','Effektiver Baustart','date'],['progress','Fortschritt (%)','number'],['hours','Arbeitsstunden','number'],
-    ['dailyLog','Bautagesbericht / ausgeführte Arbeiten','textarea','wide'],['extras','Regie / Nachträge','textarea','double'],['obstacles','Behinderungen / offene Entscheide','textarea']
-  ],checks:[['demolitionDone','Demontage abgeschlossen'],['substrateDone','Untergrund vorbereitet'],['sealingDone','Abdichtung dokumentiert'],['tilesDone','Platten verlegt'],['groutDone','Verfugt'],['siliconeDone','Silikonfugen ausgeführt'],['sanitaryDone','Sanitärmontage abgeschlossen']]},
-  abnahme:{title:'Abnahme',desc:'Abnahmeprotokoll, Mängel und Kundenfreigabe dokumentieren.',fields:[
+    ['dailyLog','Bautagesbericht / ausgefÃ¼hrte Arbeiten','textarea','wide'],['extras','Regie / NachtrÃ¤ge','textarea','double'],['obstacles','Behinderungen / offene Entscheide','textarea']
+  ],checks:[['demolitionDone','Demontage abgeschlossen'],['substrateDone','Untergrund vorbereitet'],['sealingDone','Abdichtung dokumentiert'],['tilesDone','Platten verlegt'],['groutDone','Verfugt'],['siliconeDone','Silikonfugen ausgefÃ¼hrt'],['sanitaryDone','SanitÃ¤rmontage abgeschlossen']]},
+  abnahme:{title:'Abnahme',desc:'Abnahmeprotokoll, MÃ¤ngel und Kundenfreigabe dokumentieren.',fields:[
     ['acceptanceDate','Abnahmedatum','date'],['acceptanceCustomer','Kunde / Vertreter','text'],['protocolNo','Protokollnummer','text'],
-    ['defects','Mängel / Restarbeiten','textarea','wide'],['followUp','Nachbesserungstermin','date'],['signatureStatus','Unterschrift','select',['Offen','Digital unterschrieben','Papier unterschrieben','Nicht erforderlich']]
-  ],checks:[['cleaned','Baustelle gereinigt'],['documentsHanded','Pflege-/Produktunterlagen übergeben'],['keysReturned','Schlüssel übergeben'],['photosFinal','Nachher-Fotos vollständig'],['accepted','Abnahme erfolgt']]},
+    ['defects','MÃ¤ngel / Restarbeiten','textarea','wide'],['followUp','Nachbesserungstermin','date'],['signatureStatus','Unterschrift','select',['Offen','Digital unterschrieben','Papier unterschrieben','Nicht erforderlich']]
+  ],checks:[['cleaned','Baustelle gereinigt'],['documentsHanded','Pflege-/Produktunterlagen Ã¼bergeben'],['keysReturned','SchlÃ¼ssel Ã¼bergeben'],['photosFinal','Nachher-Fotos vollstÃ¤ndig'],['accepted','Abnahme erfolgt']]},
   abgeschlossen:{title:'Projektabschluss',desc:'Schlussrechnung, Zahlung, Garantieunterlagen und Archivierung.',fields:[
     ['invoiceNo','Rechnungsnummer','text'],['invoiceDate','Rechnungsdatum','date'],['invoiceAmount','Bruttobetrag (CHF)','number'],
     ['paymentStatus','Zahlungsstatus','select',['Offen','Teilbezahlt','Bezahlt','Mahnung']],['paidDate','Bezahlt am','date'],['archiveNotes','Abschluss-/Garantienotiz','textarea','wide']
-  ],checks:[['finalInvoice','Schlussrechnung erstellt'],['paymentComplete','Zahlung vollständig'],['finalPhotos','Fotodokumentation abgeschlossen'],['warrantyDocs','Garantieunterlagen abgelegt'],['cloudBackup','OneDrive-Sicherung geprüft'],['archived','Projekt archiviert']]}
+  ],checks:[['finalInvoice','Schlussrechnung erstellt'],['paymentComplete','Zahlung vollstÃ¤ndig'],['finalPhotos','Fotodokumentation abgeschlossen'],['warrantyDocs','Garantieunterlagen abgelegt'],['cloudBackup','OneDrive-Sicherung geprÃ¼ft'],['archived','Projekt archiviert']]}
 };
 
 const AUFMASS_REPEAT={
-  walls:{title:'Wände / Bauteile',add:'+ Wand hinzufügen',cols:[['name','Wand A'],['width','Breite cm','number'],['height','Höhe cm','number'],['thickness','Stärke cm','number'],['angle','Winkel °','number'],['note','Nische / Vorsprung / Notiz']]},
-  connections:{title:'Sanitäranschlüsse',add:'+ Anschluss hinzufügen',cols:[['type','WC / Lavabo / Dusche'],['wall','Wand A/B…'],['fromLeft','Abstand links cm','number'],['height','Höhe cm','number'],['diameter','Ø mm','number'],['action','Bleibt / Versetzen / Neu'],['note','Notiz']]},
-  materials:{title:'Vorgesehene Materialien',add:'+ Material hinzufügen',cols:[['group','Fliesen / Abdichtung…'],['material','Material / Produkt'],['article','Artikel / System'],['qty','Menge','number'],['unit','m² / m / St.'],['supplier','Lieferant'],['note','Notiz']]},
-  works:{title:'Auszuführende Arbeiten',add:'+ Arbeit hinzufügen',cols:[['work','Arbeitsposition'],['qty','Menge','number'],['unit','m² / m / St. / Std.'],['hours','Stunden','number'],['responsible','Firma / Mitarbeiter'],['offer','Offerte: Ja/Nein']]},
-  trades:{title:'Fremdgewerke',add:'+ Fremdgewerk hinzufügen',cols:[['trade','Sanitär / Elektro…'],['company','Firma'],['contact','Kontakt / Telefon'],['date','Termin','date'],['responsibility','Leistungsumfang']]},
-  decisions:{title:'Offene Entscheide',add:'+ offenen Punkt hinzufügen',cols:[['topic','Entscheid / offene Frage'],['responsible','Verantwortlich'],['due','Termin','date'],['status','Offen / Erledigt']]}
+  walls:{title:'WÃ¤nde / Bauteile',add:'+ Wand hinzufÃ¼gen',cols:[['name','Wand A'],['width','Breite cm','number'],['height','HÃ¶he cm','number'],['thickness','StÃ¤rke cm','number'],['angle','Winkel Â°','number'],['note','Nische / Vorsprung / Notiz']]},
+  connections:{title:'SanitÃ¤ranschlÃ¼sse',add:'+ Anschluss hinzufÃ¼gen',cols:[['type','WC / Lavabo / Dusche'],['wall','Wand A/Bâ€¦'],['fromLeft','Abstand links cm','number'],['height','HÃ¶he cm','number'],['diameter','Ã˜ mm','number'],['action','Bleibt / Versetzen / Neu'],['note','Notiz']]},
+  materials:{title:'Vorgesehene Materialien',add:'+ Material hinzufÃ¼gen',cols:[['group','Fliesen / Abdichtungâ€¦'],['material','Material / Produkt'],['article','Artikel / System'],['qty','Menge','number'],['unit','mÂ² / m / St.'],['supplier','Lieferant'],['note','Notiz']]},
+  works:{title:'AuszufÃ¼hrende Arbeiten',add:'+ Arbeit hinzufÃ¼gen',cols:[['work','Arbeitsposition'],['qty','Menge','number'],['unit','mÂ² / m / St. / Std.'],['hours','Stunden','number'],['responsible','Firma / Mitarbeiter'],['offer','Offerte: Ja/Nein']]},
+  trades:{title:'Fremdgewerke',add:'+ Fremdgewerk hinzufÃ¼gen',cols:[['trade','SanitÃ¤r / Elektroâ€¦'],['company','Firma'],['contact','Kontakt / Telefon'],['date','Termin','date'],['responsibility','Leistungsumfang']]},
+  decisions:{title:'Offene Entscheide',add:'+ offenen Punkt hinzufÃ¼gen',cols:[['topic','Entscheid / offene Frage'],['responsible','Verantwortlich'],['due','Termin','date'],['status','Offen / Erledigt']]}
 };
 
 function aufmassField(key,label,type='text',options=null,cls=''){
@@ -477,17 +477,17 @@ function aufmassSection(title,help,body,open=false){return `<details class="aufm
 function aufmassRepeat(name,data){
   const cfg=AUFMASS_REPEAT[name],rows=Array.isArray(data[name])?data[name]:[];
   return `<div class="aufmass-repeat"><div class="aufmass-repeat-head"><strong>${esc(cfg.title)}</strong><button type="button" data-aufmass-add="${name}">${esc(cfg.add)}</button></div><div data-aufmass-list="${name}">`+
-    rows.map((row,index)=>`<div class="aufmass-repeat-row" data-aufmass-array="${name}" style="--cols:${cfg.cols.length}">${cfg.cols.map(([key,placeholder,type='text'])=>`<input data-array-field="${key}" type="${type}" value="${esc(row[key]??'')}" placeholder="${esc(placeholder)}"${type==='number'?' step="0.01"':''}>`).join('')}<button type="button" data-aufmass-delete="${name}" data-index="${index}">×</button></div>`).join('')+'</div></div>';
+    rows.map((row,index)=>`<div class="aufmass-repeat-row" data-aufmass-array="${name}" style="--cols:${cfg.cols.length}">${cfg.cols.map(([key,placeholder,type='text'])=>`<input data-array-field="${key}" type="${type}" value="${esc(row[key]??'')}" placeholder="${esc(placeholder)}"${type==='number'?' step="0.01"':''}>`).join('')}<button type="button" data-aufmass-delete="${name}" data-index="${index}">Ã—</button></div>`).join('')+'</div></div>';
 }
-const PB_MEASURE_UNITS=['m²','m1','Stk.','pauschal','GL','Std.','kg','l'];
+const PB_MEASURE_UNITS=['mÂ²','m1','Stk.','pauschal','GL','Std.','kg','l'];
 function pbMeasureNumber(v){return Number(String(v??'').trim().replace(',','.'))||0}
 function pbMeasureFormula(v){
-  const clean=String(v??'').trim().replace(/,/g,'.').replace(/[x×]/gi,'*');
+  const clean=String(v??'').trim().replace(/,/g,'.').replace(/[xÃ—]/gi,'*');
   if(!clean)return 0;if(!/^[0-9+\-*/().\s]+$/.test(clean))return pbMeasureNumber(clean);
   try{return Number(Function(`"use strict";return (${clean})`)())||0}catch(_){return pbMeasureNumber(clean)}
 }
 function pbDefaultMeasureGroups(){return [
-  {title:'Allgemeinarbeiten',notes:'',rows:[['Baustelleneinrichtung','1','1','','GL'],['Schützen von bestehenden Bauteilen','1','1','','GL'],['Lieferung','1','1','','Stk.'],['Entsorgung & Recycling','1','1','','Stk.']].map(x=>({item:x[0],factor:x[1],formula:x[2],note:x[3],unit:x[4]}))},
+  {title:'Allgemeinarbeiten',notes:'',rows:[['Baustelleneinrichtung','1','1','','GL'],['SchÃ¼tzen von bestehenden Bauteilen','1','1','','GL'],['Lieferung','1','1','','Stk.'],['Entsorgung & Recycling','1','1','','Stk.']].map(x=>({item:x[0],factor:x[1],formula:x[2],note:x[3],unit:x[4]}))},
   {title:'Bad / Raum 1',notes:'',rows:[]}
 ]}
 function pbMeasureSummary(groups){
@@ -496,33 +496,33 @@ function pbMeasureSummary(groups){
 function pbRenderMeasureGroups(data){
   const groups=Array.isArray(data.measureGroups)&&data.measureGroups.length?data.measureGroups:pbDefaultMeasureGroups(),summary=pbMeasureSummary(groups);
   data.measureGroups=groups;
-  const groupHtml=groups.map((g,gi)=>{const subtotal=pbMeasureSummary([g]);return `<section class="pb-measure-group" data-measure-group="${gi}"><div class="pb-measure-group-title"><input data-group-title value="${esc(g.title||'Raum')}" aria-label="Bereichsname"><span><button type="button" data-measure-row-add="${gi}">+</button><button type="button" class="danger" data-measure-group-delete="${gi}">×</button></span></div><div class="pb-measure-table-head"><span>Gegenstand</span><span>Berechnung</span><span>Formel</span><span>Anmerkung</span><span>Summe / Einheit</span><span></span></div><div class="pb-measure-rows">${(g.rows||[]).map((r,ri)=>{const total=pbMeasureNumber(r.factor||1)*pbMeasureFormula(r.formula);return `<div class="pb-measure-row" data-measure-row="${ri}"><input data-mr="item" value="${esc(r.item||'')}" placeholder="Gegenstand"><input data-mr="factor" type="hidden" value="${esc(r.factor??'1')}"><select class="pb-formula-kind" aria-label="Berechnung"><option>Freie Formel</option></select><input data-mr="formula" value="${esc(r.formula||'')}" placeholder="z. B. 2,40 × 1,20"><input data-mr="note" value="${esc(r.note||'')}" placeholder="Anmerkung"><div class="pb-measure-result"><output>${formatCHNumber(total,3)}</output><select data-mr="unit">${PB_MEASURE_UNITS.map(u=>`<option ${u===(r.unit||'m²')?'selected':''}>${u}</option>`).join('')}</select></div><button type="button" class="danger" data-measure-row-delete="${gi}:${ri}">×</button></div>`}).join('')}</div><textarea data-group-notes rows="3" placeholder="Notizen">${esc(g.notes||'')}</textarea><div class="pb-measure-subtotal"><strong>Zwischensumme</strong>${[...subtotal].map(([k,v])=>`<span>${esc(k.split('|||')[0])} <b>${formatCHNumber(v,2)} ${esc(k.split('|||')[1])}</b></span>`).join('')}</div></section>`}).join('');
-  const p=cur()||{};return `<div class="pb-measure-document"><div class="pb-measure-topline"><strong>${esc(data.measureNo||'AUF-2026-00001')}</strong><label>Datum <input type="date" data-pl-phase-field="measureDate" value="${esc(data.measureDate||'')}"></label></div><div class="pb-measure-meta"><label>Bezeichnung<input data-pl-phase-field="measureTitle" value="${esc(data.measureTitle||'Sanierung Nasszellen')}"></label><label>Projekt<input value="${esc(`${p.name||''}${p.projectNo?' ('+p.projectNo+')':''}`)}" readonly></label><label>Objektadresse<input value="${esc(p.address||'')}" readonly></label><label>Status<select data-pl-phase-field="measureStatus"><option>${esc(data.measureStatus||'Angebot erstellt')}</option><option>Entwurf</option><option>Aufmass abgeschlossen</option></select></label><label class="wide">Mitarbeiter<input data-pl-phase-field="measurer" value="${esc(data.measurer||p.owner||'')}"></label><label class="wide">Anmerkung<textarea rows="3" data-pl-phase-field="generalNotes">${esc(data.generalNotes||'')}</textarea></label><input type="hidden" data-pl-phase-field="measureNo" value="${esc(data.measureNo||'')}"></div><div class="pb-flow-actions"><span>Das Aufmass enthält ausschliesslich Mengen und Einheiten - keine Preise.</span><button type="button" class="primary" data-open-offer>Offertenentwurf erstellen →</button></div>${groupHtml}<button type="button" class="primary pb-add-room" data-measure-group-add>+ Neuer Raum / Bereich</button><section class="pb-measure-total"><h3>Summe</h3>${[...summary].map(([k,v])=>`<div><span>${esc(k.split('|||')[0])}</span><strong>${formatCHNumber(v,2)} ${esc(k.split('|||')[1])}</strong></div>`).join('')||'<p>Noch keine Positionen vorhanden.</p>'}</section></div>`;
+  const groupHtml=groups.map((g,gi)=>{const subtotal=pbMeasureSummary([g]);return `<section class="pb-measure-group" data-measure-group="${gi}"><div class="pb-measure-group-title"><input data-group-title value="${esc(g.title||'Raum')}" aria-label="Bereichsname"><span><button type="button" data-measure-row-add="${gi}">+</button><button type="button" class="danger" data-measure-group-delete="${gi}">Ã—</button></span></div><div class="pb-measure-table-head"><span>Gegenstand</span><span>Berechnung</span><span>Formel</span><span>Anmerkung</span><span>Summe / Einheit</span><span></span></div><div class="pb-measure-rows">${(g.rows||[]).map((r,ri)=>{const total=pbMeasureNumber(r.factor||1)*pbMeasureFormula(r.formula);return `<div class="pb-measure-row" data-measure-row="${ri}"><input data-mr="item" value="${esc(r.item||'')}" placeholder="Gegenstand"><input data-mr="factor" type="hidden" value="${esc(r.factor??'1')}"><select class="pb-formula-kind" aria-label="Berechnung"><option>Freie Formel</option></select><input data-mr="formula" value="${esc(r.formula||'')}" placeholder="z. B. 2,40 Ã— 1,20"><input data-mr="note" value="${esc(r.note||'')}" placeholder="Anmerkung"><div class="pb-measure-result"><output>${formatCHNumber(total,3)}</output><select data-mr="unit">${PB_MEASURE_UNITS.map(u=>`<option ${u===(r.unit||'mÂ²')?'selected':''}>${u}</option>`).join('')}</select></div><button type="button" class="danger" data-measure-row-delete="${gi}:${ri}">Ã—</button></div>`}).join('')}</div><textarea data-group-notes rows="3" placeholder="Notizen">${esc(g.notes||'')}</textarea><div class="pb-measure-subtotal"><strong>Zwischensumme</strong>${[...subtotal].map(([k,v])=>`<span>${esc(k.split('|||')[0])} <b>${formatCHNumber(v,2)} ${esc(k.split('|||')[1])}</b></span>`).join('')}</div></section>`}).join('');
+  const p=cur()||{};return `<div class="pb-measure-document"><div class="pb-measure-topline"><strong>${esc(data.measureNo||'AUF-2026-00001')}</strong><label>Datum <input type="date" data-pl-phase-field="measureDate" value="${esc(data.measureDate||'')}"></label></div><div class="pb-measure-meta"><label>Bezeichnung<input data-pl-phase-field="measureTitle" value="${esc(data.measureTitle||'Sanierung Nasszellen')}"></label><label>Projekt<input value="${esc(`${p.name||''}${p.projectNo?' ('+p.projectNo+')':''}`)}" readonly></label><label>Objektadresse<input value="${esc(p.address||'')}" readonly></label><label>Status<select data-pl-phase-field="measureStatus"><option>${esc(data.measureStatus||'Angebot erstellt')}</option><option>Entwurf</option><option>Aufmass abgeschlossen</option></select></label><label class="wide">Mitarbeiter<input data-pl-phase-field="measurer" value="${esc(data.measurer||p.owner||'')}"></label><label class="wide">Anmerkung<textarea rows="3" data-pl-phase-field="generalNotes">${esc(data.generalNotes||'')}</textarea></label><input type="hidden" data-pl-phase-field="measureNo" value="${esc(data.measureNo||'')}"></div><div class="pb-flow-actions"><span>Das Aufmass enthÃ¤lt ausschliesslich Mengen und Einheiten - keine Preise.</span><button type="button" class="primary" data-open-offer>Offertenentwurf erstellen â†’</button></div>${groupHtml}<button type="button" class="primary pb-add-room" data-measure-group-add>+ Neuer Raum / Bereich</button><section class="pb-measure-total"><h3>Summe</h3>${[...summary].map(([k,v])=>`<div><span>${esc(k.split('|||')[0])}</span><strong>${formatCHNumber(v,2)} ${esc(k.split('|||')[1])}</strong></div>`).join('')||'<p>Noch keine Positionen vorhanden.</p>'}</section></div>`;
 }
 
 function pbOfferDraft(c){
   c.phaseData=c.phaseData||{};const data=c.phaseData.offerte=c.phaseData.offerte||{};
   if(!Array.isArray(data.sections)){
     const source=c.phaseData.aufmass?.measureGroups||[];
-    data.sections=source.map(g=>({title:g.title||'Leistungen',rows:(g.rows||[]).map(r=>({title:r.item||'',description:r.note||'',qty:String(pbMeasureNumber(r.factor||1)*pbMeasureFormula(r.formula)),unit:r.unit||'m²',unitPrice:'0',discount:'0'}))}));
+    data.sections=source.map(g=>({title:g.title||'Leistungen',rows:(g.rows||[]).map(r=>({title:r.item||'',description:r.note||'',qty:String(pbMeasureNumber(r.factor||1)*pbMeasureFormula(r.formula)),unit:r.unit||'mÂ²',unitPrice:'0',discount:'0'}))}));
   }
   data.offerNo=data.offerNo||`A-${new Date().getFullYear()}-`;
   data.offerDate=data.offerDate||new Date().toISOString().slice(0,10);data.validDays=data.validDays||'30';data.vat=data.vat||'8.1';
   data.execution=data.execution||'Nach Vereinbarung';data.title=data.title||c.phaseData.aufmass?.measureTitle||'Sanierung / Bauarbeiten';
-  data.intro=data.intro||'Vielen Dank für Ihr Interesse. Gerne unterbreiten wir Ihnen mit dieser Offerte unser Angebot für Ihr Projekt.';
+  data.intro=data.intro||'Vielen Dank fÃ¼r Ihr Interesse. Gerne unterbreiten wir Ihnen mit dieser Offerte unser Angebot fÃ¼r Ihr Projekt.';
   data.paymentDays=data.paymentDays||c.paymentDays||c.paymentTermDays||'';
   data.payment=data.payment||(data.paymentDays?`Zahlbar innert ${data.paymentDays} Tagen ab Rechnungsdatum.`:'40 % nach Vertragsabschluss\n50 % nach Baubeginn\n10 % nach Bauabnahme');
-  data.closing=data.closing||'Vielen Dank für Ihr Vertrauen. Sämtliche Arbeiten werden fachgerecht nach den vereinbarten Grundlagen ausgeführt.';
+  data.closing=data.closing||'Vielen Dank fÃ¼r Ihr Vertrauen. SÃ¤mtliche Arbeiten werden fachgerecht nach den vereinbarten Grundlagen ausgefÃ¼hrt.';
   return data;
 }
 function pbOfferTotals(data){let net=0;(data.sections||[]).forEach(s=>(s.rows||[]).forEach(r=>net+=pbMeasureNumber(r.qty)*pbMeasureNumber(r.unitPrice)*(1-pbMeasureNumber(r.discount)/100)));const vat=net*pbMeasureNumber(data.vat)/100;return{net,vat,gross:net+vat}}
 function pbRenderOffer(c){
   const d=pbOfferDraft(c),t=pbOfferTotals(d);
-  const sections=d.sections.map((s,si)=>{let st=0;(s.rows||[]).forEach(r=>st+=pbMeasureNumber(r.qty)*pbMeasureNumber(r.unitPrice)*(1-pbMeasureNumber(r.discount)/100));return `<section class="pb-offer-section" data-offer-section="${si}"><div class="pb-offer-section-head"><input data-os-title value="${esc(s.title||'Titel')}" aria-label="Titel"><span><button type="button" data-offer-row-add="${si}">+ Position</button><button type="button" class="danger" data-offer-section-delete="${si}">×</button></span></div><div class="pb-offer-head"><span>Leistung / Material</span><span>Menge</span><span>Einheit</span><span>Einzelpreis</span><span>Rabatt %</span><span>Gesamtpreis</span><span></span></div>${(s.rows||[]).map((r,ri)=>{const sum=pbMeasureNumber(r.qty)*pbMeasureNumber(r.unitPrice)*(1-pbMeasureNumber(r.discount)/100);return `<div class="pb-offer-row" data-offer-row="${ri}"><div><input data-or="title" value="${esc(r.title||'')}" placeholder="Leistung / Material"><textarea data-or="description" rows="2" placeholder="Beschreibung">${esc(r.description||'')}</textarea></div><input data-or="qty" value="${esc(r.qty||'')}" inputmode="decimal"><select data-or="unit">${PB_MEASURE_UNITS.map(u=>`<option ${u===(r.unit||'m²')?'selected':''}>${u}</option>`).join('')}</select><input data-or="unitPrice" value="${esc(r.unitPrice||'0')}" inputmode="decimal"><input data-or="discount" value="${esc(r.discount||'0')}" inputmode="decimal"><output>${formatCHNumber(sum,2)} CHF</output><button type="button" class="danger" data-offer-row-delete="${si}:${ri}">×</button></div>`}).join('')}<div class="pb-offer-subtotal">Titelsumme <strong>${formatCHNumber(st,2)} CHF</strong></div></section>`}).join('');
-  return `<div class="pb-offer-editor"><div class="pb-flow-actions"><button type="button" class="secondary" data-back-measure>← Aufmass</button><span>Alle Felder im Offertenentwurf können manuell bearbeitet oder gelöscht werden.</span><button type="button" class="primary" data-create-order>Auftrag erstellen →</button></div><div class="pb-offer-meta"><label>Offerte-Nr.<input data-offer-field="offerNo" value="${esc(d.offerNo)}"></label><label>Datum<input type="date" data-offer-field="offerDate" value="${esc(d.offerDate)}"></label><label>Gültigkeit (Tage)<input data-offer-field="validDays" value="${esc(d.validDays)}" inputmode="numeric"></label><label>Ausführungstermin<input data-offer-field="execution" value="${esc(d.execution)}"></label><label class="wide">Bezeichnung<input data-offer-field="title" value="${esc(d.title)}"></label><label class="wide">Einleitung<textarea data-offer-field="intro" rows="4">${esc(d.intro)}</textarea></label></div>${sections}<button type="button" class="primary pb-add-room" data-offer-section-add>+ Neuer Titel</button><div class="pb-offer-summary"><div><span>Netto</span><strong>${formatCHNumber(t.net,2)} CHF</strong></div><label>MWST %<input data-offer-field="vat" value="${esc(d.vat)}" inputmode="decimal"></label><div><span>MWST</span><strong>${formatCHNumber(t.vat,2)} CHF</strong></div><div class="gross"><span>Brutto</span><strong>${formatCHNumber(t.gross,2)} CHF</strong></div></div><div class="pb-offer-texts"><label>Zahlungsbedingungen<textarea data-offer-field="payment" rows="5">${esc(d.payment)}</textarea></label><label>Schlusstext / Garantie<textarea data-offer-field="closing" rows="5">${esc(d.closing)}</textarea></label></div></div>`;
+  const sections=d.sections.map((s,si)=>{let st=0;(s.rows||[]).forEach(r=>st+=pbMeasureNumber(r.qty)*pbMeasureNumber(r.unitPrice)*(1-pbMeasureNumber(r.discount)/100));return `<section class="pb-offer-section" data-offer-section="${si}"><div class="pb-offer-section-head"><input data-os-title value="${esc(s.title||'Titel')}" aria-label="Titel"><span><button type="button" data-offer-row-add="${si}">+ Position</button><button type="button" class="danger" data-offer-section-delete="${si}">Ã—</button></span></div><div class="pb-offer-head"><span>Leistung / Material</span><span>Menge</span><span>Einheit</span><span>Einzelpreis</span><span>Rabatt %</span><span>Gesamtpreis</span><span></span></div>${(s.rows||[]).map((r,ri)=>{const sum=pbMeasureNumber(r.qty)*pbMeasureNumber(r.unitPrice)*(1-pbMeasureNumber(r.discount)/100);return `<div class="pb-offer-row" data-offer-row="${ri}"><div><input data-or="title" value="${esc(r.title||'')}" placeholder="Leistung / Material"><textarea data-or="description" rows="2" placeholder="Beschreibung">${esc(r.description||'')}</textarea></div><input data-or="qty" value="${esc(r.qty||'')}" inputmode="decimal"><select data-or="unit">${PB_MEASURE_UNITS.map(u=>`<option ${u===(r.unit||'mÂ²')?'selected':''}>${u}</option>`).join('')}</select><input data-or="unitPrice" value="${esc(r.unitPrice||'0')}" inputmode="decimal"><input data-or="discount" value="${esc(r.discount||'0')}" inputmode="decimal"><output>${formatCHNumber(sum,2)} CHF</output><button type="button" class="danger" data-offer-row-delete="${si}:${ri}">Ã—</button></div>`}).join('')}<div class="pb-offer-subtotal">Titelsumme <strong>${formatCHNumber(st,2)} CHF</strong></div></section>`}).join('');
+  return `<div class="pb-offer-editor"><div class="pb-flow-actions"><button type="button" class="secondary" data-back-measure>â† Aufmass</button><span>Alle Felder im Offertenentwurf kÃ¶nnen manuell bearbeitet oder gelÃ¶scht werden.</span><button type="button" class="primary" data-create-order>Auftrag erstellen â†’</button></div><div class="pb-offer-meta"><label>Offerte-Nr.<input data-offer-field="offerNo" value="${esc(d.offerNo)}"></label><label>Datum<input type="date" data-offer-field="offerDate" value="${esc(d.offerDate)}"></label><label>GÃ¼ltigkeit (Tage)<input data-offer-field="validDays" value="${esc(d.validDays)}" inputmode="numeric"></label><label>AusfÃ¼hrungstermin<input data-offer-field="execution" value="${esc(d.execution)}"></label><label class="wide">Bezeichnung<input data-offer-field="title" value="${esc(d.title)}"></label><label class="wide">Einleitung<textarea data-offer-field="intro" rows="4">${esc(d.intro)}</textarea></label></div>${sections}<button type="button" class="primary pb-add-room" data-offer-section-add>+ Neuer Titel</button><div class="pb-offer-summary"><div><span>Netto</span><strong>${formatCHNumber(t.net,2)} CHF</strong></div><label>MWST %<input data-offer-field="vat" value="${esc(d.vat)}" inputmode="decimal"></label><div><span>MWST</span><strong>${formatCHNumber(t.vat,2)} CHF</strong></div><div class="gross"><span>Brutto</span><strong>${formatCHNumber(t.gross,2)} CHF</strong></div></div><div class="pb-offer-texts"><label>Zahlungsbedingungen<textarea data-offer-field="payment" rows="5">${esc(d.payment)}</textarea></label><label>Schlusstext / Garantie<textarea data-offer-field="closing" rows="5">${esc(d.closing)}</textarea></label></div></div>`;
 }
 
-const PB_PDF_PHASES=[['aufmass','Aufmass'],['offerte','Offerte'],['auftrag','Auftrag'],['vorbereitung','AVOR'],['ausfuehrung','Ausführung'],['abnahme','Abnahme'],['abgeschlossen','Abgeschlossen']];
+const PB_PDF_PHASES=[['aufmass','Aufmass'],['offerte','Offerte'],['auftrag','Auftrag'],['vorbereitung','AVOR'],['ausfuehrung','AusfÃ¼hrung'],['abnahme','Abnahme'],['abgeschlossen','Abgeschlossen']];
 let pbBrandLogoCache=null;
 async function pbBrandLogoData(){
   if(pbBrandLogoCache)return pbBrandLogoCache;
@@ -533,7 +533,7 @@ async function pbPhasePdfExport(p,requested){
   const JsPdf=window.jspdf?.jsPDF;if(!JsPdf){alert('PDF-Modul ist noch nicht geladen. Bitte kurz warten und erneut versuchen.');return}
   const logo=await pbBrandLogoData(),doc=new JsPdf({unit:'mm',format:'a4'}),margin=16,pageW=210,pageH=297,maxW=178;let y=31,pageNo=1;pbAddBrandLogo(doc,logo);
   const safe=v=>String(v??'').replace(/[\u2010-\u2015]/g,'-').replace(/\u00d7/g,'x');
-  const footer=()=>{doc.setDrawColor(170);doc.line(margin,278,pageW-margin,278);doc.setFontSize(7);doc.setTextColor(100);doc.text('Ceramica Naturo GmbH · Seebergstrasse 1 · 8103 Unterengstringen · info@ceramica-naturo.ch',margin,284);doc.text(`Seite ${pageNo}`,pageW-margin,289,{align:'right'});doc.setTextColor(20)};
+  const footer=()=>{doc.setDrawColor(170);doc.line(margin,278,pageW-margin,278);doc.setFontSize(7);doc.setTextColor(100);doc.text('Ceramica Naturo GmbH Â· Seebergstrasse 1 Â· 8103 Unterengstringen Â· info@ceramica-naturo.ch',margin,284);doc.text(`Seite ${pageNo}`,pageW-margin,289,{align:'right'});doc.setTextColor(20)};
   const newPage=()=>{footer();doc.addPage();pageNo++;y=31;pbAddBrandLogo(doc,logo)};
   const ensure=h=>{if(y+h>278)newPage()};
   const text=(value,size=10,bold=false,indent=0)=>{doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);const lines=doc.splitTextToSize(safe(value||'-'),maxW-indent);ensure(lines.length*(size*.42)+3);doc.text(lines,margin+indent,y);y+=lines.length*(size*.42)+3};
@@ -548,44 +548,44 @@ async function pbPhasePdfExport(p,requested){
       kv('Aufmass-Nr.',d.measureNo);kv('Bezeichnung',d.measureTitle);kv('Aufmassdatum',d.measureDate);kv('Bearbeiter',d.measurer);kv('Anmerkung',d.generalNotes);
       (d.measureGroups||[]).forEach(g=>{ensure(20);text(g.title||'Bereich',12,true);doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setDrawColor(80);doc.line(margin,y-2,pageW-margin,y-2);[['Gegenstand',margin],['Faktor',76],['Formel',96],['Anmerkung',120],['Summe',173],['Einheit',190]].forEach(([v,x])=>doc.text(v,x,y));y+=5;doc.line(margin,y-2,pageW-margin,y-2);(g.rows||[]).forEach(r=>{const sum=pbMeasureNumber(r.factor||1)*pbMeasureFormula(r.formula),item=doc.splitTextToSize(safe(r.item||'Position'),56),note=doc.splitTextToSize(safe(r.note||''),48),h=Math.max(6,item.length*3.6,note.length*3.6);ensure(h+2);doc.setFontSize(8);doc.text(item,margin,y);doc.text(safe(r.factor||1),76,y);doc.text(safe(r.formula||'-'),96,y);if(r.note)doc.text(note,120,y);doc.text(formatCHNumber(sum,3),186,y,{align:'right'});doc.text(safe(r.unit||''),190,y);y+=h});doc.setDrawColor(120);doc.line(margin,y,pageW-margin,y);y+=5;if(g.notes)kv('Notizen',g.notes)});
     }else if(phase==='offerte'){
-      const od=pbOfferDraft(p.plattenleger),tot=pbOfferTotals(od);kv('Offerte-Nr.',od.offerNo);kv('Datum',od.offerDate);kv('Bezeichnung',od.title);kv('Ausführung',od.execution);kv('Einleitung',od.intro);
+      const od=pbOfferDraft(p.plattenleger),tot=pbOfferTotals(od);kv('Offerte-Nr.',od.offerNo);kv('Datum',od.offerDate);kv('Bezeichnung',od.title);kv('AusfÃ¼hrung',od.execution);kv('Einleitung',od.intro);
       (od.sections||[]).forEach(s=>{ensure(14);text(s.title||'Titel',13,true);(s.rows||[]).forEach(r=>{const sum=pbMeasureNumber(r.qty)*pbMeasureNumber(r.unitPrice)*(1-pbMeasureNumber(r.discount)/100);text(`${r.title||'Position'} | ${r.qty||0} ${r.unit||''} x ${formatCHNumber(pbMeasureNumber(r.unitPrice),2)} CHF = ${formatCHNumber(sum,2)} CHF`,9,true,3);if(r.description)text(r.description,8,false,6)})});kv('Netto',`${formatCHNumber(tot.net,2)} CHF`);kv(`MWST ${od.vat}%`,`${formatCHNumber(tot.vat,2)} CHF`);kv('Brutto',`${formatCHNumber(tot.gross,2)} CHF`);kv('Zahlungsbedingungen',od.payment);kv('Schlusstext / Garantie',od.closing);
     }else if(phase==='auftrag'){
-      const orders=Array.isArray(p.orders)?p.orders:[];if(!orders.length)text('Noch kein Auftrag-Entwurf vorhanden.',10);orders.forEach((o,i)=>{text(`Auftrag ${i+1} · ${o.sourceOfferNo||''}`,13,true);kv('Status',o.status);kv('Bezeichnung',o.title);kv('Erstellt',o.createdAt?new Date(o.createdAt).toLocaleString('de-CH'):'');(o.sections||[]).forEach(s=>{text(s.title||'Titel',11,true,3);(s.rows||[]).forEach(r=>text(`${r.title||'Position'} · ${r.qty||0} ${r.unit||''} · ${r.unitPrice||0} CHF`,9,false,6))});kv('Netto',`${formatCHNumber(o.net||0,2)} CHF`);kv('MWST',`${formatCHNumber(o.vat||0,2)} CHF`);kv('Brutto',`${formatCHNumber(o.gross||0,2)} CHF`)})
+      const orders=Array.isArray(p.orders)?p.orders:[];if(!orders.length)text('Noch kein Auftrag-Entwurf vorhanden.',10);orders.forEach((o,i)=>{text(`Auftrag ${i+1} Â· ${o.sourceOfferNo||''}`,13,true);kv('Status',o.status);kv('Bezeichnung',o.title);kv('Erstellt',o.createdAt?new Date(o.createdAt).toLocaleString('de-CH'):'');(o.sections||[]).forEach(s=>{text(s.title||'Titel',11,true,3);(s.rows||[]).forEach(r=>text(`${r.title||'Position'} Â· ${r.qty||0} ${r.unit||''} Â· ${r.unitPrice||0} CHF`,9,false,6))});kv('Netto',`${formatCHNumber(o.net||0,2)} CHF`);kv('MWST',`${formatCHNumber(o.vat||0,2)} CHF`);kv('Brutto',`${formatCHNumber(o.gross||0,2)} CHF`)})
     }else{
       const schema=PL_PHASE_CONTENT[phase];if(schema?.fields) schema.fields.forEach(f=>kv(f[1],d[f[0]]));else Object.entries(d).filter(([,v])=>typeof v!=='object').forEach(([k,v])=>kv(k,v));
       if(schema?.checks){text('Kontrollpunkte',12,true);schema.checks.forEach(([k,l])=>kv(l,d[k]?'Erledigt':'Offen'))}
     }
     if(idx<requested.length-1)newPage();
   });
-  footer();const slug=safe(p.name||'Projekt').replace(/[^a-z0-9äöü]+/gi,'_').replace(/^_|_$/g,'');const suffix=requested.length===1?(PB_PDF_PHASES.find(x=>x[0]===requested[0])?.[1]||requested[0]):'Alle_Projektphasen';doc.save(`${slug}_${suffix}.pdf`);
+  footer();const slug=safe(p.name||'Projekt').replace(/[^a-z0-9Ã¤Ã¶Ã¼]+/gi,'_').replace(/^_|_$/g,'');const suffix=requested.length===1?(PB_PDF_PHASES.find(x=>x[0]===requested[0])?.[1]||requested[0]):'Alle_Projektphasen';doc.save(`${slug}_${suffix}.pdf`);
 }
 function renderProfessionalAufmass(c,data){
   return pbRenderMeasureGroups(data);
   /* Legacy structured checklist remains below for backwards data compatibility. */
   const missing=[];
   if(!data.measureDate)missing.push('Aufmassdatum');if(!data.measurer)missing.push('Aufgenommen durch');
-  if(!(data.walls||[]).length)missing.push('mindestens eine Wand');if(!(data.connections||[]).length)missing.push('Sanitäranschlüsse');
-  if(!data.substrateChecked)missing.push('Untergrundprüfung');if(!data.existingPhotos)missing.push('Bestandsfotos');
-  if(!(data.works||[]).length)missing.push('auszuführende Arbeiten');if(!(data.materials||[]).length)missing.push('Materialliste');
+  if(!(data.walls||[]).length)missing.push('mindestens eine Wand');if(!(data.connections||[]).length)missing.push('SanitÃ¤ranschlÃ¼sse');
+  if(!data.substrateChecked)missing.push('UntergrundprÃ¼fung');if(!data.existingPhotos)missing.push('Bestandsfotos');
+  if(!(data.works||[]).length)missing.push('auszufÃ¼hrende Arbeiten');if(!(data.materials||[]).length)missing.push('Materialliste');
   const total=8,done=total-missing.length,pct=Math.round(done/total*100);
   const sections=[
-    aufmassSection('1 · Allgemeine Angaben','Zugang, Logistik, Baustelle',`<div class="aufmass-fields">${aufmassField('measureDate','Aufmassdatum','date')}${aufmassField('measurer','Aufgenommen durch')}${aufmassField('contactPerson','Anwesende Kontaktperson')}${aufmassField('floorDoor','Etage / Wohnung / Tür')}${aufmassField('workHours','Erlaubte Arbeitszeiten')}${aufmassField('occupancy','Bewohnt während Umbau?','select',['Ja','Nein','Teilweise'])}${aufmassField('generalNotes','Zugang, Parkierung, Lift, Schlüssel, Transportweg, Container','textarea',null,'wide')}</div>${aufmassChecks([['parkingChecked','Parkierung/Entladen geklärt'],['liftChecked','Lift/Transportweg geprüft'],['keyChecked','Schlüssel/Zugang geklärt'],['protectionNeeded','Schutzmassnahmen erforderlich'],['containerPossible','Container möglich']])}`,true),
-    aufmassSection('2 · Bestand und Zustand','Untergrund, Feuchte, Schäden',`<div class="aufmass-fields">${aufmassField('constructionYear','Baujahr / letzte Sanierung')}${aufmassField('wallBase','Wandaufbau','select',['Beton','Backstein','Gips','Leichtbau','Holz','Unbekannt'])}${aufmassField('floorBase','Bodenaufbau','select',['Zementestrich','Anhydrit','Beton','Holz','Alte Platten','Unbekannt'])}${aufmassField('moisture','Feuchteprüfung / Wert')}${aufmassField('levelDeviation','Bodenabweichung / Gefälle')}${aufmassField('conditionNotes','Risse, Hohlstellen, Schimmel, Wasserschäden, Asbestverdacht','textarea',null,'wide')}</div>${aufmassChecks([['substrateChecked','Untergrund geprüft'],['wallsPlumb','Wände auf Lot geprüft'],['floorLevel','Boden nivelliert geprüft'],['moistureDamage','Feuchte/Schaden vorhanden'],['asbestosSuspected','Asbestverdacht'],['tileOnTile','Platte auf Platte möglich']])}`,true),
-    aufmassSection('3 · Raum- und Wandmasse','Grundriss, Höhen, Öffnungen',`<div class="aufmass-fields">${aufmassField('roomHeight','Raumhöhe cm','number')}${aufmassField('roomCount','Anzahl Räume','number')}${aufmassField('ceilingType','Decke / Dachschräge')}${aufmassField('doorMeasure','Tür B×H / Öffnungsrichtung')}${aufmassField('windowMeasure','Fenster B×H / Brüstung')}${aufmassField('measureNotes','Kolonnen, Schächte, Vorwand, Ablagen, Nischen, offene Masse','textarea',null,'wide')}</div>${aufmassRepeat('walls',data)}${aufmassChecks([['floorplanReady','Grundriss erstellt'],['wallViewsReady','Wandansichten kontrolliert'],['anglesChecked','Ecken/Winkel geprüft'],['openingsChecked','Tür/Fenster geprüft']])}`),
-    aufmassSection('4 · Sanitäranschlüsse','Koordinaten und Leitungen – keine Produktliste',`${aufmassRepeat('connections',data)}${aufmassChecks([['connectionsChecked','Alle Anschlüsse geprüft'],['drainChecked','Ablauf/Gefälle geprüft'],['waterShutoff','Absperrung geklärt'],['relocationNeeded','Anschlüsse müssen versetzt werden']])}`),
-    aufmassSection('5 · Elektro und Lüftung','Anschlüsse, Licht, Heizung',`<div class="aufmass-fields">${aufmassField('electricNotes','Steckdosen, Schalter, Licht, Spiegel, Waschmaschine, Bodenheizung','textarea',null,'wide')}${aufmassField('ventilation','Lüftung / Fenster')}${aufmassField('heating','Heizkörper / Bodenheizung')}</div>${aufmassChecks([['electricianNeeded','Elektriker erforderlich'],['mirrorPower','Spiegelanschluss vorhanden'],['ventChecked','Lüftung geprüft'],['floorHeating','Bodenheizung vorgesehen']])}`),
-    aufmassSection('6 · Demontage und Entsorgung','Bestand entfernen und abführen',`<div class="aufmass-fields">${aufmassField('demolitionAreaWall','Wandplatten demontieren m²','number')}${aufmassField('demolitionAreaFloor','Bodenplatten demontieren m²','number')}${aufmassField('wasteEstimate','Menge / Gewicht / Mulde')}${aufmassField('demolitionNotes','Wanne, Dusche, WC, Möbel, Vorwand, Decke, Tür, Transport','textarea',null,'wide')}</div>${aufmassChecks([['removeTiles','Platten entfernen'],['removeScreed','Unterlagsboden entfernen'],['removeSealing','Abdichtung entfernen'],['removeFixtures','Apparate demontieren'],['wasteTransport','Entsorgung/Transport kalkuliert']])}`),
-    aufmassSection('7 · Untergrundvorbereitung','Ausgleich, Aufbau, Gefälle',`<div class="aufmass-fields">${aufmassField('levelingThickness','Ausgleichsdicke mm','number')}${aufmassField('slopePct','Gefälle %','number')}${aufmassField('substrateArea','Vorbereitungsfläche m²','number')}${aufmassField('substrateNotes','Aufbau und Produkte','textarea',null,'wide')}</div>${aufmassChecks([['primer','Grundierung'],['leveling','Ausgleich/Spachtelung'],['slopeBuild','Gefälleaufbau'],['decoupling','Entkopplung'],['drywall','Trockenbau/Bauplatten'],['soundproof','Schallschutz']])}`),
-    aufmassSection('8 · Abdichtung','Flächen und Detailpunkte',`<div class="aufmass-fields">${aufmassField('sealingClass','Beanspruchungsklasse')}${aufmassField('sealFloorArea','Boden m²','number')}${aufmassField('sealWallArea','Wand m²','number')}${aufmassField('sealTape','Dichtband m','number')}${aufmassField('sealCorners','Innen-/Aussenecken St.')}${aufmassField('sealCollars','Manschetten St.')}${aufmassField('sealSystem','System / Hersteller','text')}${aufmassField('sealingNotes','Dusche, Wanne, Nische, Türschwelle, Duschrinne','textarea',null,'double')}</div>${aufmassChecks([['sealWholeFloor','Ganzer Boden'],['sealShowerWalls','Duschwände'],['sealNiches','Nischen'],['sealDrain','Rinne/Ablauf'],['sealDocumentPhotos','Zwischenfotos erforderlich']])}`),
-    aufmassSection('9 · Fliesenplanung','Format, Fugen, Profile, Verlegung',`<div class="aufmass-fields">${aufmassField('tileFormatFloor','Bodenformat')}${aufmassField('tileFormatWall','Wandformat')}${aufmassField('tileThickness','Dicke mm','number')}${aufmassField('tileDirection','Verlegerichtung / Verband')}${aufmassField('jointWidth','Fugenbreite mm','number')}${aufmassField('jointColor','Fugenfarbe')}${aufmassField('siliconeColor','Silikonfarbe')}${aufmassField('wastePct','Verschnitt %','number')}${aufmassField('tileNotes','Startpunkt, Symmetrie, Dekor, Profile, Gehrung, Bohrungen, Sockel','textarea',null,'wide')}</div>${aufmassChecks([['rectified','Rektifiziert'],['slipClassChecked','Rutschklasse geprüft'],['mitre45','45° Gehrung'],['profilesNeeded','Profile erforderlich'],['layoutApproval','Verlegeplan/Freigabe erforderlich']])}`),
-    aufmassSection('10 · Materialien','Geplante Produkte und Mengen',aufmassRepeat('materials',data)),
-    aufmassSection('11 · Auszuführende Arbeiten','Menge, Einheit, Stunden, Verantwortung',aufmassRepeat('works',data)),
-    aufmassSection('12 · Fremdgewerke','Sanitär, Elektro, Gipser, Maler, Glaser…',aufmassRepeat('trades',data)),
-    aufmassSection('13 · Offene Entscheide','Kundenentscheide und Termine',aufmassRepeat('decisions',data)),
-    aufmassSection('14 · Fotodokumentation','Pflichtbilder vor Ort',`${aufmassChecks([['existingPhotos','Bestandsfotos vorhanden'],['photoAllWalls','Alle Wände fotografiert'],['photoFloorCeiling','Boden/Decke fotografiert'],['photoOpenings','Tür/Fenster fotografiert'],['photoConnections','Anschlüsse fotografiert'],['photoDamage','Schäden/Feuchte fotografiert'],['photoElectrical','Elektro/Lüftung fotografiert']])}<div class="aufmass-fields" style="margin-top:10px">${aufmassField('photoNotes','Fotohinweise / fehlende Aufnahmen','textarea',null,'wide')}</div>`)
+    aufmassSection('1 Â· Allgemeine Angaben','Zugang, Logistik, Baustelle',`<div class="aufmass-fields">${aufmassField('measureDate','Aufmassdatum','date')}${aufmassField('measurer','Aufgenommen durch')}${aufmassField('contactPerson','Anwesende Kontaktperson')}${aufmassField('floorDoor','Etage / Wohnung / TÃ¼r')}${aufmassField('workHours','Erlaubte Arbeitszeiten')}${aufmassField('occupancy','Bewohnt wÃ¤hrend Umbau?','select',['Ja','Nein','Teilweise'])}${aufmassField('generalNotes','Zugang, Parkierung, Lift, SchlÃ¼ssel, Transportweg, Container','textarea',null,'wide')}</div>${aufmassChecks([['parkingChecked','Parkierung/Entladen geklÃ¤rt'],['liftChecked','Lift/Transportweg geprÃ¼ft'],['keyChecked','SchlÃ¼ssel/Zugang geklÃ¤rt'],['protectionNeeded','Schutzmassnahmen erforderlich'],['containerPossible','Container mÃ¶glich']])}`,true),
+    aufmassSection('2 Â· Bestand und Zustand','Untergrund, Feuchte, SchÃ¤den',`<div class="aufmass-fields">${aufmassField('constructionYear','Baujahr / letzte Sanierung')}${aufmassField('wallBase','Wandaufbau','select',['Beton','Backstein','Gips','Leichtbau','Holz','Unbekannt'])}${aufmassField('floorBase','Bodenaufbau','select',['Zementestrich','Anhydrit','Beton','Holz','Alte Platten','Unbekannt'])}${aufmassField('moisture','FeuchteprÃ¼fung / Wert')}${aufmassField('levelDeviation','Bodenabweichung / GefÃ¤lle')}${aufmassField('conditionNotes','Risse, Hohlstellen, Schimmel, WasserschÃ¤den, Asbestverdacht','textarea',null,'wide')}</div>${aufmassChecks([['substrateChecked','Untergrund geprÃ¼ft'],['wallsPlumb','WÃ¤nde auf Lot geprÃ¼ft'],['floorLevel','Boden nivelliert geprÃ¼ft'],['moistureDamage','Feuchte/Schaden vorhanden'],['asbestosSuspected','Asbestverdacht'],['tileOnTile','Platte auf Platte mÃ¶glich']])}`,true),
+    aufmassSection('3 Â· Raum- und Wandmasse','Grundriss, HÃ¶hen, Ã–ffnungen',`<div class="aufmass-fields">${aufmassField('roomHeight','RaumhÃ¶he cm','number')}${aufmassField('roomCount','Anzahl RÃ¤ume','number')}${aufmassField('ceilingType','Decke / DachschrÃ¤ge')}${aufmassField('doorMeasure','TÃ¼r BÃ—H / Ã–ffnungsrichtung')}${aufmassField('windowMeasure','Fenster BÃ—H / BrÃ¼stung')}${aufmassField('measureNotes','Kolonnen, SchÃ¤chte, Vorwand, Ablagen, Nischen, offene Masse','textarea',null,'wide')}</div>${aufmassRepeat('walls',data)}${aufmassChecks([['floorplanReady','Grundriss erstellt'],['wallViewsReady','Wandansichten kontrolliert'],['anglesChecked','Ecken/Winkel geprÃ¼ft'],['openingsChecked','TÃ¼r/Fenster geprÃ¼ft']])}`),
+    aufmassSection('4 Â· SanitÃ¤ranschlÃ¼sse','Koordinaten und Leitungen â€“ keine Produktliste',`${aufmassRepeat('connections',data)}${aufmassChecks([['connectionsChecked','Alle AnschlÃ¼sse geprÃ¼ft'],['drainChecked','Ablauf/GefÃ¤lle geprÃ¼ft'],['waterShutoff','Absperrung geklÃ¤rt'],['relocationNeeded','AnschlÃ¼sse mÃ¼ssen versetzt werden']])}`),
+    aufmassSection('5 Â· Elektro und LÃ¼ftung','AnschlÃ¼sse, Licht, Heizung',`<div class="aufmass-fields">${aufmassField('electricNotes','Steckdosen, Schalter, Licht, Spiegel, Waschmaschine, Bodenheizung','textarea',null,'wide')}${aufmassField('ventilation','LÃ¼ftung / Fenster')}${aufmassField('heating','HeizkÃ¶rper / Bodenheizung')}</div>${aufmassChecks([['electricianNeeded','Elektriker erforderlich'],['mirrorPower','Spiegelanschluss vorhanden'],['ventChecked','LÃ¼ftung geprÃ¼ft'],['floorHeating','Bodenheizung vorgesehen']])}`),
+    aufmassSection('6 Â· Demontage und Entsorgung','Bestand entfernen und abfÃ¼hren',`<div class="aufmass-fields">${aufmassField('demolitionAreaWall','Wandplatten demontieren mÂ²','number')}${aufmassField('demolitionAreaFloor','Bodenplatten demontieren mÂ²','number')}${aufmassField('wasteEstimate','Menge / Gewicht / Mulde')}${aufmassField('demolitionNotes','Wanne, Dusche, WC, MÃ¶bel, Vorwand, Decke, TÃ¼r, Transport','textarea',null,'wide')}</div>${aufmassChecks([['removeTiles','Platten entfernen'],['removeScreed','Unterlagsboden entfernen'],['removeSealing','Abdichtung entfernen'],['removeFixtures','Apparate demontieren'],['wasteTransport','Entsorgung/Transport kalkuliert']])}`),
+    aufmassSection('7 Â· Untergrundvorbereitung','Ausgleich, Aufbau, GefÃ¤lle',`<div class="aufmass-fields">${aufmassField('levelingThickness','Ausgleichsdicke mm','number')}${aufmassField('slopePct','GefÃ¤lle %','number')}${aufmassField('substrateArea','VorbereitungsflÃ¤che mÂ²','number')}${aufmassField('substrateNotes','Aufbau und Produkte','textarea',null,'wide')}</div>${aufmassChecks([['primer','Grundierung'],['leveling','Ausgleich/Spachtelung'],['slopeBuild','GefÃ¤lleaufbau'],['decoupling','Entkopplung'],['drywall','Trockenbau/Bauplatten'],['soundproof','Schallschutz']])}`),
+    aufmassSection('8 Â· Abdichtung','FlÃ¤chen und Detailpunkte',`<div class="aufmass-fields">${aufmassField('sealingClass','Beanspruchungsklasse')}${aufmassField('sealFloorArea','Boden mÂ²','number')}${aufmassField('sealWallArea','Wand mÂ²','number')}${aufmassField('sealTape','Dichtband m','number')}${aufmassField('sealCorners','Innen-/Aussenecken St.')}${aufmassField('sealCollars','Manschetten St.')}${aufmassField('sealSystem','System / Hersteller','text')}${aufmassField('sealingNotes','Dusche, Wanne, Nische, TÃ¼rschwelle, Duschrinne','textarea',null,'double')}</div>${aufmassChecks([['sealWholeFloor','Ganzer Boden'],['sealShowerWalls','DuschwÃ¤nde'],['sealNiches','Nischen'],['sealDrain','Rinne/Ablauf'],['sealDocumentPhotos','Zwischenfotos erforderlich']])}`),
+    aufmassSection('9 Â· Fliesenplanung','Format, Fugen, Profile, Verlegung',`<div class="aufmass-fields">${aufmassField('tileFormatFloor','Bodenformat')}${aufmassField('tileFormatWall','Wandformat')}${aufmassField('tileThickness','Dicke mm','number')}${aufmassField('tileDirection','Verlegerichtung / Verband')}${aufmassField('jointWidth','Fugenbreite mm','number')}${aufmassField('jointColor','Fugenfarbe')}${aufmassField('siliconeColor','Silikonfarbe')}${aufmassField('wastePct','Verschnitt %','number')}${aufmassField('tileNotes','Startpunkt, Symmetrie, Dekor, Profile, Gehrung, Bohrungen, Sockel','textarea',null,'wide')}</div>${aufmassChecks([['rectified','Rektifiziert'],['slipClassChecked','Rutschklasse geprÃ¼ft'],['mitre45','45Â° Gehrung'],['profilesNeeded','Profile erforderlich'],['layoutApproval','Verlegeplan/Freigabe erforderlich']])}`),
+    aufmassSection('10 Â· Materialien','Geplante Produkte und Mengen',aufmassRepeat('materials',data)),
+    aufmassSection('11 Â· AuszufÃ¼hrende Arbeiten','Menge, Einheit, Stunden, Verantwortung',aufmassRepeat('works',data)),
+    aufmassSection('12 Â· Fremdgewerke','SanitÃ¤r, Elektro, Gipser, Maler, Glaserâ€¦',aufmassRepeat('trades',data)),
+    aufmassSection('13 Â· Offene Entscheide','Kundenentscheide und Termine',aufmassRepeat('decisions',data)),
+    aufmassSection('14 Â· Fotodokumentation','Pflichtbilder vor Ort',`${aufmassChecks([['existingPhotos','Bestandsfotos vorhanden'],['photoAllWalls','Alle WÃ¤nde fotografiert'],['photoFloorCeiling','Boden/Decke fotografiert'],['photoOpenings','TÃ¼r/Fenster fotografiert'],['photoConnections','AnschlÃ¼sse fotografiert'],['photoDamage','SchÃ¤den/Feuchte fotografiert'],['photoElectrical','Elektro/LÃ¼ftung fotografiert']])}<div class="aufmass-fields" style="margin-top:10px">${aufmassField('photoNotes','Fotohinweise / fehlende Aufnahmen','textarea',null,'wide')}</div>`)
   ];
-  return `<div class="aufmass-pro">${sections.join('')}<div class="aufmass-completion"><div class="aufmass-completion-head"><strong>Aufmass-Vollständigkeit</strong><span class="aufmass-complete-badge">${pct} %</span></div><div class="aufmass-progress"><i style="width:${pct}%"></i></div><div class="aufmass-missing">${missing.length?'Fehlt: '+esc(missing.join(', ')):'✓ Pflichtangaben vollständig. Aufmass kann abgeschlossen werden.'}</div>${aufmassChecks([['aufmassComplete','Aufmass vollständig geprüft und abgeschlossen']])}</div></div>`;
+  return `<div class="aufmass-pro">${sections.join('')}<div class="aufmass-completion"><div class="aufmass-completion-head"><strong>Aufmass-VollstÃ¤ndigkeit</strong><span class="aufmass-complete-badge">${pct} %</span></div><div class="aufmass-progress"><i style="width:${pct}%"></i></div><div class="aufmass-missing">${missing.length?'Fehlt: '+esc(missing.join(', ')):'âœ“ Pflichtangaben vollstÃ¤ndig. Aufmass kann abgeschlossen werden.'}</div>${aufmassChecks([['aufmassComplete','Aufmass vollstÃ¤ndig geprÃ¼ft und abgeschlossen']])}</div></div>`;
 }
 
 function phaseFieldHtml(field,data){
@@ -618,13 +618,13 @@ function readPlattenlegerPhaseData(c,phase=c.phase){
 function renderPlattenlegerPhaseContent(c){
   c.phaseData=c.phaseData||{};const schema=PL_PHASE_CONTENT[c.phase]||PL_PHASE_CONTENT.anfrage,data=c.phaseData[c.phase]||{};
   const host=$('plattenlegerPhaseContent');if(!host)return;
-  if(c.phase==='aufmass')host.innerHTML=`<div class="plattenleger-phase-head"><div><h4>Professionelles Bad-Aufmass</h4><p>Vollständige Aufnahme für Badumbau, Offerte, Material und Ausführung.</p></div><span class="plattenleger-phase-badge">Aufmass</span></div>${renderProfessionalAufmass(c,data)}`;
-  else if(c.phase==='offerte')host.innerHTML=`<div class="plattenleger-phase-head"><div><h4>Offertenentwurf</h4><p>Aufmass übernehmen, Positionen und Preise frei bearbeiten.</p></div><span class="plattenleger-phase-badge">Offerte</span></div>${pbRenderOffer(c)}`;
-  else if(c.phase==='auftrag')host.innerHTML=`<div class="plattenleger-phase-head"><div><h4>Auftrag</h4><p>Aus einer Offerte erstellte Auftrag-Entwürfe.</p></div><span class="plattenleger-phase-badge">Auftrag</span></div><div class="pb-order-placeholder">${(cur()?.orders||[]).length?(cur().orders||[]).map((o,i)=>`<div><strong>Auftrag ${i+1} · ${esc(o.sourceOfferNo||'')}</strong><span>${esc(o.title||'')}</span><b>${formatCHNumber(o.gross||0,2)} CHF</b><small>Status: ${esc(o.status||'Entwurf')}</small></div>`).join(''):'<p>Noch kein Auftrag vorhanden. Erstellen Sie den Auftrag direkt in der Offerte.</p>'}<em>Das vollständige Auftrag-Modul wird in einer späteren Version entwickelt.</em></div>`;
+  if(c.phase==='aufmass')host.innerHTML=`<div class="plattenleger-phase-head"><div><h4>Professionelles Bad-Aufmass</h4><p>VollstÃ¤ndige Aufnahme fÃ¼r Badumbau, Offerte, Material und AusfÃ¼hrung.</p></div><span class="plattenleger-phase-badge">Aufmass</span></div>${renderProfessionalAufmass(c,data)}`;
+  else if(c.phase==='offerte')host.innerHTML=`<div class="plattenleger-phase-head"><div><h4>Offertenentwurf</h4><p>Aufmass Ã¼bernehmen, Positionen und Preise frei bearbeiten.</p></div><span class="plattenleger-phase-badge">Offerte</span></div>${pbRenderOffer(c)}`;
+  else if(c.phase==='auftrag')host.innerHTML=`<div class="plattenleger-phase-head"><div><h4>Auftrag</h4><p>Aus einer Offerte erstellte Auftrag-EntwÃ¼rfe.</p></div><span class="plattenleger-phase-badge">Auftrag</span></div><div class="pb-order-placeholder">${(cur()?.orders||[]).length?(cur().orders||[]).map((o,i)=>`<div><strong>Auftrag ${i+1} Â· ${esc(o.sourceOfferNo||'')}</strong><span>${esc(o.title||'')}</span><b>${formatCHNumber(o.gross||0,2)} CHF</b><small>Status: ${esc(o.status||'Entwurf')}</small></div>`).join(''):'<p>Noch kein Auftrag vorhanden. Erstellen Sie den Auftrag direkt in der Offerte.</p>'}<em>Das vollstÃ¤ndige Auftrag-Modul wird in einer spÃ¤teren Version entwickelt.</em></div>`;
   else host.innerHTML=`<div class="plattenleger-phase-head"><div><h4>${esc(schema.title)}</h4><p>${esc(schema.desc)}</p></div><span class="plattenleger-phase-badge">${esc(PL_PHASES.find(x=>x[0]===c.phase)?.[1]||'Phase')}</span></div>`+
     `<div class="plattenleger-phase-fields">${schema.fields.map(f=>phaseFieldHtml(f,data)).join('')}</div>`+
     `<div class="plattenleger-phase-checks">${schema.checks.map(([key,label])=>`<label><input type="checkbox" data-pl-phase-check="${key}" ${data[key]?'checked':''}> ${esc(label)}</label>`).join('')}</div>`;
-  host.insertAdjacentHTML('afterbegin',`<div class="pb-phase-pdfbar"><strong>PDF-Ausgabe</strong><select data-pdf-phase>${PB_PDF_PHASES.map(([k,l])=>`<option value="${k}" ${k===c.phase?'selected':''}>${l}</option>`).join('')}</select><button type="button" class="secondary" data-pdf-one>Gewählte Phase als PDF</button><button type="button" class="primary" data-pdf-all>Alle Phasen als PDF</button></div>`);
+  host.insertAdjacentHTML('afterbegin',`<div class="pb-phase-pdfbar"><strong>PDF-Ausgabe</strong><select data-pdf-phase>${PB_PDF_PHASES.map(([k,l])=>`<option value="${k}" ${k===c.phase?'selected':''}>${l}</option>`).join('')}</select><button type="button" class="secondary" data-pdf-one>GewÃ¤hlte Phase als PDF</button><button type="button" class="primary" data-pdf-all>Alle Phasen als PDF</button></div>`);
   host.querySelectorAll('[data-pl-phase-field]').forEach(el=>{if(data[el.dataset.plPhaseField]!==undefined)el.value=data[el.dataset.plPhaseField]});
   host.querySelectorAll('[data-pl-phase-check]').forEach(el=>el.checked=!!data[el.dataset.plPhaseCheck]);
   host.querySelectorAll('[data-aufmass-add]').forEach(btn=>pbBindTap(btn,()=>{
@@ -633,22 +633,22 @@ function renderPlattenlegerPhaseContent(c){
   host.querySelectorAll('[data-aufmass-delete]').forEach(btn=>pbBindTap(btn,()=>{
     readPlattenlegerPhaseData(c,'aufmass');const name=btn.dataset.aufmassDelete,index=Number(btn.dataset.index);if(Array.isArray(data[name]))data[name].splice(index,1);renderPlattenlegerPhaseContent(c);
   }));
-  host.querySelectorAll('[data-measure-row-add]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'aufmass');const gi=Number(btn.dataset.measureRowAdd);data.measureGroups[gi].rows.push({factor:'1',formula:'',unit:'m²'});renderPlattenlegerPhaseContent(c)}));
+  host.querySelectorAll('[data-measure-row-add]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'aufmass');const gi=Number(btn.dataset.measureRowAdd);data.measureGroups[gi].rows.push({factor:'1',formula:'',unit:'mÂ²'});renderPlattenlegerPhaseContent(c)}));
   host.querySelectorAll('[data-measure-row-delete]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'aufmass');const [gi,ri]=btn.dataset.measureRowDelete.split(':').map(Number);data.measureGroups[gi].rows.splice(ri,1);renderPlattenlegerPhaseContent(c)}));
   host.querySelectorAll('[data-measure-group-delete]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'aufmass');data.measureGroups.splice(Number(btn.dataset.measureGroupDelete),1);renderPlattenlegerPhaseContent(c)}));
   host.querySelectorAll('[data-measure-group-add]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'aufmass');data.measureGroups.push({title:`Raum ${data.measureGroups.length}`,notes:'',rows:[]});renderPlattenlegerPhaseContent(c)}));
   host.querySelectorAll('.pb-measure-row input,.pb-measure-row select').forEach(el=>el.addEventListener('change',()=>{readPlattenlegerPhaseData(c,'aufmass');renderPlattenlegerPhaseContent(c)}));
   host.querySelectorAll('.pb-measure-row input[data-mr="item"],.pb-measure-row input[data-mr="factor"],.pb-measure-row input[data-mr="formula"],.pb-measure-row input[data-mr="note"]').forEach(el=>el.addEventListener('keydown',ev=>{
-    if(ev.key!=='Enter')return;ev.preventDefault();const row=el.closest('[data-measure-row]'),group=el.closest('[data-measure-group]'),field=el.dataset.mr,gi=Number(group?.dataset.measureGroup);readPlattenlegerPhaseData(c,'aufmass');data.measureGroups[gi].rows.push({factor:'1',formula:'',unit:'m²'});renderPlattenlegerPhaseContent(c);const rows=host.querySelectorAll(`[data-measure-group="${gi}"] [data-measure-row]`),last=rows[rows.length-1];(last?.querySelector(`[data-mr="${field}"]`)||last?.querySelector('[data-mr="item"]'))?.focus();
+    if(ev.key!=='Enter')return;ev.preventDefault();const row=el.closest('[data-measure-row]'),group=el.closest('[data-measure-group]'),field=el.dataset.mr,gi=Number(group?.dataset.measureGroup);readPlattenlegerPhaseData(c,'aufmass');data.measureGroups[gi].rows.push({factor:'1',formula:'',unit:'mÂ²'});renderPlattenlegerPhaseContent(c);const rows=host.querySelectorAll(`[data-measure-group="${gi}"] [data-measure-row]`),last=rows[rows.length-1];(last?.querySelector(`[data-mr="${field}"]`)||last?.querySelector('[data-mr="item"]'))?.focus();
   }));
   host.querySelectorAll('[data-open-offer]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'aufmass');pbOfferDraft(c);c.phase='offerte';const sel=$('plProjectPhase');if(sel)sel.value='offerte';save();renderPlattenlegerCockpit(cur())}));
   host.querySelectorAll('[data-back-measure]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'offerte');c.phase='aufmass';const sel=$('plProjectPhase');if(sel)sel.value='aufmass';save();renderPlattenlegerCockpit(cur())}));
-  host.querySelectorAll('[data-offer-row-add]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'offerte');const d=pbOfferDraft(c),si=Number(btn.dataset.offerRowAdd);d.sections[si].rows.push({qty:'1',unit:'m²',unitPrice:'0',discount:'0'});renderPlattenlegerPhaseContent(c)}));
+  host.querySelectorAll('[data-offer-row-add]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'offerte');const d=pbOfferDraft(c),si=Number(btn.dataset.offerRowAdd);d.sections[si].rows.push({qty:'1',unit:'mÂ²',unitPrice:'0',discount:'0'});renderPlattenlegerPhaseContent(c)}));
   host.querySelectorAll('[data-offer-row-delete]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'offerte');const d=pbOfferDraft(c),[si,ri]=btn.dataset.offerRowDelete.split(':').map(Number);d.sections[si].rows.splice(ri,1);renderPlattenlegerPhaseContent(c)}));
   host.querySelectorAll('[data-offer-section-add]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'offerte');pbOfferDraft(c).sections.push({title:'Neuer Titel',rows:[]});renderPlattenlegerPhaseContent(c)}));
   host.querySelectorAll('[data-offer-section-delete]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'offerte');pbOfferDraft(c).sections.splice(Number(btn.dataset.offerSectionDelete),1);renderPlattenlegerPhaseContent(c)}));
   host.querySelectorAll('.pb-offer-row input,.pb-offer-row select,[data-offer-field="vat"]').forEach(el=>el.addEventListener('change',()=>{readPlattenlegerPhaseData(c,'offerte');renderPlattenlegerPhaseContent(c)}));
-  host.querySelectorAll('[data-create-order]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'offerte');const p=cur(),d=pbOfferDraft(c),totals=pbOfferTotals(d);p.orders=Array.isArray(p.orders)?p.orders:[];p.orders.push({id:'order_'+Date.now(),orderNo:pbNextNumber('AT'),sourceOfferNo:d.offerNo,status:'Entwurf',createdAt:new Date().toISOString(),title:d.title,sections:JSON.parse(JSON.stringify(d.sections)),net:totals.net,vat:totals.vat,gross:totals.gross,customerId:p.customerId,customerName:p.customer,customerAddress:p.address});save();pbActionToast('Auftrag-Entwurf wurde erstellt. Das Auftrag-Modul wird später erweitert.') }));
+  host.querySelectorAll('[data-create-order]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,'offerte');const p=cur(),d=pbOfferDraft(c),totals=pbOfferTotals(d);p.orders=Array.isArray(p.orders)?p.orders:[];p.orders.push({id:'order_'+Date.now(),orderNo:pbNextNumber('AT'),sourceOfferNo:d.offerNo,status:'Entwurf',createdAt:new Date().toISOString(),title:d.title,sections:JSON.parse(JSON.stringify(d.sections)),net:totals.net,vat:totals.vat,gross:totals.gross,customerId:p.customerId,customerName:p.customer,customerAddress:p.address});save();pbActionToast('Auftrag-Entwurf wurde erstellt. Das Auftrag-Modul wird spÃ¤ter erweitert.') }));
   host.querySelectorAll('[data-pdf-one]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,c.phase);save();pbPhasePdfExport(cur(),[host.querySelector('[data-pdf-phase]').value])}));
   host.querySelectorAll('[data-pdf-all]').forEach(btn=>pbBindTap(btn,()=>{readPlattenlegerPhaseData(c,c.phase);save();pbPhasePdfExport(cur(),PB_PDF_PHASES.map(x=>x[0]))}));
 }
@@ -711,17 +711,17 @@ function renderPlattenlegerCockpit(p){
   const m=projectPlattenlegerMetrics(p),fmt=v=>formatCHNumber(v,2);
   const kpis=$('plattenlegerKpis');
   if(kpis)kpis.innerHTML=[
-    ['Bodenfläche',`${fmt(m.floor)} m²`],['Wandplatten',`${fmt(m.wall)} m²`],
-    [`Fliesen inkl. ${formatCHNumber(m.waste,0)} %`,`${fmt(m.tiledOrder)} m²`],['Abdichtung',`${fmt(m.abdichtung)} m²`],
-    ['Silikon / Umfang',`${fmt(m.silicone)} m`],['Sanitärobjekte',`${m.sanitary} St.`]
+    ['BodenflÃ¤che',`${fmt(m.floor)} mÂ²`],['Wandplatten',`${fmt(m.wall)} mÂ²`],
+    [`Fliesen inkl. ${formatCHNumber(m.waste,0)} %`,`${fmt(m.tiledOrder)} mÂ²`],['Abdichtung',`${fmt(m.abdichtung)} mÂ²`],
+    ['Silikon / Umfang',`${fmt(m.silicone)} m`],['SanitÃ¤robjekte',`${m.sanitary} St.`]
   ].map(x=>`<div class="plattenleger-kpi"><span>${esc(x[0])}</span><strong>${esc(x[1])}</strong></div>`).join('');
   const photoCount=(p.areas||[]).reduce((n,a)=>n+(a.photos||[]).length,0);
   const checks=[
     [m.totalPlans>0,'Grundriss erfasst'],[m.totalPlans>0&&m.closedPlans===m.totalPlans,'Alle Grundrisse geschlossen'],
     [(p.tileMaterials||[]).length>0,'Fliesenmaterial erfasst'],[!c.scope.abdichtung||m.abdichtung>0,'Abdichtung berechnet'],
-    [photoCount>0,'Fotodokumentation vorhanden'],[!!p.customer&&!!p.address,'Kunde und Adresse vollständig']
+    [photoCount>0,'Fotodokumentation vorhanden'],[!!p.customer&&!!p.address,'Kunde und Adresse vollstÃ¤ndig']
   ];
-  const checkEl=$('plattenlegerChecks');if(checkEl)checkEl.innerHTML=checks.map(x=>`<span class="plattenleger-check ${x[0]?'ok':''}">${x[0]?'✓':'!'} ${esc(x[1])}</span>`).join('');
+  const checkEl=$('plattenlegerChecks');if(checkEl)checkEl.innerHTML=checks.map(x=>`<span class="plattenleger-check ${x[0]?'ok':''}">${x[0]?'âœ“':'!'} ${esc(x[1])}</span>`).join('');
 }
 
 function savePlattenlegerCockpit(){
@@ -742,7 +742,7 @@ function renderP(){
   p.tileSettings=p.tileSettings||{layoutPattern:'',jointWidth:'',jointColor:'',siliconeColor:'',wastePercent:10};
   $('panel').classList.remove('hidden');
   $('pTitle').textContent=p.name;
-  $('pMeta').textContent=[p.projectNo,p.address,p.customer&&'Kunde: '+p.customer,p.owner&&'Verantwortlich: '+p.owner].filter(Boolean).join(' · ');
+  $('pMeta').textContent=[p.projectNo,p.address,p.customer&&'Kunde: '+p.customer,p.owner&&'Verantwortlich: '+p.owner].filter(Boolean).join(' Â· ');
   $('summary').innerHTML=[['Telefon',p.phone||'-'],['Startdatum',fmtDate(p.startDate)],['Bereiche',p.areas.length],['Beschreibung',p.description||'-']].map(x=>`<div><small>${esc(x[0])}</small><br><b>${esc(x[1])}</b></div>`).join('');
   renderPlattenlegerCockpit(p);
   const pe=$('projectEditFields');
@@ -761,9 +761,9 @@ function renderP(){
 function area(p,a){
   a.tasks=a.tasks||[];a.materials=a.materials||[];a.photos=a.photos||[];
   let d=document.createElement('div');d.className='area';
-  d.innerHTML=`<div class=title><div><h3>${esc(a.name)}</h3><small>${esc(a.priority)}</small></div><button class="danger editor delArea">Bereich löschen</button></div>
+  d.innerHTML=`<div class=title><div><h3>${esc(a.name)}</h3><small>${esc(a.priority)}</small></div><button class="danger editor delArea">Bereich lÃ¶schen</button></div>
   <div class=grid><label>Mitarbeiter / Team<input class=worker></label><label>Status<select class=status><option>Offen</option><option>In Arbeit</option><option>Wartet</option><option>Abgeschlossen</option></select></label></div>
-  <div class=sub><div class=title><h4>Auszuführende Arbeiten</h4><button class="secondary addT editor">+ Aufgabe</button></div><div class=tasks></div></div>
+  <div class=sub><div class=title><h4>AuszufÃ¼hrende Arbeiten</h4><button class="secondary addT editor">+ Aufgabe</button></div><div class=tasks></div></div>
   <div class=sub><div class=title><h4>Material / Menge</h4><button class="secondary addM editor">+ Material</button></div><div class=mats></div></div>
   <div class="photoBox editor">
     <select class=kind>
@@ -775,17 +775,17 @@ function area(p,a){
       <label class="primary file">Foto aufnehmen
         <input class="cameraInput" type="file" accept="image/*" capture="environment">
       </label>
-      <button type="button" class="secondary galleryButton">Foto auswählen</button>
+      <button type="button" class="secondary galleryButton">Foto auswÃ¤hlen</button>
     </div>
   </div>
   <div class=photos></div>`;
   d.querySelector('.worker').value=a.worker||'';d.querySelector('.status').value=a.status||'Offen';
   d.querySelector('.worker').onchange=e=>{a.worker=e.target.value;save()};d.querySelector('.status').onchange=e=>{a.status=e.target.value;save()};
-  pbBindTap(d.querySelector('.delArea'),()=>{if(confirm(`Bereich „${a.name||''}“ wirklich löschen?`)){p.areas=p.areas.filter(x=>x.id!==a.id);p.updatedAt=new Date().toISOString();save();pbActionToast('Bereich gelöscht.')}});
+  pbBindTap(d.querySelector('.delArea'),()=>{if(confirm(`Bereich â€ž${a.name||''}â€œ wirklich lÃ¶schen?`)){p.areas=p.areas.filter(x=>x.id!==a.id);p.updatedAt=new Date().toISOString();save();pbActionToast('Bereich gelÃ¶scht.')}});
   a.tasks.forEach(t=>d.querySelector('.tasks').appendChild(row(a.tasks,t,'Arbeitsbeschreibung')));
-  pbBindTap(d.querySelector('.addT'),()=>{a.tasks.push({id:u(),text:''});p.updatedAt=new Date().toISOString();save();pbActionToast('Aufgabe hinzugefügt.');});
-  a.materials.forEach(m=>d.querySelector('.mats').appendChild(row(a.materials,m,'60×120 seramik – 12 m²')));
-  pbBindTap(d.querySelector('.addM'),()=>{a.materials.push({id:u(),text:''});p.updatedAt=new Date().toISOString();save();pbActionToast('Material hinzugefügt.');});
+  pbBindTap(d.querySelector('.addT'),()=>{a.tasks.push({id:u(),text:''});p.updatedAt=new Date().toISOString();save();pbActionToast('Aufgabe hinzugefÃ¼gt.');});
+  a.materials.forEach(m=>d.querySelector('.mats').appendChild(row(a.materials,m,'60Ã—120 seramik â€“ 12 mÂ²')));
+  pbBindTap(d.querySelector('.addM'),()=>{a.materials.push({id:u(),text:''});p.updatedAt=new Date().toISOString();save();pbActionToast('Material hinzugefÃ¼gt.');});
   const addSelectedPhotos=async(files)=>{
     for(const f of files){
       a.photos.push({
@@ -823,7 +823,7 @@ function area(p,a){
         return;
       }
 
-      // Fallback für Browser ohne File System Access API:
+      // Fallback fÃ¼r Browser ohne File System Access API:
       // bewusst KEIN accept=image/* und KEIN capture, damit der Dateidialog erscheint.
       const picker=document.createElement('input');
       picker.type='file';
@@ -838,7 +838,7 @@ function area(p,a){
             /\.(jpg|jpeg|png|webp|gif|bmp|heic|heif)$/.test(name);
         });
         if(!files.length){
-          alert('Bitte Bilddateien auswählen.');
+          alert('Bitte Bilddateien auswÃ¤hlen.');
         }else{
           await addSelectedPhotos(files);
         }
@@ -848,26 +848,26 @@ function area(p,a){
       picker.click();
     }catch(err){
       if(err && err.name==='AbortError') return;
-      alert('Der Dateidialog konnte nicht geöffnet werden.');
+      alert('Der Dateidialog konnte nicht geÃ¶ffnet werden.');
     }
   });
   a.photos.forEach((ph,i)=>d.querySelector('.photos').appendChild(photoCard(a,ph,i)));
   return d
 }
 function row(arr,it,ph){
-  let r=document.createElement('div');r.className='row';r.innerHTML=`<input placeholder="${ph}"><button class="danger editor">Löschen</button>`;
+  let r=document.createElement('div');r.className='row';r.innerHTML=`<input placeholder="${ph}"><button class="danger editor">LÃ¶schen</button>`;
   r.querySelector('input').value=it.text||'';r.querySelector('input').onchange=e=>{it.text=e.target.value;save()};
-  pbBindTap(r.querySelector('button'),()=>{arr.splice(arr.findIndex(x=>x.id===it.id),1);save();pbActionToast('Eintrag gelöscht.');});return r
+  pbBindTap(r.querySelector('button'),()=>{arr.splice(arr.findIndex(x=>x.id===it.id),1);save();pbActionToast('Eintrag gelÃ¶scht.');});return r
 }
 function photoCard(a,ph,i){
   ph.title=ph.title||'';ph.note=ph.note||'';
   let c=document.createElement('div');c.className='photo';
   c.innerHTML=`<img><div class=body><span class=tag>${esc(ph.kind||'Detail')}</span>
   <div class=photo-fields>
-    <label>Titel / Position<input class=photoTitle placeholder="Örn. Badezimmer - duş duvarı"></label>
-    <label>Beschreibung im PDF<textarea class=photoNote rows=5 placeholder="Auszuführende Arbeiten für dieses Foto beschreiben..."></textarea></label>
+    <label>Titel / Position<input class=photoTitle placeholder="Ã–rn. Badezimmer - duÅŸ duvarÄ±"></label>
+    <label>Beschreibung im PDF<textarea class=photoNote rows=5 placeholder="AuszufÃ¼hrende Arbeiten fÃ¼r dieses Foto beschreiben..."></textarea></label>
   </div>
-  <div class="photo-actions editor"><button class="primary editPhoto">✎ Foto bearbeiten</button><button class="secondary up">↑ Nach oben</button><button class="secondary down">↓ Nach unten</button><button class="danger del">Löschen</button></div></div>`;
+  <div class="photo-actions editor"><button class="primary editPhoto">âœŽ Foto bearbeiten</button><button class="secondary up">â†‘ Nach oben</button><button class="secondary down">â†“ Nach unten</button><button class="danger del">LÃ¶schen</button></div></div>`;
   c.querySelector('img').src=ph.data;c.querySelector('.photoTitle').value=ph.title;c.querySelector('.photoNote').value=ph.note;
   const editExisting=()=>{ if(window.ProjectBauPhotoEditor?.openExisting) window.ProjectBauPhotoEditor.openExisting(ph,a); else alert('Fotoeditor wird noch geladen. Bitte erneut versuchen.'); };
   pbBindTap(c.querySelector('.editPhoto'),editExisting); c.querySelector('img').style.cursor='pointer'; c.querySelector('img').onclick=editExisting;
@@ -875,7 +875,7 @@ function photoCard(a,ph,i){
   c.querySelector('.up').disabled=i===0;c.querySelector('.down').disabled=i===a.photos.length-1;
   pbBindTap(c.querySelector('.up'),()=>{if(i>0){[a.photos[i-1],a.photos[i]]=[a.photos[i],a.photos[i-1]];save();pbActionToast('Foto verschoben.')}});
   pbBindTap(c.querySelector('.down'),()=>{if(i<a.photos.length-1){[a.photos[i+1],a.photos[i]]=[a.photos[i],a.photos[i+1]];save();pbActionToast('Foto verschoben.')}});
-  pbBindTap(c.querySelector('.del'),()=>{if(confirm('Foto wirklich löschen?')){a.photos=a.photos.filter(x=>x.id!==ph.id);save();pbActionToast('Foto gelöscht.')}});return c
+  pbBindTap(c.querySelector('.del'),()=>{if(confirm('Foto wirklich lÃ¶schen?')){a.photos=a.photos.filter(x=>x.id!==ph.id);save();pbActionToast('Foto gelÃ¶scht.')}});return c
 }
 function img(f){
   return new Promise(ok=>{let r=new FileReader(),i=new Image();r.onload=()=>i.src=r.result;i.onload=()=>{let w=Math.min(1400,i.width),h=Math.round(i.height*w/i.width),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(i,0,0,w,h);ok(c.toDataURL('image/jpeg',.8))};r.readAsDataURL(f)})
@@ -920,9 +920,9 @@ async function generateDirectPDFReport(){
     const photoPages=Math.ceil(items.length/2);
     const totalPages=1+photoPages;
 
-    // Seite 1: Projektinformationen / auszuführende Arbeiten
+    // Seite 1: Projektinformationen / auszufÃ¼hrende Arbeiten
     doc.setTextColor(90);doc.setFont('helvetica','bold');doc.setFontSize(8);
-    doc.text('CERAMICA NATURO · BAUDOKUMENTATION',72,12);
+    doc.text('CERAMICA NATURO Â· BAUDOKUMENTATION',72,12);
     doc.setTextColor(20);doc.setFontSize(19);
     doc.text(String(p.name||'Projekt'),12,20);
     doc.setFont('helvetica','normal');doc.setFontSize(9);
@@ -944,7 +944,7 @@ async function generateDirectPDFReport(){
     doc.setDrawColor(200);doc.line(12,y-5,198,y-5);
 
     doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(15);
-    doc.text('AUSZUFÜHRENDE ARBEITEN / PROJEKTINFORMATIONEN',12,y);
+    doc.text('AUSZUFÃœHRENDE ARBEITEN / PROJEKTINFORMATIONEN',12,y);
     y+=9;
     doc.setFont('helvetica','normal');doc.setFontSize(10.5);
 
@@ -960,7 +960,7 @@ async function generateDirectPDFReport(){
         pbAddBrandLogo(doc,brandLogo,12,7,54);
         y=18;
         doc.setTextColor(90);doc.setFont('helvetica','bold');doc.setFontSize(8);
-        doc.text('PROJEKT BAU · PROJEKTINFORMATIONEN',12,12);
+        doc.text('PROJEKT BAU Â· PROJEKTINFORMATIONEN',12,12);
         doc.setTextColor(20);doc.setFont('helvetica','normal');doc.setFontSize(10.5);
       }
       doc.text(line,12,y); y+=lineHeight;
@@ -976,7 +976,7 @@ async function generateDirectPDFReport(){
       pbAddBrandLogo(doc,brandLogo,12,7,54);
 
       doc.setTextColor(90);doc.setFont('helvetica','bold');doc.setFontSize(8);
-      doc.text('CERAMICA NATURO · BAUDOKUMENTATION',72,12);
+      doc.text('CERAMICA NATURO Â· BAUDOKUMENTATION',72,12);
       doc.setTextColor(20);doc.setFontSize(19);
       doc.text(String(p.name||'Projekt'),12,20);
 
@@ -1009,18 +1009,18 @@ async function generateDirectPDFReport(){
         const titleLines=doc.splitTextToSize(String(item.photo.title||item.area.name||'-'),tw);
         doc.text(titleLines,tx,ty);ty+=titleLines.length*5.4+3;
 
-        const status=`${item.photo.kind||'Detail'} · ${item.area.status||'Offen'}`;
+        const status=`${item.photo.kind||'Detail'} Â· ${item.area.status||'Offen'}`;
         doc.setFontSize(8.5);doc.setFont('helvetica','bold');
         const badgeW=Math.min(50,doc.getTextWidth(status)+6);
         doc.roundedRect(tx,ty-4,badgeW,7,3,3,'S');doc.text(status,tx+3,ty+.5);ty+=10;
 
-        const tasks=(item.area.tasks||[]).map(x=>x.text).filter(Boolean).join(' • ');
-        const materials=(item.area.materials||[]).map(x=>x.text).filter(Boolean).join(' • ');
+        const tasks=(item.area.tasks||[]).map(x=>x.text).filter(Boolean).join(' â€¢ ');
+        const materials=(item.area.materials||[]).map(x=>x.text).filter(Boolean).join(' â€¢ ');
         const sections=[
-          ['BESCHREIBUNG / AUSZUFÜHRENDE ARBEITEN',item.photo.note||tasks||'-'],
+          ['BESCHREIBUNG / AUSZUFÃœHRENDE ARBEITEN',item.photo.note||tasks||'-'],
           ...(materials?[['MATERIAL / MENGE',materials]]:[]),
           ...(item.area.worker?[['MITARBEITER / TEAM',item.area.worker]]:[]),
-          ...(item.area.priority?[['PRIORITÄT',item.area.priority]]:[])
+          ...(item.area.priority?[['PRIORITÃ„T',item.area.priority]]:[])
         ];
         for(const [label,value] of sections){
           if(ty>py+h-9)break;
@@ -1035,7 +1035,7 @@ async function generateDirectPDFReport(){
       doc.setDrawColor(200);doc.line(12,289,198,289);
       doc.setTextColor(100);doc.setFontSize(7.5);
       doc.text('Projekt Bau',12,294);
-      doc.text(`${String(p.name||'Projekt')} · ${visiblePage}/${totalPages}`,198,294,{align:'right'});
+      doc.text(`${String(p.name||'Projekt')} Â· ${visiblePage}/${totalPages}`,198,294,{align:'right'});
     }
 
     const blob=doc.output('blob');
@@ -1056,7 +1056,7 @@ function buildPrintReport(){
   
   p.areas.forEach(a=>(a.photos||[]).forEach(ph=>items.push({area:a,photo:ph})));
   const root=$('printReportRoot'); root.innerHTML='';
-  if(!items.length){alert('Für den PDF-Bericht muss mindestens ein Foto vorhanden sein.');return}
+  if(!items.length){alert('FÃ¼r den PDF-Bericht muss mindestens ein Foto vorhanden sein.');return}
 
   const totalPages=Math.ceil(items.length/2);
   const reportDate=new Date().toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -1067,7 +1067,7 @@ function buildPrintReport(){
     page.innerHTML=`<div class="pdf-header">
       <div>
         <img class="pdf-company-logo" src="logo_ceramica.jpg?v=296401" alt="Ceramica Naturo">
-        <div class="pdf-brand">CERAMICA NATURO · BAUDOKUMENTATION</div>
+        <div class="pdf-brand">CERAMICA NATURO Â· BAUDOKUMENTATION</div>
         <h1>${esc(p.name)}</h1>
         <div class="pdf-meta">
           ${p.address?`<strong>Adresse:</strong> ${esc(p.address)}<br>`:''}
@@ -1080,26 +1080,26 @@ function buildPrintReport(){
       <div class="pdf-page-no">Seite ${pageNo} / ${totalPages}<br>Berichtsdatum: ${esc(reportDate)}</div>
     </div>
     <div class="pdf-items"></div>
-    <div class="pdf-footer"><span>Projekt Bau</span><span>${esc(p.name)} · ${pageNo}/${totalPages}</span></div>`;
+    <div class="pdf-footer"><span>Projekt Bau</span><span>${esc(p.name)} Â· ${pageNo}/${totalPages}</span></div>`;
 
     const box=page.querySelector('.pdf-items');
     for(let j=0;j<2;j++){
       const it=items[i+j];
       if(!it){continue}
 
-      const tasks=(it.area.tasks||[]).map(x=>x.text).filter(Boolean).join(' • ');
-      const mats=(it.area.materials||[]).map(x=>x.text).filter(Boolean).join(' • ');
+      const tasks=(it.area.tasks||[]).map(x=>x.text).filter(Boolean).join(' â€¢ ');
+      const mats=(it.area.materials||[]).map(x=>x.text).filter(Boolean).join(' â€¢ ');
       const description=it.photo.note||tasks||'-';
 
       const card=document.createElement('div');card.className='pdf-item';
       card.innerHTML=`<div class="pdf-photo"><img src="${it.photo.data}"></div>
       <div class="pdf-text">
         <div><div class="pdf-label">Bereich / Position</div><h3>${esc(it.photo.title||it.area.name)}</h3></div>
-        <div><span class="pdf-status">${esc(it.photo.kind||'Detail')} · ${esc(it.area.status||'Offen')}</span></div>
-        <div><div class="pdf-label">Beschreibung / Auszuführende Arbeiten</div><div class="pdf-value">${esc(description)}</div></div>
+        <div><span class="pdf-status">${esc(it.photo.kind||'Detail')} Â· ${esc(it.area.status||'Offen')}</span></div>
+        <div><div class="pdf-label">Beschreibung / AuszufÃ¼hrende Arbeiten</div><div class="pdf-value">${esc(description)}</div></div>
         ${mats?`<div><div class="pdf-label">Material / Menge</div><div class="pdf-value">${esc(mats)}</div></div>`:''}
         ${it.area.worker?`<div><div class="pdf-label">Mitarbeiter / Team</div><div class="pdf-value">${esc(it.area.worker)}</div></div>`:''}
-        <div><div class="pdf-label">Priorität</div><div class="pdf-value">${esc(it.area.priority||'Normal')}</div></div>
+        <div><div class="pdf-label">PrioritÃ¤t</div><div class="pdf-value">${esc(it.area.priority||'Normal')}</div></div>
       </div>`;
       box.appendChild(card)
     }
@@ -1140,28 +1140,28 @@ function renderTileLibrary(project){
       ? `<img class="tile-material-image" src="${item.photo}" alt="${esc(item.model||'Fliese')}">`
       : '<div class="tile-material-placeholder">Kein Fliesenfoto</div>';
 
-    const price=item.price?`CHF ${formatCHNumber(Number(item.price),2)}`:'–';
+    const price=item.price?`CHF ${formatCHNumber(Number(item.price),2)}`:'â€“';
 
     card.innerHTML=`
       ${image}
       <div>
-        <div class="tile-material-title">${esc([item.brand,item.model].filter(Boolean).join(' · ')||'Fliese')}</div>
+        <div class="tile-material-title">${esc([item.brand,item.model].filter(Boolean).join(' Â· ')||'Fliese')}</div>
         <div class="tile-material-meta">
-          <div><b>Format:</b> ${esc(item.format||'–')}</div>
-          <div><b>Farbe:</b> ${esc(item.color||'–')}</div>
-          <div><b>Oberfläche:</b> ${esc(item.surface||'–')}</div>
-          <div><b>Menge:</b> ${esc(item.quantity||'–')}</div>
+          <div><b>Format:</b> ${esc(item.format||'â€“')}</div>
+          <div><b>Farbe:</b> ${esc(item.color||'â€“')}</div>
+          <div><b>OberflÃ¤che:</b> ${esc(item.surface||'â€“')}</div>
+          <div><b>Menge:</b> ${esc(item.quantity||'â€“')}</div>
           <div><b>Preis:</b> ${price}</div>
         </div>
         <div class="tile-material-actions">
           <button class="secondary editTile">Bearbeiten</button>
-          <button class="danger deleteTile">Löschen</button>
+          <button class="danger deleteTile">LÃ¶schen</button>
         </div>
       </div>`;
 
     card.querySelector('.editTile').onclick=()=>openTileMaterialModal(item);
     card.querySelector('.deleteTile').onclick=()=>{
-      if(confirm('Fliesenmaterial wirklich löschen?')){
+      if(confirm('Fliesenmaterial wirklich lÃ¶schen?')){
         project.tileMaterials=project.tileMaterials.filter(x=>x.id!==item.id);
         save();
       }
@@ -1201,7 +1201,7 @@ function updateTilePhotoPreview(){
   if(!host)return;
   host.innerHTML=tilePhotoData
     ? `<img src="${tilePhotoData}" alt="Fliesenfoto">`
-    : 'Noch kein Bild ausgewählt';
+    : 'Noch kein Bild ausgewÃ¤hlt';
 }
 
 async function tileImageFromFile(file){
@@ -1318,7 +1318,7 @@ function snapAnglePoint(start,p){
     return {x:start.x,y:snap(rawY)};
   }
 
-  // Otherwise allow an exact 45° diagonal.
+  // Otherwise allow an exact 45Â° diagonal.
   const length=Math.max(ax,ay);
   return {
     x:snap(start.x + Math.sign(dx||1)*length),
@@ -1587,7 +1587,7 @@ function drawLiveWallDimension(preview){
     fpCtx.textAlign='left';
     fpCtx.fillStyle=preview.snappedToTarget?'#15803d':'#1d4ed8';
     fpCtx.fillText(
-      preview.snappedToTarget ? 'Duvara yakalandı' : `Karşı duvar: ${Math.round(t.distance)} cm`,
+      preview.snappedToTarget ? 'Duvara yakalandÄ±' : `KarÅŸÄ± duvar: ${Math.round(t.distance)} cm`,
       t.x+12/zoom,t.y-10/zoom
     );
   }
@@ -1644,7 +1644,7 @@ function refreshOpeningPanel(){
 
   ensureOpeningDefaults(o);
 
-  if(title)title.textContent=o.type==='door'?'Tür':'Fenster';
+  if(title)title.textContent=o.type==='door'?'TÃ¼r':'Fenster';
   if(dir)dir.value=o.openingDirection||'right';
   if(width)width.value=Math.round(Number(o.widthCm)||90);
   if(height)height.value=Math.round(Number(o.heightCm)||(o.type==='door'?205:120));
@@ -1920,8 +1920,8 @@ function updateWallTileDraftInfo(){
 
   const draft=sanitizeWallTileDraft(o);
   info.textContent=
-    `Fläche: ${formatCHNumber(wallTileAreaM2(draft),2)} m² · `+
-    `${Math.round(draft.width)} × ${Math.round(draft.height)} cm`;
+    `FlÃ¤che: ${formatCHNumber(wallTileAreaM2(draft),2)} mÂ² Â· `+
+    `${Math.round(draft.width)} Ã— ${Math.round(draft.height)} cm`;
 }
 
 
@@ -2024,15 +2024,15 @@ function renderWallTileList(){
 
   if(!wall || wall.type!=='wall'){
     list.innerHTML='';
-    total.textContent='0.00 m²';
+    total.textContent='0.00 mÂ²';
     return;
   }
 
   const areas=ensureWallTileAreas(wall);
-  total.textContent=`${formatCHNumber(wallTileTotalM2(wall),2)} m²`;
+  total.textContent=`${formatCHNumber(wallTileTotalM2(wall),2)} mÂ²`;
 
   if(!areas.length){
-    list.innerHTML='<div style="font-size:11px;color:#64748b">Noch keine Fliesenfläche.</div>';
+    list.innerHTML='<div style="font-size:11px;color:#64748b">Noch keine FliesenflÃ¤che.</div>';
     return;
   }
 
@@ -2044,14 +2044,14 @@ function renderWallTileList(){
     return `
       <div class="fp-wall-tile-item ${fpEditingWallTileAreaId===area.id?'fp-wall-tile-editing':''}">
         <div>
-          <strong>F${index+1} · ${formatCHNumber(wallTileAreaM2(area),2)} m²</strong>
-          <small>${Math.round(area.width)} × ${Math.round(area.height)} cm · ab ${Math.round(area.offset)} cm · UK ${Math.round(area.bottom)} cm</small>
-          <small>Fliese ${Math.round(area.tileW)} × ${Math.round(area.tileH)} cm · ${pattern}</small>
-          ${fpEditingWallTileAreaId===area.id?'<div class="fp-wall-tile-edit-note">Diese Fliesenfläche wird bearbeitet.</div>':''}
+          <strong>F${index+1} Â· ${formatCHNumber(wallTileAreaM2(area),2)} mÂ²</strong>
+          <small>${Math.round(area.width)} Ã— ${Math.round(area.height)} cm Â· ab ${Math.round(area.offset)} cm Â· UK ${Math.round(area.bottom)} cm</small>
+          <small>Fliese ${Math.round(area.tileW)} Ã— ${Math.round(area.tileH)} cm Â· ${pattern}</small>
+          ${fpEditingWallTileAreaId===area.id?'<div class="fp-wall-tile-edit-note">Diese FliesenflÃ¤che wird bearbeitet.</div>':''}
         </div>
         <div class="fp-wall-tile-item-actions">
-          <button type="button" data-wall-tile-edit="${area.id}" title="Bearbeiten">✎</button>
-          <button type="button" data-wall-tile-delete="${area.id}" title="Löschen">×</button>
+          <button type="button" data-wall-tile-edit="${area.id}" title="Bearbeiten">âœŽ</button>
+          <button type="button" data-wall-tile-delete="${area.id}" title="LÃ¶schen">Ã—</button>
         </div>
       </div>`;
   }).join('');
@@ -2146,7 +2146,7 @@ function applyTileToAllWalls(materialId, source='floor'){
 function applyChosenTileEverywhere(target,source='floor'){
   const materialId=chosenTileMaterialId(source);
   if(!materialId){
-    alert('Bitte zuerst ein Fliesenbild / Material auswählen.');
+    alert('Bitte zuerst ein Fliesenbild / Material auswÃ¤hlen.');
     return;
   }
 
@@ -2236,7 +2236,7 @@ function drawWallTileAreas2D(wall){
     fpCtx.textAlign='center';
     fpCtx.textBaseline='middle';
     fpCtx.fillText(
-      `F${index+1} · ${Math.round(area.width)}×${Math.round(area.height)} cm · ${formatCHNumber(wallTileAreaM2(area),2)} m²`,
+      `F${index+1} Â· ${Math.round(area.width)}Ã—${Math.round(area.height)} cm Â· ${formatCHNumber(wallTileAreaM2(area),2)} mÂ²`,
       mx+nx*(24/z),
       my+ny*(24/z)
     );
@@ -2276,7 +2276,7 @@ function readFloorTileControls(c){c.tileW=Math.max(1,+$('fpFloorTileW')?.value||
 function tileMaterialOptionsHtml(selected=''){
   const mats=fpProject?.tileMaterials||[];
   return '<option value="">Neutral</option>'+mats.map(m=>{
-    const label=[m.brand,m.model,m.format].filter(Boolean).join(' · ')||'Fliese';
+    const label=[m.brand,m.model,m.format].filter(Boolean).join(' Â· ')||'Fliese';
     return `<option value="${m.id}" ${m.id===selected?'selected':''}>${esc(label)}</option>`;
   }).join('');
 }
@@ -2305,11 +2305,11 @@ function refreshCadTileMaterialSelects(){
 }
 
 function updateFloorTilePanel(){const c=ensureFloorTileConfig();if(!c)return;for(const [id,v] of Object.entries({fpFloorTileW:c.tileW,fpFloorTileH:c.tileH,fpFloorTileJoint:c.jointMm,fpFloorTilePattern:c.pattern,fpFloorTileOriginMode:c.originMode,fpFloorTileAlign:c.align,fpFloorTileOriginX:c.originX,fpFloorTileOriginY:c.originY})){const e=$(id);if(e)e.value=String(v)}refreshCadTileMaterialSelects();const ms=$('fpFloorTileMaterial');if(ms)ms.value=c.materialId||'';updateFloorTileInfo()}
-function updateFloorTileInfo(){const c=ensureFloorTileConfig(),i=$('fpFloorTileInfo');if(!c||!i)return;const ar=calculateFloorAreaM2(fpObjects),o=resolveFloorTileOrigin(c),ta=(+c.tileW||60)*(+c.tileH||60)/10000,n=ar&&ta?Math.ceil(ar/ta):0;i.textContent=`Bodenfläche: ${ar==null?'—':formatCHNumber(ar,2)+' m²'} · Fliese ${Math.round(c.tileW)}×${Math.round(c.tileH)} cm · Start X ${Math.round(o.x)} / Y ${Math.round(o.y)} cm · ca. ${n} Fliesen ohne Verschnitt`}
+function updateFloorTileInfo(){const c=ensureFloorTileConfig(),i=$('fpFloorTileInfo');if(!c||!i)return;const ar=calculateFloorAreaM2(fpObjects),o=resolveFloorTileOrigin(c),ta=(+c.tileW||60)*(+c.tileH||60)/10000,n=ar&&ta?Math.ceil(ar/ta):0;i.textContent=`BodenflÃ¤che: ${ar==null?'â€”':formatCHNumber(ar,2)+' mÂ²'} Â· Fliese ${Math.round(c.tileW)}Ã—${Math.round(c.tileH)} cm Â· Start X ${Math.round(o.x)} / Y ${Math.round(o.y)} cm Â· ca. ${n} Fliesen ohne Verschnitt`}
 function syncFloorTileTo3D(c){if(!c)return;const o=resolveFloorTileOrigin(c);fp3DOptions.tileOriginX=Math.round(o.x);fp3DOptions.tileOriginY=Math.round(o.y);fp3DOptions.tileRotation=c.align==='45'?45:0;fp3DOptions.floorMaterialId=c.materialId||'';if(fpRecord)fpRecord.threeDOptions={...fp3DOptions}}
 function applyFloorTileConfig(){const c=ensureFloorTileConfig();if(!c)return;pushHistory();readFloorTileControls(c);c.enabled=true;syncFloorTileTo3D(c);updateFloorTilePanel();drawFloorplan();if(fp3DMode)refresh3D()}
 function centerFloorTileLayout(){const c=ensureFloorTileConfig(),b=roomBoundsCm();if(!c||!b)return;readFloorTileControls(c);const rx=((b.maxX-b.minX)%c.tileW+c.tileW)%c.tileW,ry=((b.maxY-b.minY)%c.tileH+c.tileH)%c.tileH;c.originMode='manual';c.originX=b.minX+rx/2;c.originY=b.minY+ry/2;c.enabled=true;syncFloorTileTo3D(c);updateFloorTilePanel();drawFloorplan();if(fp3DMode)refresh3D()}
-function drawFloorTiles2D(){const c=ensureFloorTileConfig();if(!c?.enabled)return;const p=getRoomPolygon(),b=roomBoundsCm();if(!p||!b)return;let tw=+c.tileW||60,th=+c.tileH||60;if(c.pattern==='vertical')[tw,th]=[th,tw];const o=resolveFloorTileOrigin(c),z=Math.max(.2,fpZoom||1);fpCtx.save();fpCtx.strokeStyle='rgba(14,116,144,.55)';fpCtx.lineWidth=.8/z;fpCtx.beginPath();p.forEach((q,k)=>k?fpCtx.lineTo(q.x,q.y):fpCtx.moveTo(q.x,q.y));fpCtx.closePath();fpCtx.clip();fpCtx.translate(o.x,o.y);fpCtx.rotate(c.align==='45'?Math.PI/4:0);fpCtx.translate(-o.x,-o.y);const mg=Math.max(b.maxX-b.minX,b.maxY-b.minY)*1.5+500,sx=Math.floor((b.minX-mg-o.x)/tw)*tw+o.x,ex=Math.ceil((b.maxX+mg-o.x)/tw)*tw+o.x,sy=Math.floor((b.minY-mg-o.y)/th)*th+o.y,ey=Math.ceil((b.maxY+mg-o.y)/th)*th+o.y;for(let x=sx;x<=ex;x+=tw){fpCtx.beginPath();fpCtx.moveTo(x,sy);fpCtx.lineTo(x,ey);fpCtx.stroke()}for(let y=sy,row=0;y<=ey;y+=th,row++){fpCtx.beginPath();fpCtx.moveTo(sx,y);fpCtx.lineTo(ex,y);fpCtx.stroke();let sh=0;if(c.pattern==='half'&&row%2)sh=tw/2;if(c.pattern==='third')sh=(row%3)*tw/3;if(sh)for(let x=sx+sh;x<=ex;x+=tw){fpCtx.beginPath();fpCtx.moveTo(x,y);fpCtx.lineTo(x,y+th);fpCtx.stroke()}}fpCtx.restore();fpCtx.save();fpCtx.strokeStyle='#0e7490';fpCtx.fillStyle='#0e7490';fpCtx.lineWidth=2/z;fpCtx.beginPath();fpCtx.arc(o.x,o.y,9/z,0,Math.PI*2);fpCtx.fillStyle='rgba(255,255,255,.95)';fpCtx.fill();fpCtx.stroke();fpCtx.beginPath();fpCtx.moveTo(o.x-5/z,o.y);fpCtx.lineTo(o.x+5/z,o.y);fpCtx.moveTo(o.x,o.y-5/z);fpCtx.lineTo(o.x,o.y+5/z);fpCtx.stroke();fpCtx.font=`bold ${11/z}px Arial`;fpCtx.fillStyle='#0e7490';fpCtx.fillText('Fliesenstart · ziehen',o.x+13/z,o.y-11/z);fpCtx.restore()}
+function drawFloorTiles2D(){const c=ensureFloorTileConfig();if(!c?.enabled)return;const p=getRoomPolygon(),b=roomBoundsCm();if(!p||!b)return;let tw=+c.tileW||60,th=+c.tileH||60;if(c.pattern==='vertical')[tw,th]=[th,tw];const o=resolveFloorTileOrigin(c),z=Math.max(.2,fpZoom||1);fpCtx.save();fpCtx.strokeStyle='rgba(14,116,144,.55)';fpCtx.lineWidth=.8/z;fpCtx.beginPath();p.forEach((q,k)=>k?fpCtx.lineTo(q.x,q.y):fpCtx.moveTo(q.x,q.y));fpCtx.closePath();fpCtx.clip();fpCtx.translate(o.x,o.y);fpCtx.rotate(c.align==='45'?Math.PI/4:0);fpCtx.translate(-o.x,-o.y);const mg=Math.max(b.maxX-b.minX,b.maxY-b.minY)*1.5+500,sx=Math.floor((b.minX-mg-o.x)/tw)*tw+o.x,ex=Math.ceil((b.maxX+mg-o.x)/tw)*tw+o.x,sy=Math.floor((b.minY-mg-o.y)/th)*th+o.y,ey=Math.ceil((b.maxY+mg-o.y)/th)*th+o.y;for(let x=sx;x<=ex;x+=tw){fpCtx.beginPath();fpCtx.moveTo(x,sy);fpCtx.lineTo(x,ey);fpCtx.stroke()}for(let y=sy,row=0;y<=ey;y+=th,row++){fpCtx.beginPath();fpCtx.moveTo(sx,y);fpCtx.lineTo(ex,y);fpCtx.stroke();let sh=0;if(c.pattern==='half'&&row%2)sh=tw/2;if(c.pattern==='third')sh=(row%3)*tw/3;if(sh)for(let x=sx+sh;x<=ex;x+=tw){fpCtx.beginPath();fpCtx.moveTo(x,y);fpCtx.lineTo(x,y+th);fpCtx.stroke()}}fpCtx.restore();fpCtx.save();fpCtx.strokeStyle='#0e7490';fpCtx.fillStyle='#0e7490';fpCtx.lineWidth=2/z;fpCtx.beginPath();fpCtx.arc(o.x,o.y,9/z,0,Math.PI*2);fpCtx.fillStyle='rgba(255,255,255,.95)';fpCtx.fill();fpCtx.stroke();fpCtx.beginPath();fpCtx.moveTo(o.x-5/z,o.y);fpCtx.lineTo(o.x+5/z,o.y);fpCtx.moveTo(o.x,o.y-5/z);fpCtx.lineTo(o.x,o.y+5/z);fpCtx.stroke();fpCtx.font=`bold ${11/z}px Arial`;fpCtx.fillStyle='#0e7490';fpCtx.fillText('Fliesenstart Â· ziehen',o.x+13/z,o.y-11/z);fpCtx.restore()}
 
 function updateWallQuickPanel(){
   const panel=$('fpWallQuickPanel');
@@ -2334,7 +2334,7 @@ function updateWallQuickPanel(){
     if(el)el.value=String(val);
   };
 
-  // Länge = lichte Innenlänge. Niemals aus der Aussen-Geometrie überschreiben.
+  // LÃ¤nge = lichte InnenlÃ¤nge. Niemals aus der Aussen-Geometrie Ã¼berschreiben.
   setValue('fpQuickWallLength',Math.round(length));
   setValue('fpQuickWallThickness',Math.round(Number(o.thickness||15)));
   setValue('fpQuickWallX1',Math.round(Number(o.x1)));
@@ -2384,7 +2384,7 @@ function applyWallQuickPanel(){
       angleDeg=nearestCadAngle(angleDeg);
     }
 
-    // Eingabewert ist immer lichte Innenlänge.
+    // Eingabewert ist immer lichte InnenlÃ¤nge.
     fpApplyInnerLengthToWall2936(o,length,angleDeg);
   }
 
@@ -2444,7 +2444,7 @@ function populate3DMaterialSelects(project){
   const floor=$('fp3DFloorMaterial'),wall=$('fp3DWallMaterial');
   if(!floor||!wall)return;
   const mats=(project?.tileMaterials||[]);
-  const html='<option value="">Neutral</option>'+mats.map(m=>`<option value="${m.id}">${esc([m.brand,m.model,m.format].filter(Boolean).join(' · ')||'Fliese')}</option>`).join('');
+  const html='<option value="">Neutral</option>'+mats.map(m=>`<option value="${m.id}">${esc([m.brand,m.model,m.format].filter(Boolean).join(' Â· ')||'Fliese')}</option>`).join('');
   floor.innerHTML=html;wall.innerHTML=html;
   floor.value=fp3DOptions.floorMaterialId||'';
   wall.value=fp3DOptions.wallMaterialId||'';
@@ -2472,7 +2472,7 @@ function fpEnsureWallViewSelection(){
   const select=$('fpWallViewSelect');
   if(select){
     select.innerHTML=walls.length
-      ? walls.map((w,i)=>`<option value="${esc(w.id)}">Wand ${i+1} · ${formatCHNumber(wallLengthCm(w),0)} cm</option>`).join('')
+      ? walls.map((w,i)=>`<option value="${esc(w.id)}">Wand ${i+1} Â· ${formatCHNumber(wallLengthCm(w),0)} cm</option>`).join('')
       : '<option value="">Keine geschlossene Wand vorhanden</option>';
     select.value=fpWallViewSelectedId;
   }
@@ -2481,7 +2481,7 @@ function fpEnsureWallViewSelection(){
     buttons.innerHTML='';
     walls.forEach((w,i)=>{
       const btn=document.createElement('button');btn.type='button';btn.dataset.wallId=w.id;
-      btn.textContent=`Wand ${fpWallViewLetter(i)}`;btn.title=`Wand ${fpWallViewLetter(i)} · ${formatCHNumber(wallLengthCm(w),0)} cm`;
+      btn.textContent=`Wand ${fpWallViewLetter(i)}`;btn.title=`Wand ${fpWallViewLetter(i)} Â· ${formatCHNumber(wallLengthCm(w),0)} cm`;
       btn.classList.toggle('active',w.id===fpWallViewSelectedId);
       pbBindTap(btn,()=>fpSelectWallView(w.id));buttons.appendChild(btn);
     });
@@ -2516,7 +2516,7 @@ function fpWallObjectMetrics(o){
 }
 
 function fpWallObjectLabel(o){
-  return ({door:'Tür',window:'Fenster',glass:'Duschglas',mirror:'Spiegel',niche:'Nische',shower:'Dusche',walkInShower:'Bodengleiche Dusche',sink:'Lavabo',wc:'WC',bathtub:'Badewanne'}[o?.type]||o?.name||'Objekt');
+  return ({door:'TÃ¼r',window:'Fenster',glass:'Duschglas',mirror:'Spiegel',niche:'Nische',shower:'Dusche',walkInShower:'Bodengleiche Dusche',sink:'Lavabo',wc:'WC',bathtub:'Badewanne'}[o?.type]||o?.name||'Objekt');
 }
 
 function drawWallElevation(targetCanvas=null){
@@ -2545,18 +2545,18 @@ function drawWallElevation(targetCanvas=null){
   ctx.beginPath();ctx.moveTo(left,bottom+22);ctx.lineTo(left+wallLen*scale,bottom+22);ctx.moveTo(left,bottom+14);ctx.lineTo(left,bottom+30);ctx.moveTo(left+wallLen*scale,bottom+14);ctx.lineTo(left+wallLen*scale,bottom+30);ctx.stroke();
   ctx.font='700 13px system-ui';ctx.textAlign='center';ctx.fillText(`${formatCHNumber(wallLen,0)} cm`,W/2,bottom+43);
   ctx.save();ctx.translate(left-30,(top+bottom)/2);ctx.rotate(-Math.PI/2);ctx.fillText(`${formatCHNumber(roomH,0)} cm`,0,0);ctx.restore();
-  const index=fpWallViewWalls().findIndex(w=>w.id===wall.id);ctx.fillStyle='#0f172a';ctx.font='800 16px system-ui';ctx.textAlign='left';ctx.fillText(`Wand ${fpWallViewLetter(index)} · 2D Elevation`,left,top-17);
+  const index=fpWallViewWalls().findIndex(w=>w.id===wall.id);ctx.fillStyle='#0f172a';ctx.font='800 16px system-ui';ctx.textAlign='left';ctx.fillText(`Wand ${fpWallViewLetter(index)} Â· 2D Elevation`,left,top-17);
 }
 
 async function generateAllWallsAndFloorPdf(){
   if(!window.jspdf?.jsPDF){alert('PDF-Modul ist nicht geladen.');return}
-  const walls=fpWallViewWalls();if(!walls.length){alert('Keine Wände vorhanden.');return}
+  const walls=fpWallViewWalls();if(!walls.length){alert('Keine WÃ¤nde vorhanden.');return}
   const oldWall=fpWallViewSelectedId,oldKind=fpWallView3D,oldMode=fpViewMode;
   const oldZoom=fpZoom,oldOffsetX=fpViewOffsetX,oldOffsetY=fpViewOffsetY;
   const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
   const brandLogo=await pbBrandLogoData();
   const pageW=297,pageH=210,margin=12,project=fpProject?.name||'Projekt Bau',room=fpRecord?.name||'Grundriss';
-  const addHeader=(title,page)=>{pbAddBrandLogo(doc,brandLogo,margin,5,48);doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text(title,68,12);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text(`${project} · ${room}`,pageW-margin,11,{align:'right'});doc.setDrawColor(210);doc.line(margin,17,pageW-margin,17);doc.text(`Ceramica Naturo · Seite ${page}`,pageW-margin,pageH-5,{align:'right'})};
+  const addHeader=(title,page)=>{pbAddBrandLogo(doc,brandLogo,margin,5,48);doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text(title,68,12);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text(`${project} Â· ${room}`,pageW-margin,11,{align:'right'});doc.setDrawColor(210);doc.line(margin,17,pageW-margin,17);doc.text(`Ceramica Naturo Â· Seite ${page}`,pageW-margin,pageH-5,{align:'right'})};
   try{
     fitFloorplan2D();drawFloorplan();
     addHeader('Boden / Grundriss',1);
@@ -2568,7 +2568,7 @@ async function generateAllWallsAndFloorPdf(){
     for(let i=0;i<walls.length;i++){
       fpWallViewSelectedId=walls[i].id;
       drawWallElevation(printCanvas);
-      doc.addPage('a4','landscape');addHeader(`Wand ${fpWallViewLetter(i)} · Elevation`,i+2);
+      doc.addPage('a4','landscape');addHeader(`Wand ${fpWallViewLetter(i)} Â· Elevation`,i+2);
       const img=printCanvas.toDataURL('image/png'),cw=printCanvas.width,ch=printCanvas.height,r=Math.min(maxW/cw,maxH/ch);
       const w=cw*r,h=ch*r;doc.addImage(img,'PNG',(pageW-w)/2,19,w,h,undefined,'FAST');
     }
@@ -2657,19 +2657,19 @@ function renderFloorplans(project){
   project.floorplans.forEach(fp=>{
     const card=document.createElement('div');card.className='floorplan-card';
     card.innerHTML=`<div class="floorplan-card-title">${esc(fp.name||'Grundriss')}</div>
-      <div class="muted" style="margin-bottom:8px">${fp.floorAreaM2!=null?`Bodenfläche: ${formatCHNumber(fp.floorAreaM2,2)} m²`:''}${fp.roomHeightM?`${fp.floorAreaM2!=null?' · ':''}Raumhöhe: ${formatCHNumber(fp.roomHeightM,2)} m`:''}</div>
+      <div class="muted" style="margin-bottom:8px">${fp.floorAreaM2!=null?`BodenflÃ¤che: ${formatCHNumber(fp.floorAreaM2,2)} mÂ²`:''}${fp.roomHeightM?`${fp.floorAreaM2!=null?' Â· ':''}RaumhÃ¶he: ${formatCHNumber(fp.roomHeightM,2)} m`:''}</div>
       ${fp.image?`<img src="${fp.image}" alt="${esc(fp.name||'Grundriss')}">`:''}
-      ${Array.isArray(fp.objects)&&fp.objects.some(o=>o?.type==='wall')&&!fp.updatedAt?`<div class="muted" style="font-size:9px;margin:4px 0">Vorschau wird beim nächsten Speichern aktualisiert.</div>`:''}
-      <div class="floorplan-card-actions"><button class="secondary editFp">Bearbeiten</button><button class="danger delFp">Löschen</button></div>`;
+      ${Array.isArray(fp.objects)&&fp.objects.some(o=>o?.type==='wall')&&!fp.updatedAt?`<div class="muted" style="font-size:9px;margin:4px 0">Vorschau wird beim nÃ¤chsten Speichern aktualisiert.</div>`:''}
+      <div class="floorplan-card-actions"><button class="secondary editFp">Bearbeiten</button><button class="danger delFp">LÃ¶schen</button></div>`;
     card.querySelector('.editFp').onclick=()=>openFloorplan(project,fp);
-    card.querySelector('.delFp').onclick=()=>{if(confirm('Grundriss wirklich löschen?')){project.floorplans=project.floorplans.filter(x=>x.id!==fp.id);save()}};
+    card.querySelector('.delFp').onclick=()=>{if(confirm('Grundriss wirklich lÃ¶schen?')){project.floorplans=project.floorplans.filter(x=>x.id!==fp.id);save()}};
     list.appendChild(card);
   });
 }
 
 function createNewFloorplan(){
   const p=cur();
-  if(!p){alert('Bitte zuerst ein Projekt öffnen.');return}
+  if(!p){alert('Bitte zuerst ein Projekt Ã¶ffnen.');return}
   $('floorplanNameInput').value='';
   $('floorplanNameModal').classList.remove('hidden');
   setTimeout(()=>$('floorplanNameInput').focus(),50);
@@ -2677,7 +2677,7 @@ function createNewFloorplan(){
 function cancelNewFloorplan(){$('floorplanNameModal').classList.add('hidden')}
 function confirmNewFloorplan(){
   const p=cur(),name=$('floorplanNameInput').value.trim();
-  if(!name){alert('Bitte einen Namen für den Grundriss eingeben.');return}
+  if(!name){alert('Bitte einen Namen fÃ¼r den Grundriss eingeben.');return}
   p.floorplans=p.floorplans||[];
   const fp={id:u(),name,objects:[],image:null,grid:20,wallThickness:15};
   p.floorplans.push(fp);
@@ -2688,7 +2688,7 @@ function confirmNewFloorplan(){
 
 function calculateFloorAreaM2(objects){
   /*
-   * v2.9.43 — BODENFLÄCHE = echte lichte Innenfläche
+   * v2.9.43 â€” BODENFLÃ„CHE = echte lichte InnenflÃ¤che
    *
    * Never use the outside wall polygon for room area.
    * Build the closed outside wall chain only to determine topology/orientation,
@@ -2696,9 +2696,9 @@ function calculateFloorAreaM2(objects){
    * Consecutive inner wall faces are intersected mathematically.
    *
    * Example:
-   *   lichte Innenmasse 201 × 277 cm
-   *   = 55'677 cm²
-   *   = 5.5677 m² -> 5.57 m²
+   *   lichte Innenmasse 201 Ã— 277 cm
+   *   = 55'677 cmÂ²
+   *   = 5.5677 mÂ² -> 5.57 mÂ²
    */
   const walls=(objects||[]).filter(o=>o?.type==='wall');
   if(walls.length<3)return null;
@@ -2833,7 +2833,7 @@ function calculateFloorAreaM2(objects){
 function updateFloorRoomInfo(){
   const area=calculateFloorAreaM2(fpObjects);
   const areaEl=$('fpFloorArea');
-  if(areaEl)areaEl.textContent=area===null?'Grundriss nicht geschlossen':`${formatCHNumber(area,2)} m²`;
+  if(areaEl)areaEl.textContent=area===null?'Grundriss nicht geschlossen':`${formatCHNumber(area,2)} mÂ²`;
   if(fpRecord)fpRecord.floorAreaM2=area;
 
   const h=$('fpRoomHeight');
@@ -2937,7 +2937,7 @@ function openFloorplan(project,record){
   if(posToggle)posToggle.checked=false;
   if(measureToggle)measureToggle.checked=true;
   fpShowGrid=true;fpShowPositions=false;fpShowMeasures=true;
-  $('floorplanEditorTitle').textContent=`Grundriss · ${record.name}`;
+  $('floorplanEditorTitle').textContent=`Grundriss Â· ${record.name}`;
   $('floorplanModal').classList.remove('hidden');
   setTimeout(forceWorkspaceRootRefit,100);
   setTimeout(forceWorkspaceRootRefit,300);
@@ -3318,7 +3318,7 @@ function fpHardStopObjectAgainstWalls(o,desiredX,desiredY,originX,originY){
 
 /* === v2.9.43 ARCHITECTURAL INNER-FACE MEASUREMENT ===
    Every architectural measurement is based on the room-side wall face.
-   At corners (including 45° / arbitrary angles) the effective corner is the
+   At corners (including 45Â° / arbitrary angles) the effective corner is the
    mathematical intersection of the two room-side offset lines. Wall thickness
    therefore never becomes part of the room's effective measurement. */
 
@@ -3656,7 +3656,7 @@ function fpClampWallEndToWalls(start,end,ignoreIds=[]){
       {x:Number(w.x1),y:Number(w.y1)},{x:Number(w.x2),y:Number(w.y2)}
     );
     if(!hit)continue;
-    // Ignore the wall on which the new wall starts (t≈0), but catch every
+    // Ignore the wall on which the new wall starts (tâ‰ˆ0), but catch every
     // later collision. The first collision is the hard stop.
     if(hit.t<=0.0005)continue;
     if(!best||hit.t<best.t)best={...hit,wall:w};
@@ -4235,7 +4235,7 @@ function floorMove(ev){
     return;
   }
 
-  // Während der 500-ms-Wartezeit keine Wandposition verändern.
+  // WÃ¤hrend der 500-ms-Wartezeit keine Wandposition verÃ¤ndern.
   if(fpWallMoveHold.wallId && !fpWallMoveHold.ready){
     const dx=p.x-(fpWallMoveHold.start?.x||p.x);
     const dy=p.y-(fpWallMoveHold.start?.y||p.y);
@@ -4742,7 +4742,7 @@ function snapObjectToWall(o,x,y){
 
   const interiorSign=(nx*baseNx+ny*baseNy)>=0?1:-1;
 
-  // Tür/Fenster: anchor to selected wall FACE.
+  // TÃ¼r/Fenster: anchor to selected wall FACE.
   if(o.type==='door'||o.type==='window'){
     ensureOpeningDefaults(o);
 
@@ -5174,7 +5174,7 @@ function fpEnsureMirrorInspector(o){
     box.innerHTML=`
       <h4>SPIEGEL</h4>
       <label>Breite (cm)<input id="fpMirrorWidth" type="number" min="10" step="1"></label>
-      <label>Höhe (cm)<input id="fpMirrorHeight" type="number" min="10" step="1"></label>
+      <label>HÃ¶he (cm)<input id="fpMirrorHeight" type="number" min="10" step="1"></label>
       <label>Unterkante ab Boden (cm)<input id="fpMirrorBottom" type="number" min="0" step="1"></label>`;
     host.appendChild(box);
   }
@@ -5213,7 +5213,7 @@ function fpEnsureNicheInspector(o){
     box.innerHTML=`
       <h4>NISCHE</h4>
       <label>Breite (cm)<input id="fpNicheWidth" type="number" min="10" step="1"></label>
-      <label>Höhe (cm)<input id="fpNicheHeight" type="number" min="10" step="1"></label>
+      <label>HÃ¶he (cm)<input id="fpNicheHeight" type="number" min="10" step="1"></label>
       <label>Tiefe (cm)<input id="fpNicheDepth" type="number" min="3" step="1"></label>
       <label>Unterkante ab Boden (cm)<input id="fpNicheBottom" type="number" min="0" step="1"></label>`;
     host.appendChild(box);
@@ -5246,14 +5246,14 @@ function updateSelectedInfo(){
   const el=$('fpSelectedInfo');if(!el)return;
   const o=fpObjects.find(x=>x.id===fpSelectedId);
   if(!o){el.textContent='Keine Auswahl';refreshOpeningPanel();updateWallQuickPanel();return}
-  let txt=`Ausgewählt: ${o.type}`;
+  let txt=`AusgewÃ¤hlt: ${o.type}`;
   const pos=objectPositionCm(o);
-  txt+=` · X ${pos.x} cm · Y ${pos.y} cm`;
+  txt+=` Â· X ${pos.x} cm Â· Y ${pos.y} cm`;
   if(o.type==='wall'){
-    txt+=` · Innenlänge ${Math.round(fpWallInnerInputLength2936(o)*10)/10} cm`;
-    txt+=` · Start ${Math.round(o.x1)}/${Math.round(o.y1)} cm · Ende ${Math.round(o.x2)}/${Math.round(o.y2)} cm`;
+    txt+=` Â· InnenlÃ¤nge ${Math.round(fpWallInnerInputLength2936(o)*10)/10} cm`;
+    txt+=` Â· Start ${Math.round(o.x1)}/${Math.round(o.y1)} cm Â· Ende ${Math.round(o.x2)}/${Math.round(o.y2)} cm`;
   } else {
-    txt+=` · Drehung ${Math.round(o.rotation||0)}° · Grösse ${Math.round((o.scale||1)*100)}%`;
+    txt+=` Â· Drehung ${Math.round(o.rotation||0)}Â° Â· GrÃ¶sse ${Math.round((o.scale||1)*100)}%`;
     const slider=$('fpRotation'),num=$('fpRotationNumber');
     if(slider)slider.value=String(Math.round(o.rotation||0));
     if(num)num.value=String(Math.round(o.rotation||0));
@@ -5264,8 +5264,8 @@ function updateSelectedInfo(){
     const w=$('fpObjectWidth'),d=$('fpObjectDepth');
     if(w)w.value=o.widthCm||'';
     if(d)d.value=o.depthCm||'';
-    if(o.type!=='text' && o.widthCm && o.depthCm)txt+=` · ${o.widthCm} × ${o.depthCm} cm`;
-    if(o.type!=='text')txt+=` · Bodenhöhe ${Math.round(fpLegacyFloorHeight(o)*10)/10} cm`;
+    if(o.type!=='text' && o.widthCm && o.depthCm)txt+=` Â· ${o.widthCm} Ã— ${o.depthCm} cm`;
+    if(o.type!=='text')txt+=` Â· BodenhÃ¶he ${Math.round(fpLegacyFloorHeight(o)*10)/10} cm`;
   }
   const posInputs=objectPositionCm(o);
   const xInput=$('fpObjectX'),yInput=$('fpObjectY');
@@ -5675,8 +5675,8 @@ function drawFloorplan(preview=null){
     // missing outer wedge. Result: no overlap, no half-thickness protrusion.
     try{drawAllWallJoints()}catch(e){console.error('Wandecken Endpass',e)}
     try{fpDrawAllObjectDimensions()}catch(e){console.error('Objektmasse',e)}
-    try{fpDrawOuterCornerMarkers2927()}catch(e){console.error('Köşe marker',e)}
-    try{fpDrawInnerDimensionPoints2929()}catch(e){console.error('İç ölçü marker',e)}
+    try{fpDrawOuterCornerMarkers2927()}catch(e){console.error('KÃ¶ÅŸe marker',e)}
+    try{fpDrawInnerDimensionPoints2929()}catch(e){console.error('Ä°Ã§ Ã¶lÃ§Ã¼ marker',e)}
 
     if(preview){
       try{
@@ -5771,9 +5771,9 @@ function drawFloorplan(preview=null){
         fpCtx.font=`bold ${20/zoom}px Arial`;
         fpCtx.fillText((fpRecord.name||'Grundriss').toUpperCase(),cx,cy-22/zoom);
         fpCtx.font=`bold ${22/zoom}px Arial`;
-        fpCtx.fillText(area==null?'—':`${formatCHNumber(area,2)} m²`,cx,cy+10/zoom);
+        fpCtx.fillText(area==null?'â€”':`${formatCHNumber(area,2)} mÂ²`,cx,cy+10/zoom);
         fpCtx.font=`${12/zoom}px Arial`;
-        fpCtx.fillText(fpRecord.roomHeightM?`Raumhöhe: ${formatCHNumber(fpRecord.roomHeightM,2)} m`:'',cx,cy+34/zoom);
+        fpCtx.fillText(fpRecord.roomHeightM?`RaumhÃ¶he: ${formatCHNumber(fpRecord.roomHeightM,2)} m`:'',cx,cy+34/zoom);
         fpCtx.restore();
       }
     }catch(e){console.error('Rauminfo',e)}
@@ -6093,15 +6093,15 @@ function drawAllProfessionalWallDimensions(){
     }
 
     if(fpDimensionLayoutMap.has(wall.id)){
-      drawProfessionalWallDimension(wall);          // dış ölçü
-      drawInnerEffectiveWallDimension2935(wall);    // iç efektif ölçü
+      drawProfessionalWallDimension(wall);          // dÄ±ÅŸ Ã¶lÃ§Ã¼
+      drawInnerEffectiveWallDimension2935(wall);    // iÃ§ efektif Ã¶lÃ§Ã¼
       rendered++;
     }
   }
 
   // Do not silently lose a dimension again.
   if(rendered!==walls.length){
-    console.error(`Massfehler: ${walls.length} Wände, aber ${rendered} Masse gezeichnet.`);
+    console.error(`Massfehler: ${walls.length} WÃ¤nde, aber ${rendered} Masse gezeichnet.`);
   }
 }
 
@@ -6182,7 +6182,7 @@ function drawInnerEffectiveWallDimension2935(wall){
     const nx=-uy, ny=ux;
     const thickness=Math.max(0,Number(wall.thickness||fpWallThickness||15));
 
-    // 45°/miter connection rule:
+    // 45Â°/miter connection rule:
     // Every joined end consumes exactly one wall thickness from the effective
     // room-side length. Free ends do not.
     const joinedStart=fpWallsSharingOuterCorner2927(wall,'start',.08).length>0;
@@ -6479,7 +6479,7 @@ function fpObjectWallDistance(o){
   const fromStart=t*len;
   const fromEnd=(1-t)*len;
 
-  // User wanted "soldan / başlangıçtan" style placement dimension.
+  // User wanted "soldan / baÅŸlangÄ±Ã§tan" style placement dimension.
   // Use wall drawing start as CAD reference.
   return {wall,cm:fromStart,fromEnd,hit};
 }
@@ -6524,8 +6524,8 @@ function drawFpObject(o,preview=false){
       const ang=Math.atan2(o.y2-o.y1,o.x2-o.x1);
 
       // v1.9.9:
-      // Keine zweite Wandlänge direkt auf / innerhalb der Wand.
-      // Die Wandlänge wird ausschliesslich über
+      // Keine zweite WandlÃ¤nge direkt auf / innerhalb der Wand.
+      // Die WandlÃ¤nge wird ausschliesslich Ã¼ber
       // drawProfessionalWallDimension(o) ausserhalb des Grundrisses angezeigt.
       if(o.wallLabel){
         const z=(typeof fpZoom==='number'&&fpZoom>0)?fpZoom:1;
@@ -6547,7 +6547,7 @@ function drawFpObject(o,preview=false){
       drawWallTileAreas2D(o);
 
       // v1.9.18: Wandmasse NICHT hier zeichnen.
-      // Alle Wandmasse kommen erst nach allen Wänden / Ecken / Rauminfo
+      // Alle Wandmasse kommen erst nach allen WÃ¤nden / Ecken / Rauminfo
       // auf die oberste Zeichenebene.
       if(selected){
         // professionele Endpunktgriffe
@@ -6597,7 +6597,7 @@ function drawFpObject(o,preview=false){
     const freeX=dir==='right'?o.x+half:o.x-half;
     const freeY=o.y+desiredSide*width;
 
-    // door leaf at 90° design representation
+    // door leaf at 90Â° design representation
     fpCtx.beginPath();
     fpCtx.moveTo(hingeX,o.y);
     fpCtx.lineTo(freeX,o.y);
@@ -6655,7 +6655,7 @@ function drawFpObject(o,preview=false){
     fpCtx.fillStyle='#111827';
     if((o.drainType||'line')==='line'){{const len=Math.min(ww-4,Number(o.drainLengthCm||80)), rw=Math.max(2,Number(o.drainWidthCm||5)), off=Math.max(0,Number(o.drainOffsetCm??10)); if(dir==='front'||dir==='back'){const yy=dir==='front'?o.y+dd/2-off:o.y-dd/2+off;fpCtx.fillRect(o.x-len/2,yy-rw/2,len,rw)}else{const xx=dir==='right'?o.x+ww/2-off:o.x-ww/2+off;fpCtx.fillRect(xx-rw/2,o.y-len/2,rw,len)}}}
     else {fpCtx.fillRect(t[0]-6,t[1]-6,12,12)}
-    fpCtx.font='13px Arial';fpCtx.textAlign='center';fpCtx.fillText(`Gefälle ${Number(o.slopePct||2).toFixed(1)}%`,o.x,o.y+5);
+    fpCtx.font='13px Arial';fpCtx.textAlign='center';fpCtx.fillText(`GefÃ¤lle ${Number(o.slopePct||2).toFixed(1)}%`,o.x,o.y+5);
 
   }else if(o.type==='shower'){
     // v2.9.43: symbol base MUST equal declared default 90 x 90 cm.
@@ -6809,9 +6809,9 @@ function drawFpObject(o,preview=false){
 
   fpCtx.restore();
 
-  // ölçüler nesnenin kendi çizimi içerisinde / merkezinde
+  // Ã¶lÃ§Ã¼ler nesnenin kendi Ã§izimi iÃ§erisinde / merkezinde
   if(o.type!=='text' && o.widthCm && o.depthCm){
-    drawMeasureText(`${o.widthCm} × ${o.depthCm} cm`,o.x,o.y);
+    drawMeasureText(`${o.widthCm} Ã— ${o.depthCm} cm`,o.x,o.y);
   }
 
   if(fpShowPositions){
@@ -6866,7 +6866,7 @@ function drawFpObject(o,preview=false){
       fpCtx.font=`bold ${16/z}px Arial`;
       fpCtx.textAlign='center';
       fpCtx.textBaseline='middle';
-      fpCtx.fillText('↻',handle.x,handle.y+0.5/z);
+      fpCtx.fillText('â†»',handle.x,handle.y+0.5/z);
 
       fpCtx.restore();
     }
@@ -6882,7 +6882,7 @@ function calculateWallPerimeterCm(objects){
 
 function updateCadInspector(){
   const o=selectedObject ? selectedObject() : null;
-  const set=(id,val)=>{const el=$(id);if(el)el.textContent=val??'–'};
+  const set=(id,val)=>{const el=$(id);if(el)el.textContent=val??'â€“'};
 
   const statusSel=$('fpStatusSelection');
   if(o){
@@ -6894,22 +6894,22 @@ function updateCadInspector(){
     set('cadPropY',`${p.y} cm`);
     if(o.type==='wall'){
       set('cadPropSize',`${Math.round(fpWallInnerInputLength2936(o))} cm`);
-      set('cadPropRotation',`${Math.round(wallAngleDeg(o))}°`);
+      set('cadPropRotation',`${Math.round(wallAngleDeg(o))}Â°`);
     }else{
-      set('cadPropSize',o.widthCm&&o.depthCm?`${o.widthCm} × ${o.depthCm} cm`:`${Math.round((o.scale||1)*100)} %`);
-      set('cadPropRotation',`${Math.round(o.rotation||0)}°`);
+      set('cadPropSize',o.widthCm&&o.depthCm?`${o.widthCm} Ã— ${o.depthCm} cm`:`${Math.round((o.scale||1)*100)} %`);
+      set('cadPropRotation',`${Math.round(o.rotation||0)}Â°`);
     }
   }else{
     if(statusSel)statusSel.textContent='Keine Auswahl';
     set('cadInspectorSelection','Keine Auswahl');
-    set('cadPropType','–');set('cadPropX','–');set('cadPropY','–');set('cadPropSize','–');set('cadPropRotation','–');
+    set('cadPropType','â€“');set('cadPropX','â€“');set('cadPropY','â€“');set('cadPropSize','â€“');set('cadPropRotation','â€“');
   }
 
   if(fpRecord){
-    set('cadRoomName',fpRecord.name||'–');
+    set('cadRoomName',fpRecord.name||'â€“');
     const area=calculateFloorAreaM2(fpObjects);
-    set('cadRoomArea',area==null?'–':`${formatCHNumber(area,2)} m²`);
-    set('cadRoomHeight',fpRecord.roomHeightM?`${formatCHNumber(fpRecord.roomHeightM,2)} m`:'–');
+    set('cadRoomArea',area==null?'â€“':`${formatCHNumber(area,2)} mÂ²`);
+    set('cadRoomHeight',fpRecord.roomHeightM?`${formatCHNumber(fpRecord.roomHeightM,2)} m`:'â€“');
     set('cadRoomPerimeter',`${formatCHNumber(calculateWallPerimeterCm(fpObjects),0)} cm`);
   }
 }
@@ -7087,7 +7087,7 @@ function fpV194CleanUiInit(){
 
 async function generateFloorplan2DPDF(){
   if(!fpRecord || !fpCanvas){
-    alert('Kein Grundriss geöffnet.');
+    alert('Kein Grundriss geÃ¶ffnet.');
     return;
   }
   if(!window.jspdf || !window.jspdf.jsPDF){
@@ -7136,7 +7136,7 @@ async function generateFloorplan2DPDF(){
     const sw=Math.min(fpCanvas.width-sx,Math.ceil(px2-px1));
     const sh=Math.min(fpCanvas.height-sy,Math.ceil(py2-py1));
 
-    if(sw<20 || sh<20)throw new Error('Ungültiger PDF-Ausschnitt');
+    if(sw<20 || sh<20)throw new Error('UngÃ¼ltiger PDF-Ausschnitt');
 
     const exportCanvas=document.createElement('canvas');
     const exportScale=2;
@@ -7176,7 +7176,7 @@ async function generateFloorplan2DPDF(){
     doc.setTextColor(15,23,42);
     doc.setFont('helvetica','bold');
     doc.setFontSize(8);
-    doc.text('CERAMICA NATURO · GRUNDRISS',68,11);
+    doc.text('CERAMICA NATURO Â· GRUNDRISS',68,11);
 
     doc.setFontSize(17);
     doc.text(planName,margin,20);
@@ -7190,11 +7190,11 @@ async function generateFloorplan2DPDF(){
     doc.setTextColor(15,23,42);
     doc.setFontSize(9);
 
-    const areaText=floorArea==null?'—':`${formatCHNumber(floorArea,2)} m²`;
-    const heightText=roomHeight>0?`${formatCHNumber(roomHeight,2)} m`:'—';
+    const areaText=floorArea==null?'â€”':`${formatCHNumber(floorArea,2)} mÂ²`;
+    const heightText=roomHeight>0?`${formatCHNumber(roomHeight,2)} m`:'â€”';
 
-    doc.text(`Bodenfläche: ${areaText}`,pageW-margin,15,{align:'right'});
-    doc.text(`Raumhöhe: ${heightText}`,pageW-margin,21,{align:'right'});
+    doc.text(`BodenflÃ¤che: ${areaText}`,pageW-margin,15,{align:'right'});
+    doc.text(`RaumhÃ¶he: ${heightText}`,pageW-margin,21,{align:'right'});
 
     doc.setDrawColor(203,213,225);
     doc.setLineWidth(.3);
@@ -7225,7 +7225,7 @@ async function generateFloorplan2DPDF(){
       day:'2-digit',month:'2-digit',year:'numeric'
     });
     doc.text(`Erstellt: ${date}`,margin,pageH-5);
-    doc.text('Projekt Bau · Baudokumentation',pageW-margin,pageH-5,{align:'right'});
+    doc.text('Projekt Bau Â· Baudokumentation',pageW-margin,pageH-5,{align:'right'});
 
     // Direct download: no popup, therefore works on Samsung Internet / Chrome tablets.
     const safeName=String(planName||'Grundriss').replace(/[^a-zA-Z0-9_-]+/g,'_');
@@ -7419,7 +7419,7 @@ const wallLength=$('fpWallLength');
   if(objX)objX.onchange=setSelectedPosition;
   if(objY)objY.onchange=setSelectedPosition;
   $('fpDeleteSelected').onclick=deleteSelected;
-  $('fpClear').onclick=()=>{if(confirm('Grundriss vollständig löschen?')){pushHistory();fpObjects=[];fpSelectedId=null;drawFloorplan();updateSelectedInfo()}};
+  $('fpClear').onclick=()=>{if(confirm('Grundriss vollstÃ¤ndig lÃ¶schen?')){pushHistory();fpObjects=[];fpSelectedId=null;drawFloorplan();updateSelectedInfo()}};
   const legacySave=$('fpSave');if(legacySave)legacySave.onclick=()=>{if(saveCurrentFloorplan())closeFloorplan()};
   const roomHeightInput=$('fpRoomHeight');
   if(roomHeightInput)roomHeightInput.onchange=e=>{
@@ -7743,7 +7743,7 @@ setTimeout(()=>{try{render()}catch(err){console.error('Projekt Bau Delayed Rende
 
 
 /* v1.9.2 ---------------------------------------------------------------
-   Türhöhe + automatische Eigenschaften + Flächenabzüge
+   TÃ¼rhÃ¶he + automatische Eigenschaften + FlÃ¤chenabzÃ¼ge
 ------------------------------------------------------------------------ */
 function fpV192EnsureDoorDefaults(o){
   if(!o || o.type!=='door') return;
@@ -7768,11 +7768,11 @@ function fpV192DoorHeightField(o){
     box.id='fpDoorProfessionalFields';
     box.className='fp-v192-door-fields';
     box.innerHTML=`
-      <h4>TÜR</h4>
-      <label>Türhöhe (cm)
+      <h4>TÃœR</h4>
+      <label>TÃ¼rhÃ¶he (cm)
         <input id="fpDoorHeightCm" type="number" min="50" max="400" step="1">
       </label>
-      <small>Die Türhöhe wird in 2D/3D und bei der Wand-Flächenberechnung berücksichtigt.</small>`;
+      <small>Die TÃ¼rhÃ¶he wird in 2D/3D und bei der Wand-FlÃ¤chenberechnung berÃ¼cksichtigt.</small>`;
     host.appendChild(box);
   }
   const inp=document.getElementById('fpDoorHeightCm');
@@ -7792,7 +7792,7 @@ function fpV192DoorHeightField(o){
 }
 
 function fpV192AutoShowProperties(o){
-  // Auswahl soll die Eigenschaften ohne zusätzlichen Klick sichtbar machen.
+  // Auswahl soll die Eigenschaften ohne zusÃ¤tzlichen Klick sichtbar machen.
   const candidates=[
     document.querySelector('#fpPropertiesPanel'),
     document.querySelector('.fp-properties'),
@@ -7854,22 +7854,22 @@ function renderMaterials(){
   const rows=(r?.materials||[]).filter(x=>Number(x.qty)>0);
   if(!rows.length){host.innerHTML='<div class="pro-detail-empty" style="padding:16px">Noch keine Materialberechnung.</div>';return}
   host.innerHTML=`<table class="pro-material-grid"><thead><tr><th>Pos.</th><th>Material</th><th>Hersteller</th><th>Menge</th><th>Einheit</th><th>Gebinde</th><th>Bedarf</th><th>Hinweis</th></tr></thead><tbody>`+
-  rows.map((x,i)=>`<tr class="${/Gefällsdichtecke|Dichtflansch|Duschrinne/i.test(x.name)?'row-special':''}"><td>${i+1}</td><td><strong>${esc(x.name)}</strong></td><td>${esc(x.brand||'Weber')}</td><td>${fmt(x.qty,x.unit==='St.'?0:2)}</td><td>${esc(x.unit||'')}</td><td>${esc(x.pack||'')}</td><td>${Number(x.packs)||0}</td><td>${hint(x.name)}</td></tr>`).join('')+
+  rows.map((x,i)=>`<tr class="${/GefÃ¤llsdichtecke|Dichtflansch|Duschrinne/i.test(x.name)?'row-special':''}"><td>${i+1}</td><td><strong>${esc(x.name)}</strong></td><td>${esc(x.brand||'Weber')}</td><td>${fmt(x.qty,x.unit==='St.'?0:2)}</td><td>${esc(x.unit||'')}</td><td>${esc(x.pack||'')}</td><td>${Number(x.packs)||0}</td><td>${hint(x.name)}</td></tr>`).join('')+
   `</tbody></table>`;
 }
-function hint(n){n=String(n||'');if(/grund/i.test(n))return'Grundierung';if(/DB 120|Dichtband/i.test(n))return'Anschluss- und Fugenband';if(/DEC innen/i.test(n))return'Innenecken';if(/DEC aussen/i.test(n))return'Aussenecken';if(/DEG|Gefällsdichtecke/i.test(n))return'Gefälle-/Wandanschluss';if(/DM 150/i.test(n))return'Manschette';if(/Dichtflansch/i.test(n))return'Bodengleiche Dusche';if(/Duschrinne/i.test(n))return'Rinnenablauf';return''}
+function hint(n){n=String(n||'');if(/grund/i.test(n))return'Grundierung';if(/DB 120|Dichtband/i.test(n))return'Anschluss- und Fugenband';if(/DEC innen/i.test(n))return'Innenecken';if(/DEC aussen/i.test(n))return'Aussenecken';if(/DEG|GefÃ¤llsdichtecke/i.test(n))return'GefÃ¤lle-/Wandanschluss';if(/DM 150/i.test(n))return'Manschette';if(/Dichtflansch/i.test(n))return'Bodengleiche Dusche';if(/Duschrinne/i.test(n))return'Rinnenablauf';return''}
 
 function renderSummary(){
   const host=$('fpProAutoSealSummary');if(!host)return;
   let r=null;try{r=window.ProjectBauAbdichtung?.analyze?.()}catch(_){}
   if(!r){host.innerHTML='<div class="pro-detail-empty">Keine Berechnung.</div>';return}
   const values=[
-    ['Abdichtung Bodenfläche',`${fmt(r.floorArea)} m²`],
-    ['Abdichtung Wandfläche',`${fmt(r.wallArea)} m²`],
+    ['Abdichtung BodenflÃ¤che',`${fmt(r.floorArea)} mÂ²`],
+    ['Abdichtung WandflÃ¤che',`${fmt(r.wallArea)} mÂ²`],
     ['Dichtband gesamt',`${fmt(r.tapeTotal||0)} m`],
     ['Innenecken (DEC innen)',`${r.corners?.inner||0} St.`],
     ['Aussenecken (DEC aussen)',`${r.corners?.outer||0} St.`],
-    ['Gefällsdichtecken (DEG)',`${r.slopeCorners?.count||0} St.`],
+    ['GefÃ¤llsdichtecken (DEG)',`${r.slopeCorners?.count||0} St.`],
     ['Manschetten',`${(r.penetrations?.floor||0)+(r.penetrations?.wall||0)} St.`],
     ['Nischen',`${r.openings?.nicheCount||0} St.`]
   ];
@@ -7878,10 +7878,10 @@ function renderSummary(){
 function renderDetail(){
   const title=$('fpProDetailTitle'),host=$('fpProDetailContent');if(!title||!host)return;
   const o=typeof selectedObject==='function'?selectedObject():null;
-  if(!o){title.textContent='DETAIL';host.innerHTML='<div class="pro-detail-empty">Nische oder bodengleiche Dusche auswählen.</div>';return}
+  if(!o){title.textContent='DETAIL';host.innerHTML='<div class="pro-detail-empty">Nische oder bodengleiche Dusche auswÃ¤hlen.</div>';return}
   if(o.type==='niche'){
     const w=Number(o.widthCm)||60,h=Number(o.heightCm)||40,d=Number(o.depthCm)||10,p=2*(w+h)/100;
-    title.textContent=`NISCHE · ${Math.round(w)} × ${Math.round(h)} × ${Math.round(d)} cm`;
+    title.textContent=`NISCHE Â· ${Math.round(w)} Ã— ${Math.round(h)} Ã— ${Math.round(d)} cm`;
     host.innerHTML=`<div class="pro-niche-detail"><div class="pro-niche-diagram"></div><div>
       <div class="pro-detail-row"><span>Dichtband innen</span><strong>${fmt(p)} m</strong></div>
       <div class="pro-detail-row"><span>Dichtband aussen</span><strong>${fmt(p)} m</strong></div>
@@ -7894,8 +7894,8 @@ function renderDetail(){
     title.textContent='BODENGLEICHE DUSCHE';
     host.innerHTML=`<div class="pro-detail-row"><span>Breite</span><strong>${Math.round(Number(o.widthCm)||100)} cm</strong></div>
     <div class="pro-detail-row"><span>Tiefe</span><strong>${Math.round(Number(o.depthCm)||100)} cm</strong></div>
-    <div class="pro-detail-row"><span>Gefälle</span><strong>${fmt(Number(o.slopePct)||2,1)} %</strong></div>
-    <div class="pro-detail-row"><span>Rinnenlänge</span><strong>${Math.round(Number(o.channelLengthCm)||Number(o.widthCm)||90)} cm</strong></div>`;return;
+    <div class="pro-detail-row"><span>GefÃ¤lle</span><strong>${fmt(Number(o.slopePct)||2,1)} %</strong></div>
+    <div class="pro-detail-row"><span>RinnenlÃ¤nge</span><strong>${Math.round(Number(o.channelLengthCm)||Number(o.widthCm)||90)} cm</strong></div>`;return;
   }
   title.textContent='DETAIL';host.innerHTML=`<div class="pro-detail-row"><span>Objekt</span><strong>${esc(o.type||'')}</strong></div>`;
 }
@@ -7915,7 +7915,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   setInterval(refresh,1600);setTimeout(refresh,500);
 });
 
-/* v2.9.49 – Samsung/Android universal button activation.
+/* v2.9.49 â€“ Samsung/Android universal button activation.
    Converts a clean finger/pen release into one deterministic click without
    interfering with scrolling, inputs, selects, checkboxes or the CAD canvas. */
 (()=>{
@@ -7941,13 +7941,13 @@ function pbRenderCustomersWorkspace(workspace,editId=null){
   pbEnsureCustomerRecords();const customer=editId?S.customers.find(c=>c.id===editId):null;
   if(customer||editId==='new'){
     const c=customer||{id:u(),number:pbNextNumber('K'),type:'Firma',salutation:'Herr'};
-    workspace.innerHTML=`<div class="pb-customer-head"><h2>▣ Kunde</h2><div><button type="button" class="secondary" data-customer-back>Zurück</button><button type="button" class="primary" data-customer-save>Kunde speichern</button>${customer?'<button type="button" class="danger" data-customer-delete>Löschen</button>':''}</div></div><div class="pb-customer-form" data-customer-id="${esc(c.id)}"><label>Typ<select data-cf="type"><option ${c.type==='Firma'?'selected':''}>Firma</option><option ${c.type==='Privat'?'selected':''}>Privat</option></select></label><label>Kundennummer<input data-cf="number" value="${esc(c.number)}" readonly></label><label>Name / Firma<input data-cf="company" value="${esc(c.company||'')}"></label><label>Mehrwertsteuernummer<input data-cf="vatNo" value="${esc(c.vatNo||'')}"></label><label>Anrede<select data-cf="salutation"><option ${c.salutation==='Herr'?'selected':''}>Herr</option><option ${c.salutation==='Frau'?'selected':''}>Frau</option><option>Firma</option></select></label><label>Briefanrede<input data-cf="letterSalutation" value="${esc(c.letterSalutation||'')}"></label><label>Vorname<input data-cf="firstName" value="${esc(c.firstName||'')}"></label><label>Nachname<input data-cf="lastName" value="${esc(c.lastName||'')}"></label><label>E-Mail<input type="email" data-cf="email" value="${esc(c.email||'')}"></label><label>Fax<input data-cf="fax" value="${esc(c.fax||'')}"></label><label>Telefon<input data-cf="phone" value="${esc(c.phone||'')}"></label><label>Mobil<input data-cf="mobile" value="${esc(c.mobile||'')}"></label></div><div class="pb-customer-tabs"><strong>Adressen</strong><span>Ansprechpartner</span><span>Zahlung &amp; Bank</span><span>Anmerkung</span></div><div class="pb-address-form"><label class="wide">Adresse / Bezeichnung<input data-cf="addressLabel" value="${esc(c.addressLabel||c.fullAddress||'')}"></label><label>Strasse<input data-cf="street" value="${esc(c.street||'')}"></label><label>Hausnummer<input data-cf="houseNo" value="${esc(c.houseNo||'')}"></label><label>PLZ<input data-cf="zip" value="${esc(c.zip||'')}"></label><label>Stadt<input data-cf="city" value="${esc(c.city||'')}"></label></div>`;
+    workspace.innerHTML=`<div class="pb-customer-head"><h2>â–£ Kunde</h2><div><button type="button" class="secondary" data-customer-back>ZurÃ¼ck</button><button type="button" class="primary" data-customer-save>Kunde speichern</button>${customer?'<button type="button" class="danger" data-customer-delete>LÃ¶schen</button>':''}</div></div><div class="pb-customer-form" data-customer-id="${esc(c.id)}"><label>Typ<select data-cf="type"><option ${c.type==='Firma'?'selected':''}>Firma</option><option ${c.type==='Privat'?'selected':''}>Privat</option></select></label><label>Kundennummer<input data-cf="number" value="${esc(c.number)}" readonly></label><label>Name / Firma<input data-cf="company" value="${esc(c.company||'')}"></label><label>Mehrwertsteuernummer<input data-cf="vatNo" value="${esc(c.vatNo||'')}"></label><label>Anrede<select data-cf="salutation"><option ${c.salutation==='Herr'?'selected':''}>Herr</option><option ${c.salutation==='Frau'?'selected':''}>Frau</option><option>Firma</option></select></label><label>Briefanrede<input data-cf="letterSalutation" value="${esc(c.letterSalutation||'')}"></label><label>Vorname<input data-cf="firstName" value="${esc(c.firstName||'')}"></label><label>Nachname<input data-cf="lastName" value="${esc(c.lastName||'')}"></label><label>E-Mail<input type="email" data-cf="email" value="${esc(c.email||'')}"></label><label>Fax<input data-cf="fax" value="${esc(c.fax||'')}"></label><label>Telefon<input data-cf="phone" value="${esc(c.phone||'')}"></label><label>Mobil<input data-cf="mobile" value="${esc(c.mobile||'')}"></label></div><div class="pb-customer-tabs"><strong>Adressen</strong><span>Ansprechpartner</span><span>Zahlung &amp; Bank</span><span>Anmerkung</span></div><div class="pb-address-form"><label class="wide">Adresse / Bezeichnung<input data-cf="addressLabel" value="${esc(c.addressLabel||c.fullAddress||'')}"></label><label>Strasse<input data-cf="street" value="${esc(c.street||'')}"></label><label>Hausnummer<input data-cf="houseNo" value="${esc(c.houseNo||'')}"></label><label>PLZ<input data-cf="zip" value="${esc(c.zip||'')}"></label><label>Stadt<input data-cf="city" value="${esc(c.city||'')}"></label></div>`;
     workspace.querySelector('[data-customer-back]').onclick=()=>pbRenderCustomersWorkspace(workspace);
     workspace.querySelector('[data-customer-save]').onclick=()=>{const obj=customer||c;workspace.querySelectorAll('[data-cf]').forEach(el=>obj[el.dataset.cf]=el.value);obj.fullAddress=[obj.street,obj.houseNo].filter(Boolean).join(' ')+(obj.zip||obj.city?`, ${[obj.zip,obj.city].filter(Boolean).join(' ')}`:'');obj.updatedAt=new Date().toISOString();if(!customer)S.customers.unshift(obj);S.projects.filter(p=>p.customerId===obj.id).forEach(p=>pbApplyCustomerToProject(p,obj));save();pbRenderCustomersWorkspace(workspace);pbActionToast('Kunde gespeichert.')};
-    if(customer)workspace.querySelector('[data-customer-delete]').onclick=()=>{if(!confirm('Kunde wirklich löschen?'))return;S.customers=S.customers.filter(x=>x.id!==customer.id);save();pbRenderCustomersWorkspace(workspace)};return;
+    if(customer)workspace.querySelector('[data-customer-delete]').onclick=()=>{if(!confirm('Kunde wirklich lÃ¶schen?'))return;S.customers=S.customers.filter(x=>x.id!==customer.id);save();pbRenderCustomersWorkspace(workspace)};return;
   }
   const rows=[...S.customers].sort((a,b)=>String(b.number||'').localeCompare(String(a.number||''),'de-CH'));
-  workspace.innerHTML=`<div class="pb-customer-head"><h2>▣ Kunden</h2><div><button type="button" class="secondary" data-customer-help>?</button><button type="button" class="primary" data-customer-new>+ Neuer Kunde</button></div></div><div class="pb-customer-table"><div class="pb-customer-row head"><span>Nummer</span><span>Firma</span><span>Nachname</span><span>Vorname</span><span>Telefon</span><span>Mobil</span><span>Strasse</span><span>PLZ</span><span>Stadt</span><span>E-Mail</span><span>Typ</span></div><div class="pb-customer-filters">${Array.from({length:11},(_,i)=>`<input data-customer-filter="${i}" placeholder="Filtern">`).join('')}</div><div data-customer-list>${rows.map(c=>`<button type="button" class="pb-customer-row" data-customer-open="${esc(c.id)}"><span>${esc(c.number||'')}</span><span>${esc(c.company||'')}</span><span>${esc(c.lastName||'')}</span><span>${esc(c.firstName||'')}</span><span>${esc(c.phone||'')}</span><span>${esc(c.mobile||'')}</span><span>${esc(c.street||'')}</span><span>${esc(c.zip||'')}</span><span>${esc(c.city||'')}</span><span>${esc(c.email||'')}</span><span>${esc(c.type||'')}</span></button>`).join('')||'<p class="pb-module-empty">Noch keine Kunden vorhanden.</p>'}</div></div>`;
+  workspace.innerHTML=`<div class="pb-customer-head"><h2>â–£ Kunden</h2><div><button type="button" class="secondary" data-customer-help>?</button><button type="button" class="primary" data-customer-new>+ Neuer Kunde</button></div></div><div class="pb-customer-table"><div class="pb-customer-row head"><span>Nummer</span><span>Firma</span><span>Nachname</span><span>Vorname</span><span>Telefon</span><span>Mobil</span><span>Strasse</span><span>PLZ</span><span>Stadt</span><span>E-Mail</span><span>Typ</span></div><div class="pb-customer-filters">${Array.from({length:11},(_,i)=>`<input data-customer-filter="${i}" placeholder="Filtern">`).join('')}</div><div data-customer-list>${rows.map(c=>`<button type="button" class="pb-customer-row" data-customer-open="${esc(c.id)}"><span>${esc(c.number||'')}</span><span>${esc(c.company||'')}</span><span>${esc(c.lastName||'')}</span><span>${esc(c.firstName||'')}</span><span>${esc(c.phone||'')}</span><span>${esc(c.mobile||'')}</span><span>${esc(c.street||'')}</span><span>${esc(c.zip||'')}</span><span>${esc(c.city||'')}</span><span>${esc(c.email||'')}</span><span>${esc(c.type||'')}</span></button>`).join('')||'<p class="pb-module-empty">Noch keine Kunden vorhanden.</p>'}</div></div>`;
   workspace.querySelector('[data-customer-new]').onclick=()=>pbRenderCustomerEditorV2958(workspace,'new');workspace.querySelectorAll('[data-customer-open]').forEach(btn=>btn.onclick=()=>pbRenderCustomerEditorV2958(workspace,btn.dataset.customerOpen));workspace.querySelectorAll('[data-customer-filter]').forEach(input=>input.oninput=()=>{const filters=[...workspace.querySelectorAll('[data-customer-filter]')].map(x=>x.value.toLocaleLowerCase('de-CH'));workspace.querySelectorAll('[data-customer-open]').forEach(row=>{const cells=[...row.children];row.hidden=filters.some((f,i)=>f&&!cells[i]?.textContent.toLocaleLowerCase('de-CH').includes(f))})});
 }
 
@@ -7961,22 +7961,22 @@ function pbCalendarEvents(customerId=''){
   return events.sort((a,b)=>`${a.date||''}${a.startTime||''}`.localeCompare(`${b.date||''}${b.startTime||''}`));
 }
 function pbMountMonthCalendar(host,events,initialMonth=new Date()){
-  if(!host)return;let view=new Date(initialMonth.getFullYear(),initialMonth.getMonth(),1);const draw=()=>{const y=view.getFullYear(),m=view.getMonth(),first=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate(),today=new Date().toISOString().slice(0,10),monthLabel=new Intl.DateTimeFormat('de-CH',{month:'long',year:'numeric'}).format(view);let cells='';for(let i=0;i<first;i++)cells+='<div class="pb-cal-day muted"></div>';for(let d=1;d<=days;d++){const iso=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,dayEvents=events.filter(e=>e.date===iso);cells+=`<div class="pb-cal-day ${iso===today?'today':''}"><b>${d}</b>${dayEvents.map(e=>`<button type="button" data-cal-project="${esc(e.projectId||'')}" style="--event-color:${pbEmployeeColor(e.employee||'Nicht zugewiesen')}"><span>${esc(e.startTime||'')}</span>${esc(e.title||e.number||'Termin')}</button>`).join('')}</div>`}host.innerHTML=`<div class="pb-cal-toolbar"><button type="button" data-cal-prev>‹</button><strong>${esc(monthLabel)}</strong><button type="button" data-cal-today>Heute</button><button type="button" data-cal-next>›</button></div><div class="pb-cal-week"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div><div class="pb-cal-grid">${cells}</div>`;pbBindTap(host.querySelector('[data-cal-prev]'),()=>{view=new Date(y,m-1,1);draw()});pbBindTap(host.querySelector('[data-cal-next]'),()=>{view=new Date(y,m+1,1);draw()});pbBindTap(host.querySelector('[data-cal-today]'),()=>{view=new Date();draw()});host.querySelectorAll('[data-cal-project]').forEach(btn=>pbBindTap(btn,()=>pbNavigateToProject(btn.dataset.calProject)))};draw();
+  if(!host)return;let view=new Date(initialMonth.getFullYear(),initialMonth.getMonth(),1);const draw=()=>{const y=view.getFullYear(),m=view.getMonth(),first=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate(),today=new Date().toISOString().slice(0,10),monthLabel=new Intl.DateTimeFormat('de-CH',{month:'long',year:'numeric'}).format(view);let cells='';for(let i=0;i<first;i++)cells+='<div class="pb-cal-day muted"></div>';for(let d=1;d<=days;d++){const iso=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,dayEvents=events.filter(e=>e.date===iso);cells+=`<div class="pb-cal-day ${iso===today?'today':''}"><b>${d}</b>${dayEvents.map(e=>`<button type="button" data-cal-project="${esc(e.projectId||'')}" style="--event-color:${pbEmployeeColor(e.employee||'Nicht zugewiesen')}"><span>${esc(e.startTime||'')}</span>${esc(e.title||e.number||'Termin')}</button>`).join('')}</div>`}host.innerHTML=`<div class="pb-cal-toolbar"><button type="button" data-cal-prev>â€¹</button><strong>${esc(monthLabel)}</strong><button type="button" data-cal-today>Heute</button><button type="button" data-cal-next>â€º</button></div><div class="pb-cal-week"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div><div class="pb-cal-grid">${cells}</div>`;pbBindTap(host.querySelector('[data-cal-prev]'),()=>{view=new Date(y,m-1,1);draw()});pbBindTap(host.querySelector('[data-cal-next]'),()=>{view=new Date(y,m+1,1);draw()});pbBindTap(host.querySelector('[data-cal-today]'),()=>{view=new Date();draw()});host.querySelectorAll('[data-cal-project]').forEach(btn=>pbBindTap(btn,()=>pbNavigateToProject(btn.dataset.calProject)))};draw();
 }
 function pbExportCalendarIcs(events){
   const clean=v=>String(v||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;'),dt=(date,time='00:00')=>`${String(date||'').replaceAll('-','')}T${String(time||'00:00').replace(':','')}00`;
-  const rows=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Projekt Bau//Projektkalender//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Projekt Bau'];events.forEach(e=>rows.push('BEGIN:VEVENT',`UID:${clean(e.id||u())}@projekt-bau`,`DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}`,`DTSTART:${dt(e.date,e.startTime)}`,`DTEND:${dt(e.date,e.endTime||e.startTime||'23:59')}`,`SUMMARY:${clean(e.title||e.number||'Projekttermin')}`,`DESCRIPTION:${clean(`${e.projectName||''}${e.employee?' · Mitarbeiter: '+e.employee:''}${e.notes?' · '+e.notes:''}`)}`,'END:VEVENT'));rows.push('END:VCALENDAR');const blob=new Blob([rows.join('\r\n')],{type:'text/calendar;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ProjektBau_Kalender.ics';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)
+  const rows=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Projekt Bau//Projektkalender//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Projekt Bau'];events.forEach(e=>rows.push('BEGIN:VEVENT',`UID:${clean(e.id||u())}@projekt-bau`,`DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}`,`DTSTART:${dt(e.date,e.startTime)}`,`DTEND:${dt(e.date,e.endTime||e.startTime||'23:59')}`,`SUMMARY:${clean(e.title||e.number||'Projekttermin')}`,`DESCRIPTION:${clean(`${e.projectName||''}${e.employee?' Â· Mitarbeiter: '+e.employee:''}${e.notes?' Â· '+e.notes:''}`)}`,'END:VEVENT'));rows.push('END:VCALENDAR');const blob=new Blob([rows.join('\r\n')],{type:'text/calendar;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ProjektBau_Kalender.ics';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)
 }
 function pbRenderProjectCalendarWorkspace(workspace,selectedProjectId=''){
-  S.projectCalendarEvents=Array.isArray(S.projectCalendarEvents)?S.projectCalendarEvents:[];const events=pbCalendarEvents(),employees=pbEmployeeNames();workspace.innerHTML=`<div class="pb-module-head"><div><span class="eyebrow">PLANUNG</span><h2>Projektkalender</h2></div><button type="button" class="primary" data-calendar-export>Kalender synchronisieren (.ics)</button></div><div class="pb-calendar-layout"><section class="pb-calendar-create"><h3>Arbeit / Termin einplanen</h3><label>Projekt<select data-calendar-project><option value="">Projekt wählen …</option>${S.projects.map(p=>`<option value="${esc(p.id)}" ${p.id===selectedProjectId?'selected':''}>${esc(p.projectNo||'')} · ${esc(p.name)}</option>`).join('')}</select></label><label>Mitarbeiter<input data-calendar-employee list="pbEmployeeList" placeholder="Mitarbeiter wählen oder eingeben"><datalist id="pbEmployeeList">${employees.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label><label class="wide">Auszuführende Arbeit<input data-calendar-title placeholder="z. B. Platten verlegen"></label><label>Datum<input type="date" data-calendar-date value="${new Date().toISOString().slice(0,10)}"></label><label>Beginn<input type="time" data-calendar-start value="08:00"></label><label>Ende<input type="time" data-calendar-end value="17:00"></label><label class="wide">Anmerkung<textarea rows="3" data-calendar-notes></textarea></label><button type="button" class="primary wide" data-calendar-save>Im Kalender speichern</button><p class="wide muted">Die ICS-Datei kann in Outlook, Google Calendar, Apple Calendar und anderen Kalenderprogrammen geöffnet werden.</p></section><section><div data-project-calendar></div><div class="pb-cal-legend">${employees.map(n=>`<span><i style="background:${pbEmployeeColor(n)}"></i>${esc(n)}</span>`).join('')}</div></section></div><div class="pb-calendar-list"><h3>Geplante Arbeiten und Termine</h3>${events.map(e=>`<button type="button" data-calendar-open="${esc(e.projectId||'')}"><i style="background:${pbEmployeeColor(e.employee||'Nicht zugewiesen')}"></i><strong>${fmtDate(e.date)} · ${esc(e.startTime||'')}–${esc(e.endTime||'')}</strong><span>${esc(e.title||e.number||'Termin')}</span><small>${esc(e.employee||'Nicht zugewiesen')} · ${esc(S.projects.find(p=>p.id===e.projectId)?.name||e.projectName||'')}</small></button>`).join('')||'<p class="muted">Noch keine Kalendereinträge vorhanden.</p>'}</div>`;const projectSelect=workspace.querySelector('[data-calendar-project]'),employeeInput=workspace.querySelector('[data-calendar-employee]'),applyProjectEmployee=()=>{const p=S.projects.find(x=>x.id===projectSelect.value);if(p?.owner&&!employeeInput.value.trim())employeeInput.value=p.owner};projectSelect.addEventListener('change',applyProjectEmployee);applyProjectEmployee();pbMountMonthCalendar(workspace.querySelector('[data-project-calendar]'),events);pbBindTap(workspace.querySelector('[data-calendar-export]'),()=>pbExportCalendarIcs(events));pbBindTap(workspace.querySelector('[data-calendar-save]'),async()=>{const projectId=projectSelect.value,title=workspace.querySelector('[data-calendar-title]').value.trim(),employee=employeeInput.value.trim();if(!projectId||!title||!employee){alert('Bitte Projekt, Mitarbeiter und Arbeit eingeben.');return}S.projectCalendarEvents.push({id:u(),projectId,title,employee,date:workspace.querySelector('[data-calendar-date]').value,startTime:workspace.querySelector('[data-calendar-start]').value,endTime:workspace.querySelector('[data-calendar-end]').value,notes:workspace.querySelector('[data-calendar-notes]').value,createdAt:new Date().toISOString()});localStorage.setItem(K3,JSON.stringify(S));await window.PBStorage?.saveState?.(S,{reason:'project-calendar-save'});window.ProjectBauOneDrive?.scheduleAutoSync?.('project-calendar-save');pbRenderProjectCalendarWorkspace(workspace,projectId);pbActionToast('Kalendereintrag gespeichert.')});workspace.querySelectorAll('[data-calendar-open]').forEach(btn=>pbBindTap(btn,()=>pbNavigateToProject(btn.dataset.calendarOpen)));
+  S.projectCalendarEvents=Array.isArray(S.projectCalendarEvents)?S.projectCalendarEvents:[];const events=pbCalendarEvents(),employees=pbEmployeeNames();workspace.innerHTML=`<div class="pb-module-head"><div><span class="eyebrow">PLANUNG</span><h2>Projektkalender</h2></div><button type="button" class="primary" data-calendar-export>Kalender synchronisieren (.ics)</button></div><div class="pb-calendar-layout"><section class="pb-calendar-create"><h3>Arbeit / Termin einplanen</h3><label>Projekt<select data-calendar-project><option value="">Projekt wÃ¤hlen â€¦</option>${S.projects.map(p=>`<option value="${esc(p.id)}" ${p.id===selectedProjectId?'selected':''}>${esc(p.projectNo||'')} Â· ${esc(p.name)}</option>`).join('')}</select></label><label>Mitarbeiter<input data-calendar-employee list="pbEmployeeList" placeholder="Mitarbeiter wÃ¤hlen oder eingeben"><datalist id="pbEmployeeList">${employees.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label><label class="wide">AuszufÃ¼hrende Arbeit<input data-calendar-title placeholder="z. B. Platten verlegen"></label><label>Datum<input type="date" data-calendar-date value="${new Date().toISOString().slice(0,10)}"></label><label>Beginn<input type="time" data-calendar-start value="08:00"></label><label>Ende<input type="time" data-calendar-end value="17:00"></label><label class="wide">Anmerkung<textarea rows="3" data-calendar-notes></textarea></label><button type="button" class="primary wide" data-calendar-save>Im Kalender speichern</button><p class="wide muted">Die ICS-Datei kann in Outlook, Google Calendar, Apple Calendar und anderen Kalenderprogrammen geÃ¶ffnet werden.</p></section><section><div data-project-calendar></div><div class="pb-cal-legend">${employees.map(n=>`<span><i style="background:${pbEmployeeColor(n)}"></i>${esc(n)}</span>`).join('')}</div></section></div><div class="pb-calendar-list"><h3>Geplante Arbeiten und Termine</h3>${events.map(e=>`<button type="button" data-calendar-open="${esc(e.projectId||'')}"><i style="background:${pbEmployeeColor(e.employee||'Nicht zugewiesen')}"></i><strong>${fmtDate(e.date)} Â· ${esc(e.startTime||'')}â€“${esc(e.endTime||'')}</strong><span>${esc(e.title||e.number||'Termin')}</span><small>${esc(e.employee||'Nicht zugewiesen')} Â· ${esc(S.projects.find(p=>p.id===e.projectId)?.name||e.projectName||'')}</small></button>`).join('')||'<p class="muted">Noch keine KalendereintrÃ¤ge vorhanden.</p>'}</div>`;const projectSelect=workspace.querySelector('[data-calendar-project]'),employeeInput=workspace.querySelector('[data-calendar-employee]'),applyProjectEmployee=()=>{const p=S.projects.find(x=>x.id===projectSelect.value);if(p?.owner&&!employeeInput.value.trim())employeeInput.value=p.owner};projectSelect.addEventListener('change',applyProjectEmployee);applyProjectEmployee();pbMountMonthCalendar(workspace.querySelector('[data-project-calendar]'),events);pbBindTap(workspace.querySelector('[data-calendar-export]'),()=>pbExportCalendarIcs(events));pbBindTap(workspace.querySelector('[data-calendar-save]'),async()=>{const projectId=projectSelect.value,title=workspace.querySelector('[data-calendar-title]').value.trim(),employee=employeeInput.value.trim();if(!projectId||!title||!employee){alert('Bitte Projekt, Mitarbeiter und Arbeit eingeben.');return}S.projectCalendarEvents.push({id:u(),projectId,title,employee,date:workspace.querySelector('[data-calendar-date]').value,startTime:workspace.querySelector('[data-calendar-start]').value,endTime:workspace.querySelector('[data-calendar-end]').value,notes:workspace.querySelector('[data-calendar-notes]').value,createdAt:new Date().toISOString()});localStorage.setItem(K3,JSON.stringify(S));await window.PBStorage?.saveState?.(S,{reason:'project-calendar-save'});window.ProjectBauOneDrive?.scheduleAutoSync?.('project-calendar-save');pbRenderProjectCalendarWorkspace(workspace,projectId);pbActionToast('Kalendereintrag gespeichert.')});workspace.querySelectorAll('[data-calendar-open]').forEach(btn=>pbBindTap(btn,()=>pbNavigateToProject(btn.dataset.calendarOpen)));
 }
 window.PBRenderProjectCalendarWorkspace=pbRenderProjectCalendarWorkspace;
 
 const PB_CUSTOMER_RELATIONS=[
-  ['projects','⌘','Projekte'],['appointments','▣','Termine'],['measurements','⌑','Aufmass'],['offers','▤','Offerten'],
-  ['dayworks','▧','Regieberichte'],['orders','⌁','Aufträge'],['deliveries','▣','Lieferscheine'],['acceptances','⌂','Abnahmeprotokolle'],
-  ['invoices','▤','Rechnungen'],['payments','▣','Zahlungen'],['reminders','♧','Mahnungen'],['forms','▥','Formulare'],
-  ['contracts','▧','Verträge'],['emails','✉','Gesendete E-Mails'],['letters','✉','Briefe']
+  ['projects','âŒ˜','Projekte'],['appointments','â–£','Termine'],['measurements','âŒ‘','Aufmass'],['offers','â–¤','Offerten'],
+  ['dayworks','â–§','Regieberichte'],['orders','âŒ','AuftrÃ¤ge'],['deliveries','â–£','Lieferscheine'],['acceptances','âŒ‚','Abnahmeprotokolle'],
+  ['invoices','â–¤','Rechnungen'],['payments','â–£','Zahlungen'],['reminders','â™§','Mahnungen'],['forms','â–¥','Formulare'],
+  ['contracts','â–§','VertrÃ¤ge'],['emails','âœ‰','Gesendete E-Mails'],['letters','âœ‰','Briefe']
 ];
 function pbCustomerProjects(customer){return (S.projects||[]).filter(p=>p.customerId===customer.id)}
 function pbCustomerRelationItems(customer,type){
@@ -7994,19 +7994,19 @@ function pbCustomerRelationsHtml(customer){
 function pbCustomerRelationPrefix(type){return{projects:'PRO',appointments:'TER',measurements:'AUF',offers:'OFF',dayworks:'REG',orders:'AUFTR',deliveries:'LIE',acceptances:'ABN',invoices:'RE',payments:'ZA',reminders:'MAH',forms:'FOR',contracts:'VER',emails:'MAIL',letters:'BR'}[type]||'DOK'}
 function pbBindSwissAddressSuggestions(input,host,onSelect){
   if(!input||!host)return;let timer=0,controller=null;
-  input.addEventListener('input',()=>{clearTimeout(timer);const q=input.value.trim();if(q.length<3){host.hidden=true;return}timer=setTimeout(async()=>{try{controller?.abort();controller=new AbortController();const json=await fetch('https://api3.geo.admin.ch/rest/services/api/SearchServer?type=locations&origins=address&limit=8&searchText='+encodeURIComponent(q),{signal:controller.signal}).then(r=>r.json());const items=(json.results||[]).map(x=>{const tmp=document.createElement('div');tmp.innerHTML=x.attrs?.label||x.attrs?.detail||'';const label=tmp.textContent.trim();const m=label.match(/^(.*?)(\d+[A-Za-z]?)\s*,?\s*(\d{4})\s+(.+?)(?:\s+[A-Z]{2})?$/);return{label,street:m?.[1]?.trim()||label,houseNo:m?.[2]||'',zip:m?.[3]||'',city:m?.[4]?.trim()||'',fullAddress:label.replace(/,\s*/g,', ')}}).filter(x=>x.label);host.innerHTML=items.map((x,i)=>`<button type="button" data-swiss-address="${i}">⌖ ${esc(x.label)}</button>`).join('');host.hidden=!items.length;host.querySelectorAll('[data-swiss-address]').forEach(btn=>pbBindTap(btn,()=>{const x=items[Number(btn.dataset.swissAddress)];input.value=x.fullAddress;host.hidden=true;onSelect?.(x)}))}catch(e){if(e.name!=='AbortError')host.hidden=true}},260)});
+  input.addEventListener('input',()=>{clearTimeout(timer);const q=input.value.trim();if(q.length<3){host.hidden=true;return}timer=setTimeout(async()=>{try{controller?.abort();controller=new AbortController();const json=await fetch('https://api3.geo.admin.ch/rest/services/api/SearchServer?type=locations&origins=address&limit=8&searchText='+encodeURIComponent(q),{signal:controller.signal}).then(r=>r.json());const items=(json.results||[]).map(x=>{const tmp=document.createElement('div');tmp.innerHTML=x.attrs?.label||x.attrs?.detail||'';const label=tmp.textContent.trim();const m=label.match(/^(.*?)(\d+[A-Za-z]?)\s*,?\s*(\d{4})\s+(.+?)(?:\s+[A-Z]{2})?$/);return{label,street:m?.[1]?.trim()||label,houseNo:m?.[2]||'',zip:m?.[3]||'',city:m?.[4]?.trim()||'',fullAddress:label.replace(/,\s*/g,', ')}}).filter(x=>x.label);host.innerHTML=items.map((x,i)=>`<button type="button" data-swiss-address="${i}">âŒ– ${esc(x.label)}</button>`).join('');host.hidden=!items.length;host.querySelectorAll('[data-swiss-address]').forEach(btn=>pbBindTap(btn,()=>{const x=items[Number(btn.dataset.swissAddress)];input.value=x.fullAddress;host.hidden=true;onSelect?.(x)}))}catch(e){if(e.name!=='AbortError')host.hidden=true}},260)});
 }
 function pbOpenExistingProjectPhase(workspace,project,phase){
   if(!project)return;ensurePlattenlegerProject(project).phase=phase;localStorage.setItem(K3,JSON.stringify(S));window.PBStorage?.saveState?.(S,{reason:`open-${phase}-296401`});document.querySelector('.pb-relation-modal')?.remove();pbNavigateToProject(project.id,phase);
 }
 function pbOpenCustomerRelationCreate(workspace,customer,type){
   const projects=pbCustomerProjects(customer),label=PB_CUSTOMER_RELATIONS.find(x=>x[0]===type)?.[2]||'Dokument',isProject=type==='projects',directPhase={measurements:'aufmass',offers:'offerte',orders:'auftrag',acceptances:'abnahme'}[type];
-  if(!isProject&&!projects.length){alert('Bitte zuerst ein Projekt für diesen Kunden erstellen.');return}
+  if(!isProject&&!projects.length){alert('Bitte zuerst ein Projekt fÃ¼r diesen Kunden erstellen.');return}
   if(directPhase&&projects.length===1){pbOpenExistingProjectPhase(workspace,projects[0],directPhase);return}
   document.querySelector('.pb-relation-modal')?.remove();
-  const modal=document.createElement('div');modal.className='pb-relation-modal';modal.innerHTML=`<div class="pb-relation-dialog" role="dialog" aria-modal="true"><div class="pb-relation-dialog-head"><div><small>NEU ERSTELLEN</small><h2>${esc(isProject?'Neues Projekt':label)}</h2></div><button type="button" data-modal-close>×</button></div><div class="pb-relation-form">
-    ${isProject?`<label>Projektnummer<input value="${esc(pbNextNumber('PRO'))}" data-new-number readonly></label><label>Kunde / Firma<input value="${esc(pbCustomerName(customer))}" readonly></label><label class="wide">Projektname<input data-new-title placeholder="z. B. Badsanierung" autofocus></label><label class="wide">Adresse<div class="pb-address-search"><input data-new-address autocomplete="off" value="${esc(customer.fullAddress||[customer.street,customer.houseNo,customer.zip,customer.city].filter(Boolean).join(' '))}" placeholder="Strasse, Hausnummer, PLZ oder Ort"><div class="pb-address-suggestions" data-new-address-suggestions hidden></div></div></label><label>Startdatum<input type="date" data-new-date value="${new Date().toISOString().slice(0,10)}"></label><label>Verantwortlich<input data-new-owner></label><label class="wide">Allgemeine Beschreibung<textarea rows="5" data-new-notes></textarea></label>`:directPhase?`<label class="wide">Projekt<select data-new-project>${projects.map(p=>`<option value="${esc(p.id)}">${esc(p.projectNo||'')} · ${esc(p.name||'Projekt')}</option>`).join('')}</select></label><p class="wide pb-direct-phase-note">Das bestehende ${esc(label)}-Bearbeitungsfenster wird geöffnet.</p>`:`<label>Nummer<input value="${esc(pbNextNumber(pbCustomerRelationPrefix(type)))}" data-new-number readonly></label><label>Projekt<select data-new-project>${projects.map(p=>`<option value="${esc(p.id)}">${esc(p.projectNo||'')} · ${esc(p.name||'Projekt')}</option>`).join('')}</select></label><label class="wide">Bezeichnung<input data-new-title placeholder="${esc(label)}" autofocus></label><label>Datum<input type="date" data-new-date value="${new Date().toISOString().slice(0,10)}"></label>${type==='appointments'?`<label>Beginn<input type="time" data-new-start-time value="08:00"></label><label>Ende<input type="time" data-new-end-time value="09:00"></label><label class="wide">Mitarbeiter<input data-new-employee list="pbAppointmentEmployees" placeholder="Mitarbeiter wählen oder eingeben"><datalist id="pbAppointmentEmployees">${pbEmployeeNames().map(n=>`<option value="${esc(n)}">`).join('')}</datalist></label>`:''}<label>Status<select data-new-status><option>Entwurf</option><option>Offen</option><option>Erstellt</option><option>Abgeschlossen</option></select></label><label class="wide">Anmerkung<textarea rows="5" data-new-notes></textarea></label>`}
-  </div><div class="pb-relation-dialog-actions"><button type="button" class="secondary" data-modal-close>Abbrechen</button><button type="button" class="primary" data-modal-save>${esc(directPhase?label+' öffnen':isProject?'Projekt erstellen':label+' erstellen')}</button></div></div>`;
+  const modal=document.createElement('div');modal.className='pb-relation-modal';modal.innerHTML=`<div class="pb-relation-dialog" role="dialog" aria-modal="true"><div class="pb-relation-dialog-head"><div><small>NEU ERSTELLEN</small><h2>${esc(isProject?'Neues Projekt':label)}</h2></div><button type="button" data-modal-close>Ã—</button></div><div class="pb-relation-form">
+    ${isProject?`<label>Projektnummer<input value="${esc(pbNextNumber('PRO'))}" data-new-number readonly></label><label>Kunde / Firma<input value="${esc(pbCustomerName(customer))}" readonly></label><label class="wide">Projektname<input data-new-title placeholder="z. B. Badsanierung" autofocus></label><label class="wide">Adresse<div class="pb-address-search"><input data-new-address autocomplete="off" value="${esc(customer.fullAddress||[customer.street,customer.houseNo,customer.zip,customer.city].filter(Boolean).join(' '))}" placeholder="Strasse, Hausnummer, PLZ oder Ort"><div class="pb-address-suggestions" data-new-address-suggestions hidden></div></div></label><label>Startdatum<input type="date" data-new-date value="${new Date().toISOString().slice(0,10)}"></label><label>Verantwortlich<input data-new-owner></label><label class="wide">Allgemeine Beschreibung<textarea rows="5" data-new-notes></textarea></label>`:directPhase?`<label class="wide">Projekt<select data-new-project>${projects.map(p=>`<option value="${esc(p.id)}">${esc(p.projectNo||'')} Â· ${esc(p.name||'Projekt')}</option>`).join('')}</select></label><p class="wide pb-direct-phase-note">Das bestehende ${esc(label)}-Bearbeitungsfenster wird geÃ¶ffnet.</p>`:`<label>Nummer<input value="${esc(pbNextNumber(pbCustomerRelationPrefix(type)))}" data-new-number readonly></label><label>Projekt<select data-new-project>${projects.map(p=>`<option value="${esc(p.id)}">${esc(p.projectNo||'')} Â· ${esc(p.name||'Projekt')}</option>`).join('')}</select></label><label class="wide">Bezeichnung<input data-new-title placeholder="${esc(label)}" autofocus></label><label>Datum<input type="date" data-new-date value="${new Date().toISOString().slice(0,10)}"></label>${type==='appointments'?`<label>Beginn<input type="time" data-new-start-time value="08:00"></label><label>Ende<input type="time" data-new-end-time value="09:00"></label><label class="wide">Mitarbeiter<input data-new-employee list="pbAppointmentEmployees" placeholder="Mitarbeiter wÃ¤hlen oder eingeben"><datalist id="pbAppointmentEmployees">${pbEmployeeNames().map(n=>`<option value="${esc(n)}">`).join('')}</datalist></label>`:''}<label>Status<select data-new-status><option>Entwurf</option><option>Offen</option><option>Erstellt</option><option>Abgeschlossen</option></select></label><label class="wide">Anmerkung<textarea rows="5" data-new-notes></textarea></label>`}
+  </div><div class="pb-relation-dialog-actions"><button type="button" class="secondary" data-modal-close>Abbrechen</button><button type="button" class="primary" data-modal-save>${esc(directPhase?label+' Ã¶ffnen':isProject?'Projekt erstellen':label+' erstellen')}</button></div></div>`;
   document.body.appendChild(modal);modal.querySelector('[autofocus]')?.focus();modal.querySelectorAll('[data-modal-close]').forEach(btn=>pbBindTap(btn,()=>modal.remove()));
   if(isProject)pbBindSwissAddressSuggestions(modal.querySelector('[data-new-address]'),modal.querySelector('[data-new-address-suggestions]'));
   pbBindTap(modal.querySelector('[data-modal-save]'),async()=>{
@@ -8025,8 +8025,8 @@ function pbOpenCustomerRelationCreate(workspace,customer,type){
 }
 function pbRenderCustomerRelation(workspace,customer,type='projects'){
   const target=workspace.querySelector('[data-customer-relation-content]');if(!target)return;const items=pbCustomerRelationItems(customer,type),label=PB_CUSTOMER_RELATIONS.find(x=>x[0]===type)?.[2]||type;
-  if(type==='projects')target.innerHTML=`<div class="pb-relation-tools"><strong>${label}</strong><button type="button" class="primary" data-relation-add>+</button></div><div class="pb-relation-table"><div class="pb-relation-row head"><span>Erstellt</span><span>Nummer</span><span>Bezeichnung</span><span>Status</span><span>Projektleiter</span></div>${items.map(p=>`<button type="button" class="pb-relation-row" data-relation-project="${esc(p.id)}"><span>${fmtDate((p.createdAt||p.startDate||'').slice?.(0,10)||'')}</span><span>${esc(p.projectNo||'')}</span><span>${esc(p.name||'')}</span><span>${esc(p.status||p.plattenleger?.activePhase||'Neu')}</span><span>${esc(p.owner||'')}</span></button>`).join('')||'<p class="pb-relation-empty">Für diesen Kunden sind noch keine Projekte vorhanden.</p>'}</div>`;
-  else target.innerHTML=`<div class="pb-relation-tools"><strong>${label}</strong><button type="button" class="primary" data-relation-add>+</button></div>${items.length?`<div class="pb-relation-cards">${items.map(x=>`<button type="button" data-relation-project="${esc(x._project?.id||'')}"><strong>${esc(x.offerNo||x.measureNo||x.orderNo||x.invoiceNo||x.number||x.title||label)}</strong><span>${esc(x._project?.name||'')}</span><small>${fmtDate(x.date||x.offerDate||x.measureDate||x.createdAt||'')}${x.startTime?` · ${esc(x.startTime)}${x.endTime?'–'+esc(x.endTime):''}`:''}</small></button>`).join('')}</div>`:`<p class="pb-relation-empty">Für diesen Kunden sind noch keine ${label} vorhanden.</p>`}`;
+  if(type==='projects')target.innerHTML=`<div class="pb-relation-tools"><strong>${label}</strong><button type="button" class="primary" data-relation-add>+</button></div><div class="pb-relation-table"><div class="pb-relation-row head"><span>Erstellt</span><span>Nummer</span><span>Bezeichnung</span><span>Status</span><span>Projektleiter</span></div>${items.map(p=>`<button type="button" class="pb-relation-row" data-relation-project="${esc(p.id)}"><span>${fmtDate((p.createdAt||p.startDate||'').slice?.(0,10)||'')}</span><span>${esc(p.projectNo||'')}</span><span>${esc(p.name||'')}</span><span>${esc(p.status||p.plattenleger?.activePhase||'Neu')}</span><span>${esc(p.owner||'')}</span></button>`).join('')||'<p class="pb-relation-empty">FÃ¼r diesen Kunden sind noch keine Projekte vorhanden.</p>'}</div>`;
+  else target.innerHTML=`<div class="pb-relation-tools"><strong>${label}</strong><button type="button" class="primary" data-relation-add>+</button></div>${items.length?`<div class="pb-relation-cards">${items.map(x=>`<button type="button" data-relation-project="${esc(x._project?.id||'')}"><strong>${esc(x.offerNo||x.measureNo||x.orderNo||x.invoiceNo||x.number||x.title||label)}</strong><span>${esc(x._project?.name||'')}</span><small>${fmtDate(x.date||x.offerDate||x.measureDate||x.createdAt||'')}${x.startTime?` Â· ${esc(x.startTime)}${x.endTime?'â€“'+esc(x.endTime):''}`:''}</small></button>`).join('')}</div>`:`<p class="pb-relation-empty">FÃ¼r diesen Kunden sind noch keine ${label} vorhanden.</p>`}`;
   if(type==='appointments'){const cal=document.createElement('section');cal.className='pb-customer-calendar';cal.setAttribute('data-customer-calendar','');target.querySelector('.pb-relation-tools')?.after(cal);pbMountMonthCalendar(cal,items.map(x=>({...x,projectId:x._project?.id||x.projectId,projectName:x._project?.name||''})))}
   target.querySelectorAll('[data-relation-project]').forEach(btn=>pbBindTap(btn,()=>pbNavigateToProject(btn.dataset.relationProject)));
   pbBindTap(target.querySelector('[data-relation-add]'),()=>pbOpenCustomerRelationCreate(workspace,customer,type));
@@ -8038,41 +8038,41 @@ function pbRenderCustomerEditorV2958(workspace,editId){
   const c=customer||{id:u(),number:pbNextNumber('K'),type:'Firma',salutation:'Herr',contacts:[],bank:{},language:'Deutsch'};
   const contact=c.contacts?.[0]||{},bank=c.bank||{};
   workspace.innerHTML=`
-    <div class="pb-customer-head"><h2>▣ Kunde</h2><div><button type="button" class="secondary" data-customer-back>← Zurück</button><button type="button" class="primary" data-customer-save>✓ Kunde speichern</button>${customer?'<button type="button" class="danger" data-customer-delete>🗑</button>':''}</div></div>
+    <div class="pb-customer-head"><h2>â–£ Kunde</h2><div><button type="button" class="secondary" data-customer-back>â† ZurÃ¼ck</button><button type="button" class="primary" data-customer-save>âœ“ Kunde speichern</button>${customer?'<button type="button" class="danger" data-customer-delete>ðŸ—‘</button>':''}</div></div>
     <div class="pb-customer-form" data-customer-id="${esc(c.id)}">
-      <label>Typ<select data-cf="type"><option ${c.type==='Firma'?'selected':''}>Firma</option><option ${c.type==='Privat'?'selected':''}>Privat</option></select></label><label>Kundennummer<div class="pb-icon-input"><i>▣</i><input data-cf="number" value="${esc(c.number)}" readonly></div></label>
-      <label>Name / Firma<div class="pb-icon-input"><i>▣</i><input data-cf="company" value="${esc(c.company||'')}"></div></label><label>Mehrwertsteuernummer<div class="pb-icon-input"><i>▤</i><input data-cf="vatNo" value="${esc(c.vatNo||'')}"></div></label>
+      <label>Typ<select data-cf="type"><option ${c.type==='Firma'?'selected':''}>Firma</option><option ${c.type==='Privat'?'selected':''}>Privat</option></select></label><label>Kundennummer<div class="pb-icon-input"><i>â–£</i><input data-cf="number" value="${esc(c.number)}" readonly></div></label>
+      <label>Name / Firma<div class="pb-icon-input"><i>â–£</i><input data-cf="company" value="${esc(c.company||'')}"></div></label><label>Mehrwertsteuernummer<div class="pb-icon-input"><i>â–¤</i><input data-cf="vatNo" value="${esc(c.vatNo||'')}"></div></label>
       <label>Anrede<select data-cf="salutation"><option ${c.salutation==='Herr'?'selected':''}>Herr</option><option ${c.salutation==='Frau'?'selected':''}>Frau</option><option>Firma</option></select></label><label>Briefanrede<input data-cf="letterSalutation" value="${esc(c.letterSalutation||'')}"></label>
       <label>Vorname<div class="pb-icon-input"><i>i</i><input data-cf="firstName" value="${esc(c.firstName||'')}"></div></label><label>Nachname<div class="pb-icon-input"><i>i</i><input data-cf="lastName" value="${esc(c.lastName||'')}"></div></label>
-      <label>E-Mail<div class="pb-icon-input"><i>✉</i><input type="email" data-cf="email" value="${esc(c.email||'')}"><b>✉</b></div></label><label>Fax<div class="pb-icon-input"><i>▤</i><input data-cf="fax" value="${esc(c.fax||'')}"></div></label>
-      <label>Telefon<div class="pb-icon-input"><i>☎</i><input data-cf="phone" value="${esc(c.phone||'')}"><b>☎</b></div></label><label>Mobil<div class="pb-icon-input"><i>☎</i><input data-cf="mobile" value="${esc(c.mobile||'')}"><b>☎</b></div></label>
+      <label>E-Mail<div class="pb-icon-input"><i>âœ‰</i><input type="email" data-cf="email" value="${esc(c.email||'')}"><b>âœ‰</b></div></label><label>Fax<div class="pb-icon-input"><i>â–¤</i><input data-cf="fax" value="${esc(c.fax||'')}"></div></label>
+      <label>Telefon<div class="pb-icon-input"><i>â˜Ž</i><input data-cf="phone" value="${esc(c.phone||'')}"><b>â˜Ž</b></div></label><label>Mobil<div class="pb-icon-input"><i>â˜Ž</i><input data-cf="mobile" value="${esc(c.mobile||'')}"><b>â˜Ž</b></div></label>
     </div>
-    <div class="pb-customer-tabs" role="tablist"><button class="active" data-customer-tab="address">⌂ Adressen</button><button data-customer-tab="contact">♙ Ansprechpartner</button><button data-customer-tab="bank">🏦 Zahlung &amp; Bank</button><button data-customer-tab="notes">▢ Anmerkung</button></div>
-    <div class="pb-customer-tabpanel active" data-customer-panel="address"><div class="pb-address-form"><label class="wide">Adresse / Bezeichnung<input data-cf="addressLabel" value="${esc(c.addressLabel||'')}"></label><label>Strasse<div class="pb-address-search"><div class="pb-icon-input"><i>⌂</i><input data-cf="street" autocomplete="off" value="${esc(c.street||'')}" placeholder="Strasse oder vollständige Adresse eingeben"></div><div class="pb-address-suggestions" hidden></div></div></label><label>Hausnummer<input data-cf="houseNo" value="${esc(c.houseNo||'')}"></label><label>PLZ<input data-cf="zip" value="${esc(c.zip||'')}"></label><label>Stadt<input data-cf="city" value="${esc(c.city||'')}"></label></div></div>
-    <div class="pb-customer-tabpanel" data-customer-panel="contact"><div class="pb-panel-actions"><select data-contact="selection"><option>Ansprechpartner 1</option></select><button type="button" class="pb-round primary">+</button><button type="button" class="pb-round danger">🗑</button></div><div class="pb-contact-form"><label>Anrede<select data-contact="salutation"><option></option><option ${contact.salutation==='Herr'?'selected':''}>Herr</option><option ${contact.salutation==='Frau'?'selected':''}>Frau</option></select></label><label>Briefanrede<input data-contact="letterSalutation" value="${esc(contact.letterSalutation||'')}"></label><label>Titel<input data-contact="title" value="${esc(contact.title||'')}"></label><span></span><label>Vorname<input data-contact="firstName" value="${esc(contact.firstName||'')}"></label><label>Nachname<input data-contact="lastName" value="${esc(contact.lastName||'')}"></label><label>Geburtsdatum<input type="date" data-contact="birthDate" value="${esc(contact.birthDate||'')}"></label><label>Rolle<input data-contact="role" value="${esc(contact.role||'')}"></label><label>E-Mail<div class="pb-icon-input"><i>✉</i><input data-contact="email" value="${esc(contact.email||'')}"><b>✉</b></div></label><label>Fax<div class="pb-icon-input"><i>▤</i><input data-contact="fax" value="${esc(contact.fax||'')}"></div></label><label>Telefon<div class="pb-icon-input"><i>☎</i><input data-contact="phone" value="${esc(contact.phone||'')}"><b>☎</b></div></label><label>Mobil<div class="pb-icon-input"><i>☎</i><input data-contact="mobile" value="${esc(contact.mobile||'')}"><b>☎</b></div></label><label>Telefon privat<div class="pb-icon-input"><i>☎</i><input data-contact="privatePhone" value="${esc(contact.privatePhone||'')}"><b>☎</b></div></label><span></span><label class="wide">Anmerkung<textarea rows="4" data-contact="notes">${esc(contact.notes||'')}</textarea></label></div></div>
-    <div class="pb-customer-tabpanel" data-customer-panel="bank"><div class="pb-bank-form"><label>Kontoinhaber<div class="pb-icon-input"><i>♙</i><input data-bank="accountHolder" value="${esc(bank.accountHolder||'')}"></div></label><label>Bank Name<div class="pb-icon-input"><i>i</i><input data-bank="bankName" value="${esc(bank.bankName||'')}"></div></label><label>IBAN<div class="pb-icon-input"><i>i</i><input data-bank="iban" value="${esc(bank.iban||'')}"></div></label><label>BIC<div class="pb-icon-input"><i>🏦</i><input data-bank="bic" value="${esc(bank.bic||'')}"></div></label><h3 class="wide">Zahlungsbedingungen</h3><label>Zahlungsziel (in Tagen)<input type="number" data-bank="paymentDays" value="${esc(bank.paymentDays||'')}"></label><span></span><label class="check wide"><input type="checkbox" data-bank-check="discount" ${bank.discount?'checked':''}> Skonto</label><label class="check wide"><input type="checkbox" data-bank-check="reverseCharge" ${bank.reverseCharge?'checked':''}> Steuerschuldumkehr (Reverse Charge)</label></div></div>
-    <div class="pb-customer-tabpanel" data-customer-panel="notes"><div class="pb-notes-form"><label class="wide">Anmerkung<textarea rows="6" data-cf="notes">${esc(c.notes||'')}</textarea></label><label>Akquisekanal<input data-cf="acquisitionChannel" value="${esc(c.acquisitionChannel||'')}"></label><label>Sprache<select data-cf="language"><option ${c.language==='Deutsch'?'selected':''}>Deutsch</option><option>Französisch</option><option>Italienisch</option><option>Englisch</option></select></label></div></div>${customer?pbCustomerRelationsHtml(customer):'<div class="pb-customer-save-hint">Kunde speichern, um Projekte und Dokumente zu verknüpfen.</div>'}`;
+    <div class="pb-customer-tabs" role="tablist"><button class="active" data-customer-tab="address">âŒ‚ Adressen</button><button data-customer-tab="contact">â™™ Ansprechpartner</button><button data-customer-tab="bank">ðŸ¦ Zahlung &amp; Bank</button><button data-customer-tab="notes">â–¢ Anmerkung</button></div>
+    <div class="pb-customer-tabpanel active" data-customer-panel="address"><div class="pb-address-form"><label class="wide">Adresse / Bezeichnung<input data-cf="addressLabel" value="${esc(c.addressLabel||'')}"></label><label>Strasse<div class="pb-address-search"><div class="pb-icon-input"><i>âŒ‚</i><input data-cf="street" autocomplete="off" value="${esc(c.street||'')}" placeholder="Strasse oder vollstÃ¤ndige Adresse eingeben"></div><div class="pb-address-suggestions" hidden></div></div></label><label>Hausnummer<input data-cf="houseNo" value="${esc(c.houseNo||'')}"></label><label>PLZ<input data-cf="zip" value="${esc(c.zip||'')}"></label><label>Stadt<input data-cf="city" value="${esc(c.city||'')}"></label></div></div>
+    <div class="pb-customer-tabpanel" data-customer-panel="contact"><div class="pb-panel-actions"><select data-contact="selection"><option>Ansprechpartner 1</option></select><button type="button" class="pb-round primary">+</button><button type="button" class="pb-round danger">ðŸ—‘</button></div><div class="pb-contact-form"><label>Anrede<select data-contact="salutation"><option></option><option ${contact.salutation==='Herr'?'selected':''}>Herr</option><option ${contact.salutation==='Frau'?'selected':''}>Frau</option></select></label><label>Briefanrede<input data-contact="letterSalutation" value="${esc(contact.letterSalutation||'')}"></label><label>Titel<input data-contact="title" value="${esc(contact.title||'')}"></label><span></span><label>Vorname<input data-contact="firstName" value="${esc(contact.firstName||'')}"></label><label>Nachname<input data-contact="lastName" value="${esc(contact.lastName||'')}"></label><label>Geburtsdatum<input type="date" data-contact="birthDate" value="${esc(contact.birthDate||'')}"></label><label>Rolle<input data-contact="role" value="${esc(contact.role||'')}"></label><label>E-Mail<div class="pb-icon-input"><i>âœ‰</i><input data-contact="email" value="${esc(contact.email||'')}"><b>âœ‰</b></div></label><label>Fax<div class="pb-icon-input"><i>â–¤</i><input data-contact="fax" value="${esc(contact.fax||'')}"></div></label><label>Telefon<div class="pb-icon-input"><i>â˜Ž</i><input data-contact="phone" value="${esc(contact.phone||'')}"><b>â˜Ž</b></div></label><label>Mobil<div class="pb-icon-input"><i>â˜Ž</i><input data-contact="mobile" value="${esc(contact.mobile||'')}"><b>â˜Ž</b></div></label><label>Telefon privat<div class="pb-icon-input"><i>â˜Ž</i><input data-contact="privatePhone" value="${esc(contact.privatePhone||'')}"><b>â˜Ž</b></div></label><span></span><label class="wide">Anmerkung<textarea rows="4" data-contact="notes">${esc(contact.notes||'')}</textarea></label></div></div>
+    <div class="pb-customer-tabpanel" data-customer-panel="bank"><div class="pb-bank-form"><label>Kontoinhaber<div class="pb-icon-input"><i>â™™</i><input data-bank="accountHolder" value="${esc(bank.accountHolder||'')}"></div></label><label>Bank Name<div class="pb-icon-input"><i>i</i><input data-bank="bankName" value="${esc(bank.bankName||'')}"></div></label><label>IBAN<div class="pb-icon-input"><i>i</i><input data-bank="iban" value="${esc(bank.iban||'')}"></div></label><label>BIC<div class="pb-icon-input"><i>ðŸ¦</i><input data-bank="bic" value="${esc(bank.bic||'')}"></div></label><h3 class="wide">Zahlungsbedingungen</h3><label>Zahlungsziel (in Tagen)<input type="number" data-bank="paymentDays" value="${esc(bank.paymentDays||'')}"></label><span></span><label class="check wide"><input type="checkbox" data-bank-check="discount" ${bank.discount?'checked':''}> Skonto</label><label class="check wide"><input type="checkbox" data-bank-check="reverseCharge" ${bank.reverseCharge?'checked':''}> Steuerschuldumkehr (Reverse Charge)</label></div></div>
+    <div class="pb-customer-tabpanel" data-customer-panel="notes"><div class="pb-notes-form"><label class="wide">Anmerkung<textarea rows="6" data-cf="notes">${esc(c.notes||'')}</textarea></label><label>Akquisekanal<input data-cf="acquisitionChannel" value="${esc(c.acquisitionChannel||'')}"></label><label>Sprache<select data-cf="language"><option ${c.language==='Deutsch'?'selected':''}>Deutsch</option><option>FranzÃ¶sisch</option><option>Italienisch</option><option>Englisch</option></select></label></div></div>${customer?pbCustomerRelationsHtml(customer):'<div class="pb-customer-save-hint">Kunde speichern, um Projekte und Dokumente zu verknÃ¼pfen.</div>'}`;
   pbBindTap(workspace.querySelector('[data-customer-back]'),()=>pbRenderCustomersWorkspace(workspace));
   workspace.querySelectorAll('[data-customer-tab]').forEach(btn=>btn.onclick=()=>{workspace.querySelectorAll('[data-customer-tab]').forEach(x=>x.classList.toggle('active',x===btn));workspace.querySelectorAll('[data-customer-panel]').forEach(p=>p.classList.toggle('active',p.dataset.customerPanel===btn.dataset.customerTab))});
   const street=workspace.querySelector('[data-cf="street"]'),suggestions=workspace.querySelector('.pb-address-suggestions');let addressTimer=0,controller=null;
-  street.addEventListener('input',()=>{clearTimeout(addressTimer);const q=street.value.trim();if(q.length<3){suggestions.hidden=true;return}addressTimer=setTimeout(async()=>{try{controller?.abort();controller=new AbortController();const url='https://api3.geo.admin.ch/rest/services/api/SearchServer?type=locations&origins=address&limit=8&searchText='+encodeURIComponent(q);const json=await fetch(url,{signal:controller.signal}).then(r=>r.json());const items=(json.results||[]).map(x=>{const tmp=document.createElement('div');tmp.innerHTML=x.attrs?.label||x.attrs?.detail||'';const label=tmp.textContent.trim();const m=label.match(/^(.*?)(\d+[A-Za-z]?)\s*,?\s*(\d{4})\s+(.+?)(?:\s+[A-Z]{2})?$/);return{label,street:m?.[1]?.trim()||label,houseNo:m?.[2]||'',zip:m?.[3]||'',city:m?.[4]?.trim()||''}}).filter(x=>x.label);suggestions.innerHTML=items.map((x,i)=>`<button type="button" data-address-i="${i}">⌖ ${esc(x.label)}</button>`).join('');suggestions.hidden=!items.length;suggestions.querySelectorAll('[data-address-i]').forEach(btn=>btn.onclick=()=>{const x=items[Number(btn.dataset.addressI)];street.value=x.street;workspace.querySelector('[data-cf="houseNo"]').value=x.houseNo;workspace.querySelector('[data-cf="zip"]').value=x.zip;workspace.querySelector('[data-cf="city"]').value=x.city;suggestions.hidden=true})}catch(err){if(err.name!=='AbortError')suggestions.hidden=true}},280)});
+  street.addEventListener('input',()=>{clearTimeout(addressTimer);const q=street.value.trim();if(q.length<3){suggestions.hidden=true;return}addressTimer=setTimeout(async()=>{try{controller?.abort();controller=new AbortController();const url='https://api3.geo.admin.ch/rest/services/api/SearchServer?type=locations&origins=address&limit=8&searchText='+encodeURIComponent(q);const json=await fetch(url,{signal:controller.signal}).then(r=>r.json());const items=(json.results||[]).map(x=>{const tmp=document.createElement('div');tmp.innerHTML=x.attrs?.label||x.attrs?.detail||'';const label=tmp.textContent.trim();const m=label.match(/^(.*?)(\d+[A-Za-z]?)\s*,?\s*(\d{4})\s+(.+?)(?:\s+[A-Z]{2})?$/);return{label,street:m?.[1]?.trim()||label,houseNo:m?.[2]||'',zip:m?.[3]||'',city:m?.[4]?.trim()||''}}).filter(x=>x.label);suggestions.innerHTML=items.map((x,i)=>`<button type="button" data-address-i="${i}">âŒ– ${esc(x.label)}</button>`).join('');suggestions.hidden=!items.length;suggestions.querySelectorAll('[data-address-i]').forEach(btn=>btn.onclick=()=>{const x=items[Number(btn.dataset.addressI)];street.value=x.street;workspace.querySelector('[data-cf="houseNo"]').value=x.houseNo;workspace.querySelector('[data-cf="zip"]').value=x.zip;workspace.querySelector('[data-cf="city"]').value=x.city;suggestions.hidden=true})}catch(err){if(err.name!=='AbortError')suggestions.hidden=true}},280)});
   workspace.querySelectorAll('[data-customer-relation]').forEach(btn=>pbBindTap(btn,()=>{workspace.querySelectorAll('[data-customer-relation]').forEach(x=>x.classList.toggle('active',x===btn));pbRenderCustomerRelation(workspace,c,btn.dataset.customerRelation)}));
   if(customer)pbRenderCustomerRelation(workspace,customer,'projects');
   pbBindTap(workspace.querySelector('[data-customer-save]'),async()=>{
     const saveButton=workspace.querySelector('[data-customer-save]');
     try{
-      saveButton.disabled=true;saveButton.textContent='Speichert …';
+      saveButton.disabled=true;saveButton.textContent='Speichert â€¦';
       const obj=customer||c;workspace.querySelectorAll('[data-cf]').forEach(el=>obj[el.dataset.cf]=el.value);const cp={};workspace.querySelectorAll('[data-contact]').forEach(el=>{if(el.dataset.contact!=='selection')cp[el.dataset.contact]=el.value});obj.contacts=[cp];obj.bank=obj.bank||{};workspace.querySelectorAll('[data-bank]').forEach(el=>obj.bank[el.dataset.bank]=el.value);workspace.querySelectorAll('[data-bank-check]').forEach(el=>obj.bank[el.dataset.bankCheck]=el.checked);
-      if(!pbCustomerName(obj)){alert('Bitte Name / Firma oder Vor- und Nachname eingeben.');workspace.querySelector('[data-cf="company"]')?.focus();saveButton.disabled=false;saveButton.textContent='✓ Kunde speichern';return}
+      if(!pbCustomerName(obj)){alert('Bitte Name / Firma oder Vor- und Nachname eingeben.');workspace.querySelector('[data-cf="company"]')?.focus();saveButton.disabled=false;saveButton.textContent='âœ“ Kunde speichern';return}
       obj.fullAddress=[obj.street,obj.houseNo].filter(Boolean).join(' ')+(obj.zip||obj.city?`, ${[obj.zip,obj.city].filter(Boolean).join(' ')}`:'');obj.updatedAt=new Date().toISOString();obj.createdAt=obj.createdAt||obj.updatedAt;S.customers=Array.isArray(S.customers)?S.customers:[];if(!S.customers.some(x=>x.id===obj.id))S.customers.unshift(obj);
       (S.projects||[]).filter(p=>p.customerId===obj.id).forEach(p=>pbApplyCustomerToProject(p,obj));
       localStorage.setItem(K3,JSON.stringify(S));
       await Promise.resolve(window.PBStorage?.saveState?.(S,{reason:'customer-save-296001'}));
       try{window.ProjectBauOneDrive?.scheduleAutoSync?.('customer-save')}catch(_){ }
       render();const liveWorkspace=document.getElementById('pbModuleWorkspace');document.body.classList.add('pb-customer-mode');pbRenderCustomersWorkspace(liveWorkspace);liveWorkspace.classList.remove('hidden');pbActionToast('Kunde dauerhaft gespeichert.');
-    }catch(error){console.error('Kunde speichern',error);saveButton.disabled=false;saveButton.textContent='✓ Kunde speichern';alert('Der Kunde konnte nicht gespeichert werden: '+(error?.message||'Unbekannter Fehler'))}
+    }catch(error){console.error('Kunde speichern',error);saveButton.disabled=false;saveButton.textContent='âœ“ Kunde speichern';alert('Der Kunde konnte nicht gespeichert werden: '+(error?.message||'Unbekannter Fehler'))}
   });
-  if(customer)pbBindTap(workspace.querySelector('[data-customer-delete]'),()=>{if(!confirm('Kunde wirklich löschen?'))return;S.customers=S.customers.filter(x=>x.id!==customer.id);save();pbRenderCustomersWorkspace(document.getElementById('pbModuleWorkspace'))});
+  if(customer)pbBindTap(workspace.querySelector('[data-customer-delete]'),()=>{if(!confirm('Kunde wirklich lÃ¶schen?'))return;S.customers=S.customers.filter(x=>x.id!==customer.id);save();pbRenderCustomersWorkspace(document.getElementById('pbModuleWorkspace'))});
 }
 
 /* Projekt Bau 2.9.64: non-destructive ERP navigation shell. */
@@ -8083,8 +8083,8 @@ function pbRenderCustomerEditorV2958(workspace,editId){
     const nav=[...document.querySelectorAll('.cad-nav-item')];
     const activate=btn=>{nav.forEach(x=>x.classList.toggle('active',x===btn));};
     const roadmap={
-      Rechnungen:'Für Swiss QR-Rechnung, Zahlteil/PDF und sicheren E-Mail-Versand vorbereitet.',
-      Hilfe:'Projekt Bau 2.9.64 PRO CLEAN · Lokale Daten, OneDrive, PDF, Aufmass sowie 2D/3D CAD bleiben unverändert verfügbar.'
+      Rechnungen:'FÃ¼r Swiss QR-Rechnung, Zahlteil/PDF und sicheren E-Mail-Versand vorbereitet.',
+      Hilfe:'Projekt Bau 2.9.65 PRO CLEAN Â· Lokale Daten, OneDrive, PDF, Aufmass sowie 2D/3D CAD bleiben unverÃ¤ndert verfÃ¼gbar.'
     };
     document.querySelectorAll('.cad-nav-item[data-module]').forEach(btn=>btn.addEventListener('click',()=>{
       activate(btn);
@@ -8093,7 +8093,7 @@ function pbRenderCustomerEditorV2958(workspace,editId){
       if(name==='Kunden'){document.body.classList.add('pb-customer-mode');pbRenderCustomersWorkspace(workspace);workspace.classList.remove('hidden');workspace.scrollIntoView({behavior:'smooth',block:'start'});return}
       if(name==='Projektkalender'){document.body.classList.remove('pb-customer-mode');pbRenderProjectCalendarWorkspace(workspace);workspace.classList.remove('hidden');workspace.scrollIntoView({behavior:'smooth',block:'start'});return}
       document.body.classList.remove('pb-customer-mode');
-      workspace.innerHTML=`<div class="pb-module-head"><div><span class="eyebrow">MODUL</span><h2>${name}</h2></div><button type="button" class="secondary" data-close-module>Schliessen</button></div><div class="pb-module-empty"><div class="pb-module-symbol">${btn.querySelector('.nav-icon')?.textContent||'•'}</div><h3>${name}</h3><p>${roadmap[name]||'Dieses Modul ist in der neuen Navigation vorbereitet und wird in einer kommenden Ausbaustufe mit den bestehenden Projektdaten verbunden.'}</p><small>Es wurden keine bestehenden Daten oder Funktionen verändert.</small></div>`;
+      workspace.innerHTML=`<div class="pb-module-head"><div><span class="eyebrow">MODUL</span><h2>${name}</h2></div><button type="button" class="secondary" data-close-module>Schliessen</button></div><div class="pb-module-empty"><div class="pb-module-symbol">${btn.querySelector('.nav-icon')?.textContent||'â€¢'}</div><h3>${name}</h3><p>${roadmap[name]||'Dieses Modul ist in der neuen Navigation vorbereitet und wird in einer kommenden Ausbaustufe mit den bestehenden Projektdaten verbunden.'}</p><small>Es wurden keine bestehenden Daten oder Funktionen verÃ¤ndert.</small></div>`;
       workspace.classList.remove('hidden');
       workspace.scrollIntoView({behavior:'smooth',block:'start'});
       workspace.querySelector('[data-close-module]').onclick=()=>{document.body.classList.remove('pb-customer-mode','pb-module-mode');workspace.classList.add('hidden')};
@@ -8115,7 +8115,7 @@ function pbRenderCustomerEditorV2958(workspace,editId){
     if(host&&host.parentElement&&!document.getElementById('pbProjectTools')){
       const tools=document.createElement('div');
       tools.id='pbProjectTools'; tools.className='pb-list-tools';
-      tools.innerHTML='<label>Filtern <input id="pbProjectFilter" type="search" placeholder="Projekt oder Kunde"></label><label>Sortieren <select id="pbProjectSort"><option value="default">Standard</option><option value="az">A–Z</option><option value="za">Z–A</option></select></label><span class="pb-list-hint">Schnellzugriff auf bestehende Projektdaten</span>';
+      tools.innerHTML='<label>Filtern <input id="pbProjectFilter" type="search" placeholder="Projekt oder Kunde"></label><label>Sortieren <select id="pbProjectSort"><option value="default">Standard</option><option value="az">Aâ€“Z</option><option value="za">Zâ€“A</option></select></label><span class="pb-list-hint">Schnellzugriff auf bestehende Projektdaten</span>';
       host.parentElement.insertBefore(tools,host);
       document.getElementById('pbProjectFilter').addEventListener('input',e=>{const q=e.target.value.toLocaleLowerCase('de-CH');[...host.children].forEach(x=>x.hidden=!!q&&!x.textContent.toLocaleLowerCase('de-CH').includes(q));});
       document.getElementById('pbProjectSort').addEventListener('change',e=>{if(e.target.value==='default')return;[...host.children].sort((a,b)=>a.textContent.localeCompare(b.textContent,'de-CH')*(e.target.value==='za'?-1:1)).forEach(x=>host.appendChild(x));});
@@ -8155,7 +8155,7 @@ window.ProjectBauProLayout={refresh};
 
 
 
-/* v2.7.2 – non-destructive project recovery */
+/* v2.7.2 â€“ non-destructive project recovery */
 window.ProjectBauRecovery={
   scan(){
     return pbScanAllStates().map(x=>({
@@ -8184,7 +8184,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const states=window.ProjectBauRecovery?.scan?.()||[];
     const total=states.reduce((n,x)=>n+(Number(x.projects)||0),0);
     status.textContent=states.length
-      ? `${states.length} lokale Datenquelle(n) erkannt · ${total} Projektkopien`
+      ? `${states.length} lokale Datenquelle(n) erkannt Â· ${total} Projektkopien`
       : 'Keine weitere lokale Projektdatenquelle erkannt.';
   }
 
@@ -8200,7 +8200,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 
-/* v2.7.6 – resilient CAD controls */
+/* v2.7.6 â€“ resilient CAD controls */
 (()=>{
   let delegated=false;
   function installDelegation(){
@@ -8261,7 +8261,7 @@ document.addEventListener('DOMContentLoaded',()=>{
           setFloorplanView('2d');fpActiveLayer='sanitary';if(fpRecord)fpRecord.activeLayer='sanitary';
           const layer=document.getElementById('fpActiveLayer');if(layer)layer.value='sanitary';
           setFloorTool('select');drawFloorplan();
-        }catch(err){console.error('Sanitär',err)};return;
+        }catch(err){console.error('SanitÃ¤r',err)};return;
       }
       if(target.id==='fpPhotoDocOpen'){
         ev.preventDefault();ev.stopPropagation();try{window.ProjectBauPhotoEditor?.open?.()}catch(err){console.error('Fotodokumentation',err)};return;
@@ -8286,9 +8286,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 
-/* v2.9.1 – authoritative runtime version stamp */
+/* v2.9.1 â€“ authoritative runtime version stamp */
 (()=>{
-  const VERSION='2.9.64 PRO CLEAN';
+  const VERSION='2.9.65 PRO CLEAN';
   function stampVersion(){
     document.querySelectorAll(
       '.cad-sidebar-footer strong,.pro-version,[data-app-version],#appVersion,.app-version'
@@ -8314,7 +8314,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 
-/* v2.9.1 – safety autosave */
+/* v2.9.1 â€“ safety autosave */
 (()=>{
   let lastAutoSave=0;
   const safeAutoSave=()=>{
@@ -8648,19 +8648,19 @@ function fpEnsurePropertyPanel(){
   p.innerHTML=`
     <div class="fp-prop-head">
       <strong>Objekt bearbeiten</strong>
-      <button type="button" id="fp-prop-close">×</button>
+      <button type="button" id="fp-prop-close">Ã—</button>
     </div>
     <div id="fp-prop-name" class="fp-prop-name"></div>
     <div class="fp-prop-grid">
       <label>Breite (cm)<input id="fp-prop-width" inputmode="decimal"></label>
       <label>Tiefe (cm)<input id="fp-prop-depth" inputmode="decimal"></label>
-      <label>Höhe (cm)<input id="fp-prop-height" inputmode="decimal"></label>
-      <label>Drehwinkel (°)<input id="fp-prop-angle" inputmode="decimal"></label>
-      <label class="fp-distance-label">Abstand links (cm)<input id="fp-prop-left" class="fp-distance-drag" data-distance-side="left" inputmode="decimal"><span>↔ ziehen</span></label>
-      <label class="fp-distance-label">Abstand rechts (cm)<input id="fp-prop-right" class="fp-distance-drag" data-distance-side="right" inputmode="decimal"><span>↔ ziehen</span></label>
-      <label class="fp-distance-label">Abstand vorne (cm)<input id="fp-prop-front" class="fp-distance-drag" data-distance-side="front" inputmode="decimal"><span>↔ ziehen</span></label>
-      <label class="fp-distance-label">Abstand hinten (cm)<input id="fp-prop-back" class="fp-distance-drag" data-distance-side="back" inputmode="decimal"><span>↔ ziehen</span></label>
-      <label class="fp-distance-label">Höhe ab Boden (cm)<input id="fp-prop-floorheight" class="fp-height-drag" inputmode="decimal"><span>↔ ziehen</span></label>
+      <label>HÃ¶he (cm)<input id="fp-prop-height" inputmode="decimal"></label>
+      <label>Drehwinkel (Â°)<input id="fp-prop-angle" inputmode="decimal"></label>
+      <label class="fp-distance-label">Abstand links (cm)<input id="fp-prop-left" class="fp-distance-drag" data-distance-side="left" inputmode="decimal"><span>â†” ziehen</span></label>
+      <label class="fp-distance-label">Abstand rechts (cm)<input id="fp-prop-right" class="fp-distance-drag" data-distance-side="right" inputmode="decimal"><span>â†” ziehen</span></label>
+      <label class="fp-distance-label">Abstand vorne (cm)<input id="fp-prop-front" class="fp-distance-drag" data-distance-side="front" inputmode="decimal"><span>â†” ziehen</span></label>
+      <label class="fp-distance-label">Abstand hinten (cm)<input id="fp-prop-back" class="fp-distance-drag" data-distance-side="back" inputmode="decimal"><span>â†” ziehen</span></label>
+      <label class="fp-distance-label">HÃ¶he ab Boden (cm)<input id="fp-prop-floorheight" class="fp-height-drag" inputmode="decimal"><span>â†” ziehen</span></label>
       <label>Einbautiefe (cm)<input id="fp-prop-inset" inputmode="decimal"></label>
       <label>Wandseite
         <select id="fp-prop-side">
@@ -8673,9 +8673,9 @@ function fpEnsurePropertyPanel(){
     </div>
     <label class="fp-prop-desc">Beschreibung<textarea id="fp-prop-desc" rows="3"></textarea></label>
     <div class="fp-prop-actions">
-      <button type="button" id="fp-prop-rotate">90° drehen</button>
+      <button type="button" id="fp-prop-rotate">90Â° drehen</button>
       <button type="button" id="fp-prop-duplicate">Duplizieren</button>
-      <button type="button" id="fp-prop-save">Übernehmen</button>
+      <button type="button" id="fp-prop-save">Ãœbernehmen</button>
     </div>`;
   document.body.appendChild(p);
   fpBindDistanceDragControls();
@@ -8779,7 +8779,7 @@ function fpEnsureObjectEditButton(){
   b=document.createElement('button');
   b.type='button';
   b.id='fp-object-edit-visible';
-  b.textContent='✎ Objekt bearbeiten';
+  b.textContent='âœŽ Objekt bearbeiten';
   b.hidden=true;
   b.addEventListener('click',()=>{
     const o=(fpObjects||[]).find(x=>x.id===fpSelectedId);
@@ -8794,7 +8794,7 @@ function fpRefreshObjectEditButton(){
   b.hidden=!(o && o.type!=='wall');
   if(!b.hidden){
     const n=o.label||o.name||o.kind||o.type||'Objekt';
-    b.textContent='✎ Objekt bearbeiten · '+n;
+    b.textContent='âœŽ Objekt bearbeiten Â· '+n;
   }
 }
 (function(){
@@ -8820,16 +8820,17 @@ function fpRefreshObjectEditButton(){
  const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const projects=()=>Array.isArray(S?.projects)?S.projects:[];
  const flat=(key)=>projects().flatMap(p=>(Array.isArray(p[key])?p[key]:[]).map(x=>({...x,_project:p})));
- const fmt=d=>{if(!d)return '–';try{return new Intl.DateTimeFormat('de-CH').format(new Date(d))}catch(_){return d}};
+ const fmt=d=>{if(!d)return 'â€“';try{return new Intl.DateTimeFormat('de-CH').format(new Date(d))}catch(_){return d}};
  const money=n=>new Intl.NumberFormat('de-CH',{style:'currency',currency:'CHF'}).format(Number(n)||0);
  const defs={
-  'Offerten':['offers','Offerten','offerNo','offerDate'], 'Aufträge':['orders','Aufträge','orderNo','date'], 'Meine Aufträge':['orders','Meine Aufträge','orderNo','date'],
-  'Regieberichte':['dayworks','Regieberichte','number','date'], 'Bautagebücher':['dayworks','Bautagebücher','title','date'], 'Rechnungen':['invoices','Rechnungen','invoiceNo','date'],
-  'Zahlungen':['payments','Zahlungen','number','date'], 'Verträge':['contracts','Verträge','number','date'], 'Aufgaben':['reminders','Aufgaben','title','date']
+  'Offerten':['offers','Offerten','offerNo','offerDate'], 'AuftrÃ¤ge':['orders','AuftrÃ¤ge','orderNo','date'], 'Meine AuftrÃ¤ge':['orders','Meine AuftrÃ¤ge','orderNo','date'],
+  'Regieberichte':['dayworks','Regieberichte','number','date'], 'BautagebÃ¼cher':['dayworks','BautagebÃ¼cher','title','date'], 'Rechnungen':['invoices','Rechnungen','invoiceNo','date'],
+  'Zahlungen':['payments','Zahlungen','number','date'], 'VertrÃ¤ge':['contracts','VertrÃ¤ge','number','date'], 'Aufgaben':['reminders','Aufgaben','title','date']
  };
  function shell(title,body,sub='ERP / CRM'){return `<div class="pb-module-head"><div><span class="eyebrow">${e(sub)}</span><h2>${e(title)}</h2></div><button type="button" class="secondary" data-close-module>Schliessen</button></div>${body}`}
- function tableModule(name){const [key,title,no,dateKey]=defs[name],items=flat(key);return shell(title,`<div class="pb-erp-kpis"><div><b>${items.length}</b><span>Einträge</span></div><div><b>${new Set(items.map(x=>x._project.id)).size}</b><span>Projekte</span></div><div><b>${projects().length}</b><span>Projekte total</span></div></div><div class="pb-erp-table"><div class="pb-erp-row head"><span>Datum</span><span>Nummer / Titel</span><span>Projekt</span><span>Kunde</span><span>Status / Betrag</span></div>${items.map(x=>`<button class="pb-erp-row" data-pb-project="${e(x._project.id)}"><span>${fmt(x[dateKey]||x.createdAt)}</span><span>${e(x[no]||x.title||'–')}</span><span>${e(x._project.name||'')}</span><span>${e(x._project.customer||'')}</span><span>${e(x.status||'')}${x.total!=null?' · '+money(x.total):''}</span></button>`).join('')||'<p class="pb-erp-empty">Noch keine Einträge vorhanden.</p>'}</div>`)}
- function cockpit(){const ps=projects(),customers=Array.isArray(S?.customers)?S.customers:[],inv=flat('invoices'),offers=flat('offers');return shell('Cockpit',`<div class="pb-erp-kpis pb-erp-kpis-large"><div><b>${ps.length}</b><span>Projekte</span></div><div><b>${customers.length}</b><span>Kunden</span></div><div><b>${offers.length}</b><span>Offerten</span></div><div><b>${inv.length}</b><span>Rechnungen</span></div></div><div class="pb-dashboard-grid"><section><h3>Aktuelle Projekte</h3>${ps.slice(0,8).map(p=>`<button data-pb-project="${e(p.id)}"><strong>${e(p.name)}</strong><span>${e(p.customer||p.address||'')}</span><small>${e(p.plattenleger?.activePhase||p.status||'Projekt')}</small></button>`).join('')||'<p>Keine Projekte vorhanden.</p>'}</section><section><h3>Schnellzugriff</h3><button data-pb-scroll="#plattenlegerCockpit"><strong>Aufmass / Projekt-Cockpit</strong><span>Badumbau, Ausführung und Materialbedarf</span></button><button data-pb-scroll=".project-floorplans"><strong>2D / 3D CAD</strong><span>Grundrisse und Wandansichten</span></button><button data-pb-module="Kunden"><strong>Kunden</strong><span>Stammdaten und Projektverknüpfungen</span></button><button data-pb-module="Rechnungen"><strong>Rechnungen</strong><span>Rechnungsübersicht · QR-Modul vorbereitet</span></button></section></div>`,'ÜBERSICHT')}
+ function tableModule(name){const [key,title,no,dateKey]=defs[name],items=flat(key);return shell(title,`<div class="pb-erp-kpis"><div><b>${items.length}</b><span>EintrÃ¤ge</span></div><div><b>${new Set(items.map(x=>x._project.id)).size}</b><span>Projekte</span></div><div><b>${projects().length}</b><span>Projekte total</span></div></div><div class="pb-erp-table"><div class="pb-erp-row head"><span>Datum</span><span>Nummer / Titel</span><span>Projekt</span><span>Kunde</span><span>Status / Betrag</span></div>${items.map(x=>`<button class="pb-erp-row" data-pb-project="${e(x._project.id)}"><span>${fmt(x[dateKey]||x.createdAt)}</span><span>${e(x[no]||x.title||'â€“')}</span><span>${e(x._project.name||'')}</span><span>${e(x._project.customer||'')}</span><span>${e(x.status||'')}${x.total!=null?' Â· '+money(x.total):''}</span></button>`).join('')||'<p class="pb-erp-empty">Noch keine EintrÃ¤ge vorhanden.</p>'}</div>`)}
+ function cockpit(){const ps=projects(),customers=Array.isArray(S?.customers)?S.customers:[],inv=flat('invoices'),offers=flat('offers');return shell('Cockpit',`<div class="pb-erp-kpis pb-erp-kpis-large"><div><b>${ps.length}</b><span>Projekte</span></div><div><b>${customers.length}</b><span>Kunden</span></div><div><b>${offers.length}</b><span>Offerten</span></div><div><b>${inv.length}</b><span>Rechnungen</span></div></div><div class="pb-dashboard-grid"><section><h3>Aktuelle Projekte</h3>${ps.slice(0,8).map(p=>`<button data-pb-project="${e(p.id)}"><strong>${e(p.name)}</strong><span>${e(p.customer||p.address||'')}</span><small>${e(p.plattenleger?.activePhase||p.status||'Projekt')}</small></button>`).join('')||'<p>Keine Projekte vorhanden.</p>'}</section><section><h3>Schnellzugriff</h3><button data-pb-scroll="#plattenlegerCockpit"><strong>Aufmass / Projekt-Cockpit</strong><span>Badumbau, AusfÃ¼hrung und Materialbedarf</span></button><button data-pb-scroll=".project-floorplans"><strong>2D / 3D CAD</strong><span>Grundrisse und Wandansichten</span></button><button data-pb-module="Kunden"><strong>Kunden</strong><span>Stammdaten und ProjektverknÃ¼pfungen</span></button><button data-pb-module="Rechnungen"><strong>Rechnungen</strong><span>RechnungsÃ¼bersicht Â· QR-Modul vorbereitet</span></button></section></div>`,'ÃœBERSICHT')}
  function render(name,w){if(name==='Cockpit')w.innerHTML=cockpit();else if(defs[name])w.innerHTML=tableModule(name);else return false;w.querySelector('[data-close-module]')?.addEventListener('click',()=>{document.body.classList.remove('pb-module-mode','pb-customer-mode');w.classList.add('hidden')});w.querySelectorAll('[data-pb-project]').forEach(b=>b.onclick=()=>{if(typeof pbNavigateToProject==='function')pbNavigateToProject(b.dataset.pbProject)});w.querySelectorAll('[data-pb-module]').forEach(b=>b.onclick=()=>document.querySelector(`[data-module="${b.dataset.pbModule}"]`)?.click());w.querySelectorAll('[data-pb-scroll]').forEach(b=>b.onclick=()=>{document.body.classList.remove('pb-module-mode');w.classList.add('hidden');document.querySelector(b.dataset.pbScroll)?.scrollIntoView({behavior:'smooth'})});return true}
  document.addEventListener('DOMContentLoaded',()=>{const w=document.getElementById('pbModuleWorkspace');if(!w)return;document.querySelectorAll('.cad-nav-item[data-module]').forEach(b=>b.addEventListener('click',ev=>{if(render(b.dataset.module,w)){ev.stopImmediatePropagation();document.body.classList.remove('pb-customer-mode','pb-shell-focus');document.body.classList.add('pb-module-mode');w.classList.remove('hidden');w.scrollIntoView({block:'start'})}},true));const c=document.querySelector('.cad-nav-item[data-scroll="#projects"]');if(c)c.addEventListener('click',ev=>{ev.preventDefault();ev.stopImmediatePropagation();document.querySelectorAll('.cad-nav-item').forEach(x=>x.classList.toggle('active',x===c));document.body.classList.remove('pb-customer-mode','pb-shell-focus');document.body.classList.add('pb-module-mode');render('Cockpit',w);w.classList.remove('hidden')},true)});
 })();
+

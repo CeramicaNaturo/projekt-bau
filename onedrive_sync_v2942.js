@@ -239,10 +239,10 @@
       const body=JSON.stringify(payload);
       const size=new Blob([body]).size;
       if(size>250*1024*1024){
-        throw new Error(`Yedek ${bytes(size)}. Tek dosya OneDrive yükleme sınırı 250 MB.`);
+        throw new Error(`Die Sicherung ist ${bytes(size)} gross. Die OneDrive-Grenze für eine einzelne Datei beträgt 250 MB.`);
       }
 
-      if(!silent)setStatus(`OneDrive'a yedekleniyor… (${bytes(size)})`,'working');
+      if(!silent)setStatus(`Sicherung wird auf OneDrive hochgeladen … (${bytes(size)})`,'working');
 
       const res=await graph(`/me/drive/special/approot:/${encodeURIComponent(BACKUP_FILE)}:/content`,{
         method:'PUT',
@@ -304,7 +304,7 @@
   function normalizeRemoteState(payload){
     if(payload?.schema==='projekt-bau-cloud-backup' && payload?.state?.projects)return payload.state;
     if(payload?.projects)return payload;
-    throw new Error('OneDrive yedek dosyasında geçerli Projekt Bau verisi bulunamadı.');
+    throw new Error('In der OneDrive-Sicherungsdatei wurden keine gültigen Projekt-Bau-Daten gefunden.');
   }
 
   function mergeState(localState,remoteState,remotePayload={}){
@@ -395,17 +395,17 @@
 
   async function restoreBackup(){
     try{
-      setStatus('OneDrive-Yedek wird geladen…','working');
+      setStatus('OneDrive-Sicherung wird geladen …','working');
       const payload=await fetchBackup();
       const remote=normalizeRemoteState(payload);
 
       const remoteCount=remote.projects?.length||0;
       const localCount=S?.projects?.length||0;
       const ok=confirm(
-        `OneDrive yedeği bulundu.\n\n`+
+        `OneDrive-Sicherung gefunden.\n\n`+
         `Lokal: ${localCount} Projekt(e)\n`+
         `OneDrive: ${remoteCount} Projekt(e)\n\n`+
-        `Projeler silinmeden birleştirilecek. Devam edilsin mi?`
+        `Die Projekte werden zusammengeführt, ohne bestehende Projekte zu löschen. Fortfahren?`
       );
       if(!ok){
         setStatus('Wiederherstellung abgebrochen.','neutral');
@@ -442,12 +442,12 @@
         if(st)storageNote=` · IndexedDB`;
       }catch(_){}
       setStatus(`${S.projects.length} Projekt(e) lokal + OneDrive zusammengeführt${storageNote}.`,'ok');
-      alert(`OneDrive geri yükleme tamamlandı.\nToplam ${S.projects.length} proje mevcut.`);
+      alert(`OneDrive-Wiederherstellung abgeschlossen.\nInsgesamt sind ${S.projects.length} Projekte vorhanden.`);
       return true;
     }catch(e){
       console.error('OneDrive restore',e);
       setStatus(`Wiederherstellung fehlgeschlagen: ${e.message}`,'error');
-      alert(`OneDrive geri yükleme başarısız:\n${e.message}`);
+      alert(`OneDrive-Wiederherstellung fehlgeschlagen:\n${e.message}`);
       return false;
     }
   }
@@ -493,7 +493,7 @@
     const autoSync=!!el('odAutoSync')?.checked;
 
     if(clientId && !/^[0-9a-fA-F-]{20,}$/.test(clientId)){
-      alert('Application (Client) ID geçerli bir GUID gibi görünmüyor.');
+      alert('Die Application (Client) ID scheint keine gültige GUID zu sein.');
       return false;
     }
     writeConfig({...current,clientId,tenant,redirectUri,autoSync});

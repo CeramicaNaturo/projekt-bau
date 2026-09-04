@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#075ea8">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2965.css?v=296501">
+<link rel="stylesheet" href="styles_v2966.css?v=296601">
 </head>
 <body class="cad-app">
 
@@ -28,7 +28,7 @@
     <div class="cad-nav-section">VERKAUF &amp; PROJEKTE</div>
     <button class="cad-nav-item" data-module="Kunden"><span class="nav-icon">♙</span><span>Kunden</span></button>
     <button class="cad-nav-item" data-scroll="#projects"><span class="nav-icon">▤</span><span>Projekte</span></button>
-    <button class="cad-nav-item" data-module="Projekt Aufgaben"><span class="nav-icon">☑</span><span>Projekt Aufgaben</span></button>
+    <button class="cad-nav-item" data-module="Projektaufgaben"><span class="nav-icon">☑</span><span>Projektaufgaben</span></button>
     <button class="cad-nav-item" data-module="Einsatzplanung"><span class="nav-icon">▦</span><span>Einsatzplanung</span></button>
     <button class="cad-nav-item" data-module="Projektkalender"><span class="nav-icon">▣</span><span>Projektkalender</span></button>
     <button class="cad-nav-item" data-module="Offerten"><span class="nav-icon">CHF</span><span>Offerten</span></button>
@@ -69,7 +69,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.65 PRO CLEAN</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.66 PRO CLEAN</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -86,7 +86,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJE-DOKUMENTATION · v2.9.65 PRO CLEAN</div>
+    <div class="eyebrow">BAUPROJEKT-DOKUMENTATION · v2.9.66 PRO CLEAN</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -422,7 +422,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.9.65 PRO CLEAN</span>
+    <span class="pro-version">v2.9.66 PRO CLEAN</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -921,7 +921,7 @@
 
         <div class="cad-inspector-section">
           <h4>GÖRÜNÜRLÜK · 2D / 3D</h4>
-          <div class="fp-layer-help">Aynı katman düğmeleri 2D ve 3D görünümde ayrı ayrı kontrol edilebilir. Özellikle <b>Wände</b> ile duvarları açıp kapatabilirsin.</div>
+          <div class="fp-layer-help">Dieselben Ebenenschalter steuern die Sichtbarkeit in der 2D- und 3D-Ansicht. Mit <b>Wände</b> können die Wände ein- oder ausgeblendet werden.</div>
           <label class="check-inline"><input class="fp-layer-toggle" data-layer="walls" type="checkbox" checked> Wände</label>
           <label class="check-inline"><input class="fp-layer-toggle" data-layer="openings" type="checkbox" checked> Türen / Fenster</label>
           <label class="check-inline"><input class="fp-layer-toggle" data-layer="sanitary" type="checkbox" checked> Sanitär</label>
@@ -1063,7 +1063,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=296501"></script>
+<script src="storage_bridge_v2942.js?v=296601"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1081,19 +1081,19 @@
     await window.PBStorage.ready;
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2965.js?v=296501');
-    await loadScript('pro_core.js?v=296501');
-    await loadScript('abdichtung_core.js?v=296501');
-    await loadScript('photo_editor_v2942.js?v=296501');
+    await loadScript('app_v2966.js?v=296601');
+    await loadScript('pro_core.js?v=296601');
+    await loadScript('abdichtung_core.js?v=296601');
+    await loadScript('photo_editor_v2942.js?v=296601');
     try{
       await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-      await loadScript('onedrive_sync_v2942.js?v=296501');
+      await loadScript('onedrive_sync_v2942.js?v=296601');
     }catch(cloudError){
       console.warn('OneDrive ist momentan nicht verfügbar; CAD und lokale Projektdaten bleiben nutzbar.',cloudError);
     }
 
     // Three.js module can initialize independently after storage/app boot.
-    try{await loadScript('three_viewer_v2965.js?v=296501','module')}
+    try{await loadScript('three_viewer_v2966.js?v=296601','module')}
     catch(viewError){console.warn('3D-Modul konnte nicht geladen werden; 2D CAD bleibt nutzbar.',viewError)}
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
@@ -1116,9 +1116,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2965.js?v=296501')) await reg.unregister();
+      if(url && !url.includes('sw_v2966.js?v=296601')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2965.js?v=296501',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2966.js?v=296601',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

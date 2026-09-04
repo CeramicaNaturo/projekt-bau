@@ -6,13 +6,13 @@
 <meta name="theme-color" content="#075ea8">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2973.css?v=297301">
+<link rel="stylesheet" href="styles_v2974.css?v=297401">
 </head>
 <body class="cad-app pb-auth-locked">
 
 <div id="pbAuthGate" class="pb-auth-gate" aria-hidden="false">
   <div class="pb-auth-card">
-    <div class="pb-auth-brand"><img src="logo_ceramica.jpg?v=297301" alt="Ceramica Naturo"><div><strong>Projekt Bau</strong><span>Sichere lokale Anmeldung</span></div></div>
+    <div class="pb-auth-brand"><img src="logo_ceramica.jpg?v=297401" alt="Ceramica Naturo"><div><strong>Projekt Bau</strong><span>Sichere lokale Anmeldung</span></div></div>
     <div id="pbAuthLogin" class="pb-auth-panel hidden">
       <h1>Anmelden</h1><p>Mit E-Mail-Adresse und Passwort anmelden.</p>
       <label>E-Mail-Adresse<input id="pbLoginEmail" type="email" autocomplete="username" inputmode="email"></label>
@@ -107,7 +107,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.73 PRO CLEAN</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.74 PRO CLEAN</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -125,7 +125,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJEKT-DOKUMENTATION · v2.9.73 PRO CLEAN</div>
+    <div class="eyebrow">BAUPROJEKT-DOKUMENTATION · v2.9.74 PRO CLEAN</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -474,7 +474,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.9.73 PRO CLEAN</span>
+    <span class="pro-version">v2.9.74 PRO CLEAN</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -1115,7 +1115,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=297301"></script>
+<script src="storage_bridge_v2942.js?v=297401"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1131,22 +1131,22 @@
 
   try{
     await window.PBStorage.ready;
-    await loadScript('auth_core.js?v=297301');
+    await loadScript('auth_core.js?v=297401');
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2973.js?v=297301');
-    await loadScript('pro_core.js?v=297301');
-    await loadScript('abdichtung_core.js?v=297301');
-    await loadScript('photo_editor_v2942.js?v=297301');
+    await loadScript('app_v2974.js?v=297401');
+    await loadScript('pro_core.js?v=297401');
+    await loadScript('abdichtung_core.js?v=297401');
+    await loadScript('photo_editor_v2942.js?v=297401');
     try{
       await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-      await loadScript('onedrive_sync_v2942.js?v=297301');
+      await loadScript('onedrive_sync_v2942.js?v=297401');
     }catch(cloudError){
       console.warn('OneDrive ist momentan nicht verfügbar; CAD und lokale Projektdaten bleiben nutzbar.',cloudError);
     }
 
     // Three.js module can initialize independently after storage/app boot.
-    try{await loadScript('three_viewer_v2973.js?v=297301','module')}
+    try{await loadScript('three_viewer_v2974.js?v=297401','module')}
     catch(viewError){console.warn('3D-Modul konnte nicht geladen werden; 2D CAD bleibt nutzbar.',viewError)}
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
@@ -1169,9 +1169,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2973.js?v=297301')) await reg.unregister();
+      if(url && !url.includes('sw_v2974.js?v=297401')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2973.js?v=297301',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2974.js?v=297401',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

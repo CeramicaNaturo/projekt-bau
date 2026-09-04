@@ -6,9 +6,46 @@
 <meta name="theme-color" content="#075ea8">
 <title>Projekt Bau</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles_v2966.css?v=296601">
+<link rel="stylesheet" href="styles_v2967.css?v=296701">
 </head>
-<body class="cad-app">
+<body class="cad-app pb-auth-locked">
+
+<div id="pbAuthGate" class="pb-auth-gate" aria-hidden="false">
+  <div class="pb-auth-card">
+    <div class="pb-auth-brand"><img src="logo_ceramica.jpg?v=296701" alt="Ceramica Naturo"><div><strong>Projekt Bau</strong><span>Sichere lokale Anmeldung</span></div></div>
+    <div id="pbAuthLogin" class="pb-auth-panel hidden">
+      <h1>Anmelden</h1><p>Mit E-Mail-Adresse und Passwort anmelden.</p>
+      <label>E-Mail-Adresse<input id="pbLoginEmail" type="email" autocomplete="username" inputmode="email"></label>
+      <label>Passwort<input id="pbLoginPassword" type="password" autocomplete="current-password"></label>
+      <button id="pbLoginButton" type="button" class="primary">Anmelden</button>
+    </div>
+    <div id="pbAuthSetup" class="pb-auth-panel hidden">
+      <h1>Administrator einrichten</h1><p>Beim ersten Start wird das erste Benutzerkonto angelegt.</p>
+      <label>Name<input id="pbSetupName" autocomplete="name"></label>
+      <label>E-Mail-Adresse<input id="pbSetupEmail" type="email" autocomplete="username" inputmode="email"></label>
+      <label>Passwort<input id="pbSetupPassword" type="password" autocomplete="new-password"></label>
+      <label>Passwort wiederholen<input id="pbSetupPassword2" type="password" autocomplete="new-password"></label>
+      <button id="pbSetupButton" type="button" class="primary">Administrator anlegen</button>
+    </div>
+    <div id="pbAuthMessage" class="pb-auth-message" aria-live="polite"></div>
+  </div>
+</div>
+
+<div id="pbUserModal" class="pb-user-modal hidden" aria-hidden="true">
+  <div class="pb-user-dialog">
+    <header><div><small>EINSTELLUNGEN</small><h2>Benutzerverwaltung</h2></div><button id="pbUserClose" type="button">×</button></header>
+    <section class="pb-user-create">
+      <label>Name<input id="pbNewUserName"></label>
+      <label>E-Mail-Adresse<input id="pbNewUserEmail" type="email"></label>
+      <label>Passwort<input id="pbNewUserPassword" type="password" autocomplete="new-password"></label>
+      <label>Rolle<select id="pbNewUserRole"><option>Benutzer</option><option>Administrator</option></select></label>
+      <button id="pbAddUser" type="button" class="primary">Benutzer anlegen</button>
+      <div id="pbUserMessage" class="pb-auth-message"></div>
+    </section>
+    <section><h3>Vorhandene Benutzer</h3><div id="pbUserList" class="pb-user-list"></div></section>
+  </div>
+</div>
+
 
 <aside class="cad-sidebar">
   <div class="cad-brand">
@@ -62,6 +99,7 @@
 
     <div class="cad-nav-section">EINSTELLUNGEN</div>
     <button class="cad-nav-item" data-scroll="#oneDrivePanel" id="cadResetView"><span class="nav-icon">⚙</span><span>Einstellungen</span></button>
+    <button class="cad-nav-item" id="pbUserManagement"><span class="nav-icon">♟</span><span>Benutzerverwaltung</span></button>
     <button class="cad-nav-item" data-module="Hilfe"><span class="nav-icon">?</span><span>Hilfe</span></button>
   </nav>
 
@@ -69,7 +107,7 @@
       <button id="pbRecoverProjects" type="button">↺ Projekte wiederherstellen</button>
       <small id="pbRecoveryStatus">Lokale Projektdaten werden automatisch geprüft.</small>
     </div>
-    <div class="cad-sidebar-footer"><strong>Version 2.9.66 PRO CLEAN</strong></div>
+    <div class="cad-sidebar-footer"><strong>Version 2.9.67 PRO CLEAN</strong></div>
 </aside>
 
 <header class="cad-topbar">
@@ -79,6 +117,7 @@
   </div>
   <div class="cad-global-search"><input id="pbGlobalSearch" type="search" placeholder="Projekte, Kunden oder Module suchen …" aria-label="Globale Suche"></div>
   <div class="cad-topbar-actions">
+    <div id="pbCurrentUser" class="pb-current-user hidden"><span><strong></strong><small></small></span><button id="pbLogout" type="button" class="secondary">Abmelden</button></div>
     <button class="secondary" id="cadSaveProject">Speichern</button>
     <button class="primary" id="cadPdfReportTop">PDF-Bericht erstellen</button>
   </div>
@@ -86,7 +125,7 @@
 
 <header class="topbar">
   <div>
-    <div class="eyebrow">BAUPROJEKT-DOKUMENTATION · v2.9.66 PRO CLEAN</div>
+    <div class="eyebrow">BAUPROJEKT-DOKUMENTATION · v2.9.67 PRO CLEAN</div>
     <h1>Projekt Bau</h1>
   </div>
   <button id="workerView" class="secondary">Mitarbeiteransicht</button>
@@ -422,7 +461,7 @@
   <div class="pro-brand">
     <button type="button" id="fpHomeButton" class="pro-home-button" title="Speichern und zur Startseite">⌂ <span>Home</span></button>
     <span class="pro-brand-title">Projekt Bau PRO</span>
-    <span class="pro-version">v2.9.66 PRO CLEAN</span>
+    <span class="pro-version">v2.9.67 PRO CLEAN</span>
   </div>
   <nav class="pro-main-nav">
     <button type="button" class="pro-nav-item">⌂ <span>Projekt</span></button>
@@ -1063,7 +1102,7 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
-<script src="storage_bridge_v2942.js?v=296601"></script>
+<script src="storage_bridge_v2942.js?v=296701"></script>
 <script>
 (async()=>{
   function loadScript(src,type){
@@ -1079,21 +1118,22 @@
 
   try{
     await window.PBStorage.ready;
+    await loadScript('auth_core.js?v=296701');
 
     // App code starts only after IndexedDB migration/hydration is complete.
-    await loadScript('app_v2966.js?v=296601');
-    await loadScript('pro_core.js?v=296601');
-    await loadScript('abdichtung_core.js?v=296601');
-    await loadScript('photo_editor_v2942.js?v=296601');
+    await loadScript('app_v2967.js?v=296701');
+    await loadScript('pro_core.js?v=296701');
+    await loadScript('abdichtung_core.js?v=296701');
+    await loadScript('photo_editor_v2942.js?v=296701');
     try{
       await loadScript('https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js');
-      await loadScript('onedrive_sync_v2942.js?v=296601');
+      await loadScript('onedrive_sync_v2942.js?v=296701');
     }catch(cloudError){
       console.warn('OneDrive ist momentan nicht verfügbar; CAD und lokale Projektdaten bleiben nutzbar.',cloudError);
     }
 
     // Three.js module can initialize independently after storage/app boot.
-    try{await loadScript('three_viewer_v2966.js?v=296601','module')}
+    try{await loadScript('three_viewer_v2967.js?v=296701','module')}
     catch(viewError){console.warn('3D-Modul konnte nicht geladen werden; 2D CAD bleibt nutzbar.',viewError)}
   }catch(e){
     console.error('Projekt Bau Startfehler',e);
@@ -1116,9 +1156,9 @@
     const regs=await navigator.serviceWorker.getRegistrations();
     for(const reg of regs){
       const url=reg.active?.scriptURL||reg.waiting?.scriptURL||reg.installing?.scriptURL||'';
-      if(url && !url.includes('sw_v2966.js?v=296601')) await reg.unregister();
+      if(url && !url.includes('sw_v2967.js?v=296701')) await reg.unregister();
     }
-    const reg=await navigator.serviceWorker.register('./sw_v2966.js?v=296601',{updateViaCache:'none'});
+    const reg=await navigator.serviceWorker.register('./sw_v2967.js?v=296701',{updateViaCache:'none'});
     await reg.update();
   }catch(err){ console.warn('Service Worker update:',err); }
 })();

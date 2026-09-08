@@ -1,9 +1,1 @@
-{
-  "name": "Projekt Bau – Schweiz",
-  "short_name": "Projekt Bau",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#eef3f8",
-  "theme_color": "#075ea8",
-  "icons": []
-}
+{"name":"Projekt Bau – Kunden & Projekte","short_name":"Projekt Bau","start_url":"./index.html","display":"standalone","background_color":"#f3f6f5","theme_color":"#123d37"}
